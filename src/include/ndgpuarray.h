@@ -6,12 +6,13 @@
 
 typedef struct {
     PyArrayObject base;
-    /* Type-specific fields go here. */
+    /* Type-specific fields */
+    int mem_loc;
 } PyGPUArrayObject;
 
 static PyTypeObject PyGPUArray_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name = "custom.Custom",
+    .tp_name = "GPUArray",
     .tp_doc = "Custom objects",
     .tp_basicsize = sizeof(PyGPUArrayObject),
     .tp_itemsize = 0,
