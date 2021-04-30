@@ -1,8 +1,6 @@
-#from ../lib/millipyde import *
 import numpy as np
 
 import sys
-# insert at 1, 0 is the script path (or '' in REPL)
 sys.path.insert(1, '../')
 import millipyde
 
