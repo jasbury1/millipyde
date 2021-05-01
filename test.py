@@ -14,3 +14,5 @@ from millipyde import *
 #array = mp.GPUArray()
 
 test_func(4)
+
+print("Done")
