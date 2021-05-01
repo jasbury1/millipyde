@@ -2,7 +2,7 @@ import numpy as np
 
 import sys
 sys.path.insert(1, '../')
-import millipyde
+from millipyde import *
 
 #array = mp.GPUArray()
 
@@ -11,4 +11,6 @@ import millipyde
 
 #print(type(a))
 
-#array = GPUArray()
+#array = mp.GPUArray()
+
+test_func(4)
