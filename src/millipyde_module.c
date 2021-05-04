@@ -3,7 +3,7 @@
 #include <Python.h>
 #include <math.h>
 #include <numpy/arrayobject.h>
-#include <ndgpuarray.h>
+#include "ndgpuarray.h"
 
 /*
 typedef struct {
@@ -73,7 +73,7 @@ PyInit_millipyde(void)
     }
 
     Py_INCREF(&PyGPUArray_Type);
-    if (PyModule_AddObject(m, "PyGPUArray_Type", (PyObject *) &PyGPUArray_Type) < 0) {
+    if (PyModule_AddObject(m, "GPUArray", (PyObject *) &PyGPUArray_Type) < 0) {
         Py_DECREF(&PyGPUArray_Type);
         Py_DECREF(m);
         return NULL;

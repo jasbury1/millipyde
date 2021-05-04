@@ -2,7 +2,9 @@ import numpy as np
 
 import sys
 sys.path.insert(1, '../')
-from millipyde import *
+#from millipyde import *
+
+import millipyde as mp
 
 #array = mp.GPUArray()
 
@@ -13,6 +15,16 @@ from millipyde import *
 
 #array = mp.GPUArray()
 
-test_func(4)
+#mp.test_func(4)
+
+#arr = mp.GPUArray()
+
+nparr = np.array([1, 2, 3, 4])
+
+arr = mp.GPUArray(nparr)
+
+sins = 10 * np.sin(arr)
+
+print(sins)
 
 print("Done")
