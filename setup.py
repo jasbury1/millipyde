@@ -6,10 +6,7 @@ here = pathlib.Path(__file__).parent.resolve()
 long_description = (here / 'README.md').read_text(encoding='utf-8')
 
 millipyde_module = Extension('millipyde',
-                             sources=[
-                                 'src/ndgpuarray.c',
-                                 'src/millipyde_module.c'
-                             ],
+                             sources=['src/millipyde_module.c', 'src/ndgpuarray.c'],
                              include_dirs=[numpy.get_include(), 'src/include/'])
 
 setup(
