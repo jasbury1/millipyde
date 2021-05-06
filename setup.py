@@ -1,13 +1,26 @@
 from setuptools import setup, find_packages, Extension
 import pathlib
 import numpy
+import os
 
 here = pathlib.Path(__file__).parent.resolve()
 long_description = (here / 'README.md').read_text(encoding='utf-8')
 
 millipyde_module = Extension('millipyde',
-                             sources=['src/millipyde_module.c', 'src/ndgpuarray.c'],
-                             include_dirs=[numpy.get_include(), 'src/include/'])
+                             sources=['src/millipyde_module.c', 
+                                 'src/ndgpuarray.c',
+                                 'src/bit_extract.cpp'],
+                             include_dirs=[numpy.get_include(), 
+                                 'src/include/',
+                                 '/opt/rocm-4.1.0/hip/include/hip'])
+
+os.environ["CC"] = "/opt/rocm-4.1.0/hip/bin/hipcc"
+os.environ["CXX"] = "/opt/rocm-4.1.0/hip/bin/hipcc"
+
+#millipyde_hip_module = Extension('millipyde.hip',
+#                                sources=['src/bit_extract.cpp'],
+#                                extra_compile_args=[])
+                                
 
 setup(
     version='0.0.1.dev1',

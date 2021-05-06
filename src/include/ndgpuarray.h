@@ -70,6 +70,13 @@ PyGPUArray_array_function(PyGPUArrayObject *self, void *closure)
     return NULL;
 }
 
+static PyObject *
+PyGPUArray_add_one(PyGPUArrayObject *self, void *closure)
+{
+    printf("Adding one...");
+    return self;
+}
+
 static PyMemberDef PyGPUArray_members[] = {
     {NULL}
 };
@@ -82,6 +89,9 @@ static PyMethodDef PyGPUArray_methods[] = {
     //  "TODO"
     // },
     {"__array_function__", (PyCFunction) PyGPUArray_array_function, METH_VARARGS,
+     "TODO"
+    },
+    {"add_one", (PyCFunction) PyGPUArray_add_one, METH_NOARGS,
      "TODO"
     },
     {NULL}
