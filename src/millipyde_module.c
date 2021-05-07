@@ -5,42 +5,11 @@
 #include <numpy/arrayobject.h>
 #include "ndgpuarray.h"
 
-/*
-typedef struct {
-    PyObject_HEAD
-} TestObject;
-
-static PyTypeObject TestType = {
-    PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name = "test",
-    .tp_doc = "test",
-    .tp_basicsize = sizeof(TestObject),
-    .tp_itemsize = 0,
-    .tp_flags = Py_TPFLAGS_DEFAULT,
-    .tp_new = PyType_GenericNew,
-};
-
-static PyObject* test_func(PyObject* self, PyObject* args)
-{
-    PyObject *array;
-    if (!PyArg_ParseTuple(args, "O", &array)) {
-        return NULL;
-    }
-    
-    TestObject *obj;
-    obj = (TestObject *) TestType.tp_alloc(&TestType, 0);
-    PyObject *pobj = (PyObject *)obj;
-
-    *array = *pobj;
-    return pobj;
-}
-*/
 
 static PyObject * test_func(PyObject* self, PyObject* args)
 {
     return self;
 }
-
 
 /*  define functions in module */
 static PyMethodDef MillipydeMethods[] =
@@ -54,7 +23,8 @@ static PyMethodDef MillipydeMethods[] =
 static struct PyModuleDef millipydeModule =
 {
     PyModuleDef_HEAD_INIT,
-    "test_func", "Some documentation",
+    "Millipyde Module", 
+    "Some documentation",
     -1,
     MillipydeMethods
 };
