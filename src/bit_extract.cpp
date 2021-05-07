@@ -24,6 +24,8 @@ THE SOFTWARE.
 #include <iostream>
 #include "hip/hip_runtime.h"
 
+#include "GPUKernels.h"
+
 #define CHECK(cmd)                                                                                 \
     {                                                                                              \
         hipError_t error = cmd;                                                                    \
@@ -47,8 +49,8 @@ __global__ void bit_extract_kernel(uint32_t* C_d, const uint32_t* A_d, size_t N)
     }
 }
 
-
-int run_bit_extract(int argc, char* argv[]) {
+extern "C" {
+int run_bit_extract() {
     uint32_t *A_d, *C_d;
     uint32_t *A_h, *C_h;
     size_t N = 1000000;
@@ -110,4 +112,6 @@ int run_bit_extract(int argc, char* argv[]) {
         }
     }
     printf("PASSED!\n");
+    return 0;
+}
 }

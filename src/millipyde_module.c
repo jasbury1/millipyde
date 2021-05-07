@@ -4,10 +4,16 @@
 #include <math.h>
 #include <numpy/arrayobject.h>
 #include "ndgpuarray.h"
+#include "GPUKernels.h"
 
+void helper() {
+    printf("Trying something!\n");
+}
 
 static PyObject * test_func(PyObject* self, PyObject* args)
 {
+    int test = run_bit_extract();
+    printf("Test result: %d\n", test);
     return self;
 }
 

@@ -6,18 +6,7 @@ sys.path.insert(1, '../')
 
 import millipyde as mp
 
-#array = mp.GPUArray()
-
-#a = np.arange(15)
-#test_func(a)
-
-#print(type(a))
-
-#array = mp.GPUArray()
-
-#mp.test_func(4)
-
-#arr = mp.GPUArray()
+mp.test_func()
 
 nparr = np.array([1, 2, 3, 4])
 arr = mp.GPUArray(nparr)

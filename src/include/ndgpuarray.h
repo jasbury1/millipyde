@@ -9,12 +9,20 @@
 #include <numpy/arrayobject.h>
 #include "structmember.h"
 
+/*******************************************************************************
+* STRUCTS
+*******************************************************************************/
+
 typedef struct {
     PyObject_HEAD
     PyArrayObject *base_array;
     /* Type-specific fields */
     int mem_loc;
 } PyGPUArrayObject;
+
+/*******************************************************************************
+* FUNCTION HEADERS
+*******************************************************************************/
 
 void
 PyGPUArray_dealloc(PyGPUArrayObject *self);
@@ -40,6 +48,10 @@ PyGPUArray_add_one(PyGPUArrayObject *self, void *closure);
 static PyMemberDef PyGPUArray_members[] = {
     {NULL}
 };
+
+/*******************************************************************************
+* TYPE DATA
+*******************************************************************************/
 
 static PyMethodDef PyGPUArray_methods[] = {
     {"__array__", (PyCFunction) PyGPUArray_to_array, METH_NOARGS,
