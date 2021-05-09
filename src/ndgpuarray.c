@@ -2,12 +2,29 @@
 #include <Python.h>
 #include <numpy/arrayobject.h>
 #include "ndgpuarray.h"
+#include "GPUKernels.h"
 
 PyObject *
 PyGPUArray_add_one(PyGPUArrayObject *self, void *closure)
 {
     printf("Adding one...\n");
-    return self;
+    PyArrayObject *array = self->base_array;
+    int dim = PyArray_NDIM(array);
+    printf("Dimensions: %d\n", dim);
+    int type = PyArray_TYPE(array);
+    printf("Type: %d\n", type);
+    printf("Type check returned: %d\n", PyArray_ISSIGNED(array));
+    printf("Type check returned: %d\n", PyArray_ISINTEGER(array));
+    printf("Type check returned: %d\n", PyArray_ISSTRING(array));
+    
+    int elements = (int)(PyArray_DIM(array, 0));
+    printf("elements: %d\n", elements);
+    void *data = PyArray_DATA(array);
+    printf("Data: %p\n", data);
+
+    int result = add_one(data, elements);
+    printf("Result was: %d\n", result);
+    return Py_None;
 }
 
 void
@@ -47,6 +64,7 @@ PyGPUArray_init(PyGPUArrayObject *self, PyObject *args, PyObject *kwds)
 PyObject *
 PyGPUArray_to_array(PyGPUArrayObject *self, void *closure)
 {
+    Py_INCREF(self->base_array);
     return (PyObject*)self->base_array;
 }
 

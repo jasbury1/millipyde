@@ -50,6 +50,7 @@ __global__ void bit_extract_kernel(uint32_t* C_d, const uint32_t* A_d, size_t N)
 }
 
 extern "C" {
+
 int run_bit_extract() {
     uint32_t *A_d, *C_d;
     uint32_t *A_h, *C_h;
@@ -114,4 +115,33 @@ int run_bit_extract() {
     printf("PASSED!\n");
     return 0;
 }
+
+__global__ void add_one_kernel(long* data_d, size_t N) {
+    size_t offset = (hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x);
+    size_t stride = hipBlockDim_x * hipGridDim_x;
+
+    for (size_t i = offset; i < N; i += stride) {
+        data_d[i] = data_d[i] + 1;
+    }
+}
+
+int add_one(void * data, int N)
+{
+    size_t Nbytes = N * sizeof(long);
+    long *data_d;
+
+    CHECK(hipMalloc(&data_d, Nbytes));
+    printf("info: copy Host2Device\n");
+    CHECK(hipMemcpy(data_d, data, Nbytes, hipMemcpyHostToDevice));
+
+    const unsigned blocks = 512;
+    const unsigned threadsPerBlock = 256;
+    printf("info: launch 'add_one_kernel' \n");
+    hipLaunchKernelGGL(add_one_kernel, dim3(blocks), dim3(threadsPerBlock), 0, 0, data_d, N);
+    
+    printf("info: copy Device2Host\n");
+    CHECK(hipMemcpy(data, data_d, Nbytes, hipMemcpyDeviceToHost));
+    return 0;
+}
+
 }

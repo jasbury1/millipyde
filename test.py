@@ -15,4 +15,11 @@ print(sins)
 
 arr.add_one()
 
+print(arr.__array__())
+
+sins = 10 * np.sin(arr)
+
+print(sins)
+
+
 print("Done")
