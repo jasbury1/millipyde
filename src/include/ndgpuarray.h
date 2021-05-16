@@ -1,12 +1,12 @@
 #ifndef ND_GPU_ARRAY_H
 #define ND_GPU_ARRAY_H
 
-// PY_SSIZE_T_CLEAN Should be defined before including Python.h
-#define PY_SSIZE_T_CLEAN
 #include <stdio.h>
 
+// PY_SSIZE_T_CLEAN Should be defined before including Python.h
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
-#include <numpy/arrayobject.h>
+
 #include "structmember.h"
 
 /*******************************************************************************
@@ -15,7 +15,7 @@
 
 typedef struct {
     PyObject_HEAD
-    PyArrayObject *base_array;
+    PyObject *base_array;
     /* Type-specific fields */
     int mem_loc;
 } PyGPUArrayObject;
@@ -45,6 +45,9 @@ PyGPUArray_array_function(PyGPUArrayObject *self, void *closure);
 PyObject *
 PyGPUArray_add_one(PyGPUArrayObject *self, void *closure);
 
+PyObject *
+PyGPUArray_color_to_greyscale(PyGPUArrayObject *self, void *closure);
+
 static PyMemberDef PyGPUArray_members[] = {
     {NULL}
 };
@@ -64,6 +67,9 @@ static PyMethodDef PyGPUArray_methods[] = {
      "TODO"
     },
     {"add_one", (PyCFunction) PyGPUArray_add_one, METH_NOARGS,
+     "TODO"
+    },
+    {"to_greyscale", (PyCFunction) PyGPUArray_color_to_greyscale, METH_NOARGS,
      "TODO"
     },
     {NULL}

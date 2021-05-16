@@ -40,6 +40,33 @@ __global__ void bit_extract_kernel(uint32_t* C_d, const uint32_t* A_d, size_t N)
     }
 }
 
+__global__ void add_one_kernel(long* data_d, size_t N) {
+    size_t offset = (hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x);
+    size_t stride = hipBlockDim_x * hipGridDim_x;
+
+    for (size_t i = offset; i < N; i += stride) {
+        data_d[i] = data_d[i] + 1;
+    }
+}
+
+__global__ void color_to_greyscale_kernel(unsigned char * greyImg, 
+        unsigned char * rgbImg, int width, int height)
+{
+    int x = hipThreadIdx_x + hipBlockIdx_x * hipBlockDim_x;
+    int y = hipThreadIdx_y + hipBlockIdx_y * hipBlockDim_y;
+
+    if (x < width && y < height) {
+        int greyOffset = y * width + x;
+
+        // 3 is for the 3 channels in rgb
+        int rgbOffset = greyOffset * 3;
+        unsigned char r = rgbImg[rgbOffset];
+        unsigned char g = rgbImg[rgbOffset + 1];
+        unsigned char b = rgbImg[rgbOffset + 2];
+        greyImg[greyOffset] = 0.21f * r + 0.71f * g + 0.07f * b;
+    }
+}
+
 extern "C" {
 
 int run_bit_extract() {
@@ -107,14 +134,7 @@ int run_bit_extract() {
     return 0;
 }
 
-__global__ void add_one_kernel(long* data_d, size_t N) {
-    size_t offset = (hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x);
-    size_t stride = hipBlockDim_x * hipGridDim_x;
 
-    for (size_t i = offset; i < N; i += stride) {
-        data_d[i] = data_d[i] + 1;
-    }
-}
 
 int add_one(void * data, int N)
 {
@@ -135,4 +155,29 @@ int add_one(void * data, int N)
     return 0;
 }
 
+/*
+int color_to_greyscale(void * source, void * destination, size_t Nbytes, int width, int height)
+{
+    unsigned char *rgbImg;
+    unsigned char *greyImg;
+    HIP_CHECK(hipMalloc(&rgbImg, Nbytes));
+    HIP_CHECK(hipMalloc(&greyImg, Nbytes / 3));
+
+    HIP_CHECK(hipMemcpy(rgbImg, source, Nbytes, hipMemcpyHostToDevice));
+
+    hipLaunchKernelGGL(color_to_greyscale_kernel, 
+            dim3(ceil(width / 16.0), ceil(height/16.0), 1),
+            dim3(16, 16, 1)
+            0,
+            0,
+            greyImg,
+            rgbImg,
+            width,
+            height);
+
+    HIP_CHECK(hipMemcpy(destination, greyImg, Nbytes, hipMemcpyDeviceToHost)); 
 }
+*/
+
+
+} // extern "C"

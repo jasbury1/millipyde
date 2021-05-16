@@ -1,8 +1,12 @@
 #include <stdio.h>
+
+// PY_SSIZE_T_CLEAN Should be defined before including Python.h
 #include <Python.h>
-#include <numpy/arrayobject.h>
+
 #include "ndgpuarray.h"
 #include "GPUKernels.h"
+#include "millipyde_image.h"
+#include "use_numpy.h"
 
 PyObject *
 PyGPUArray_add_one(PyGPUArrayObject *self, void *closure)
@@ -26,6 +30,15 @@ PyGPUArray_add_one(PyGPUArrayObject *self, void *closure)
     printf("Result was: %d\n", result);
     return Py_None;
 }
+
+PyObject *
+PyGPUArray_color_to_greyscale(PyGPUArrayObject *self, void *closure)
+{
+    PyObject *array = self->base_array;
+    mpimg_color_to_greyscale(array);
+    return Py_None;
+ }
+
 
 void
 PyGPUArray_dealloc(PyGPUArrayObject *self)
@@ -51,12 +64,17 @@ PyGPUArray_init(PyGPUArrayObject *self, PyObject *args, PyObject *kwds)
     //if(PyArray_Type.tp_init((PyObject *)self, args, kwds) < 0) {
     //    return -1;
     //}
-    PyObject *any;
-    if (!PyArg_ParseTuple(args, "O", &any)) {
+    PyObject *array = NULL;
+
+    if (!PyArg_ParseTuple(args, "O", &array)) {
         return -1;
     }
-    self->base_array = (PyArrayObject *)any;
-    Py_INCREF(any);
+
+    if(array) {
+        Py_INCREF(array);
+        self->base_array = array;
+    }
+
     self->mem_loc = 0;
     return 0;
 }

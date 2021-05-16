@@ -9,17 +9,15 @@ long_description = (here / 'README.md').read_text(encoding='utf-8')
 millipyde_module = Extension('millipyde',
                              sources=['src/millipyde_module.c', 
                                  'src/ndgpuarray.c',
-                                 'src/bit_extract.cpp'],
+                                 'src/bit_extract.cpp',
+                                 'src/millipyde_funcs.c',
+                                 'src/millipyde_image.cpp'],
                              include_dirs=[numpy.get_include(), 
                                  'src/include/',
                                  '/opt/rocm-4.1.0/hip/include/hip'])
 
 os.environ["CC"] = "/opt/rocm-4.1.0/hip/bin/hipcc"
 os.environ["CXX"] = "/opt/rocm-4.1.0/hip/bin/hipcc"
-
-#millipyde_hip_module = Extension('millipyde.hip',
-#                                sources=['src/bit_extract.cpp'],
-#                                extra_compile_args=[])
                                 
 
 setup(
@@ -28,14 +26,14 @@ setup(
     long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://github.com/jasbury1/millipyde',
-    author='James Asbury',  # Optional
+    author='James Asbury',
     author_email='jasbury@calpoly.edu',
 
     keywords='gpu, parallel, array',
 
     ext_modules=[millipyde_module],
 
-    project_urls={  # Optional
+    project_urls={
         'Bug Reports': 'https://github.com/jasbury1/millipyde/issues',
         'Source': 'https://github.com/jasbury1/millipyde',
     },
