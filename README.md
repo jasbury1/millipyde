@@ -1,3 +1,3 @@
-![MILLIPYDE LOGO](/docs/img/MillipydeLogo.png)
+![MILLIPYDE LOGO](/branding/MillipydeLogo.png)
 
 # Millipyde
