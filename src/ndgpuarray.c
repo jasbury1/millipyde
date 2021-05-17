@@ -35,7 +35,7 @@ PyObject *
 PyGPUArray_color_to_greyscale(PyGPUArrayObject *self, void *closure)
 {
     PyObject *array = self->base_array;
-    mpimg_color_to_greyscale(array);
+    self->base_array = mpimg_color_to_greyscale(array);
     return Py_None;
  }
 

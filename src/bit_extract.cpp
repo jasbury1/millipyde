@@ -49,24 +49,6 @@ __global__ void add_one_kernel(long* data_d, size_t N) {
     }
 }
 
-__global__ void color_to_greyscale_kernel(unsigned char * greyImg, 
-        unsigned char * rgbImg, int width, int height)
-{
-    int x = hipThreadIdx_x + hipBlockIdx_x * hipBlockDim_x;
-    int y = hipThreadIdx_y + hipBlockIdx_y * hipBlockDim_y;
-
-    if (x < width && y < height) {
-        int greyOffset = y * width + x;
-
-        // 3 is for the 3 channels in rgb
-        int rgbOffset = greyOffset * 3;
-        unsigned char r = rgbImg[rgbOffset];
-        unsigned char g = rgbImg[rgbOffset + 1];
-        unsigned char b = rgbImg[rgbOffset + 2];
-        greyImg[greyOffset] = 0.21f * r + 0.71f * g + 0.07f * b;
-    }
-}
-
 extern "C" {
 
 int run_bit_extract() {

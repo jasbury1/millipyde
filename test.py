@@ -1,6 +1,7 @@
 import numpy as np
 from skimage import data, io, filters
 from skimage.io import imsave, imread
+from skimage.color import rgb2gray
 
 import millipyde as mp
 
@@ -29,11 +30,15 @@ gpuimg = mp.GPUArray(image)
 imsave("test.png", image)
 
 '''
-nparr = np.array([[1, 2], [3, 4], [5, 6]])
-gpuarr = mp.GPUArray(nparr)
-result = gpuarr.to_greyscale()
-print(result)
+img = data.chelsea()
+print(img)
+gpuimg = mp.GPUArray(img)
 
+gpuimg.to_greyscale()
+result_img = gpuimg.__array__()
+print(result_img[0][0])
+print(img[0][0])
+imsave("tests/test2.png", gpuimg.__array__())
 '''
 image = data.chelsea()
 gpuarr2 = mp.GPUArray(image)

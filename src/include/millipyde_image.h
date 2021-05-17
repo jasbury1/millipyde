@@ -9,7 +9,7 @@
 extern "C" {
 #endif
 
-void mpimg_color_to_greyscale(PyObject *array);
+PyObject * mpimg_color_to_greyscale(PyObject *array);
 
 #ifdef __cplusplus
 }
