@@ -11,7 +11,7 @@
 #include "use_numpy.h"
 
 __global__ void color_to_greyscale_kernel(unsigned char * rgbImg, double * greyImg, 
-        int width, int height)
+        int width, int height, int channels)
 {
     int x = hipThreadIdx_x + hipBlockIdx_x * hipBlockDim_x;
     int y = hipThreadIdx_y + hipBlockIdx_y * hipBlockDim_y;
@@ -20,7 +20,7 @@ __global__ void color_to_greyscale_kernel(unsigned char * rgbImg, double * greyI
         int greyOffset = y * width + x;
 
         // 3 is for the 3 channels in rgb
-        int rgbOffset = greyOffset * 3;
+        int rgbOffset = greyOffset * channels;
         unsigned char r = rgbImg[rgbOffset];
         unsigned char g = rgbImg[rgbOffset + 1];
         unsigned char b = rgbImg[rgbOffset + 2];
@@ -38,6 +38,9 @@ PyObject * mpimg_color_to_greyscale(PyObject *array){
 
     npy_intp *dims = PyArray_DIMS(array);
     npy_intp *strides = PyArray_STRIDES(array);
+
+    int channels = dims[2];
+
     for(int i = 0; i < ndims; ++i) {
         printf("Dimension: %d, Stride: %d\n", dims[i], strides[i]);
     }
@@ -45,16 +48,16 @@ PyObject * mpimg_color_to_greyscale(PyObject *array){
     printf("Array Type: %d\n", PyArray_TYPE(array));
     printf("Number of bytes: %ld\n", PyArray_NBYTES(array));
 
-    int height = (int)(dims[0]);
-    int width = (int)(dims[1]);
+    npy_intp height = dims[0];
+    npy_intp width = dims[1];
 
     unsigned char *rgbImg_d;
     double *greyImg_d;
     size_t Nbytes = PyArray_NBYTES(array);
     HIP_CHECK(hipMalloc(&rgbImg_d, Nbytes));
-    HIP_CHECK(hipMalloc(&greyImg_d, (Nbytes / 3) * sizeof(double)));
+    HIP_CHECK(hipMalloc(&greyImg_d, (Nbytes / channels) * sizeof(double)));
 
-    void *greyImg_h = PyArray_malloc((Nbytes / 3) * sizeof(double));
+    void *greyImg_h = PyArray_malloc((Nbytes / channels) * sizeof(double));
 
     HIP_CHECK(hipMemcpy(rgbImg_d, PyArray_DATA(array), Nbytes, hipMemcpyHostToDevice));
 
@@ -66,11 +69,15 @@ PyObject * mpimg_color_to_greyscale(PyObject *array){
             rgbImg_d,
             greyImg_d,
             width,
-            height);
+            height,
+            channels);
 
-    HIP_CHECK(hipMemcpy(greyImg_h, greyImg_d, (Nbytes / 3) * sizeof(double), hipMemcpyDeviceToHost));
+    HIP_CHECK(hipMemcpy(greyImg_h, greyImg_d, (Nbytes / channels) * sizeof(double), hipMemcpyDeviceToHost));
 
-    const npy_intp grey_dims[4] = {300, 451, 451 * sizeof(double), sizeof(double)};
+    const npy_intp grey_dims[4] = {height, 
+                                   width, 
+                                   (npy_intp)(width * sizeof(double)), 
+                                   (npy_intp)(sizeof(double))};
     PyObject *result = PyArray_SimpleNewFromData(2, grey_dims, NPY_FLOAT64, greyImg_h);
     PyArray_ENABLEFLAGS((PyArrayObject*)result, NPY_ARRAY_OWNDATA);
 

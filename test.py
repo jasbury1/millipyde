@@ -2,6 +2,7 @@ import numpy as np
 from skimage import data, io, filters
 from skimage.io import imsave, imread
 from skimage.color import rgb2gray
+import timeit
 
 import millipyde as mp
 
@@ -31,19 +32,19 @@ imsave("test.png", image)
 
 '''
 img = data.chelsea()
-print(img)
 gpuimg = mp.GPUArray(img)
-
 gpuimg.to_greyscale()
-result_img = gpuimg.__array__()
-print(result_img[0][0])
-print(img[0][0])
-imsave("tests/test2.png", gpuimg.__array__())
-'''
-image = data.chelsea()
-gpuarr2 = mp.GPUArray(image)
-gpuarr2.to_greyscale()
-'''
+imsave("chelsea_original.png", img)
+imsave("chelsea_grey.png", gpuimg.__array__())
+
+
+
+charlie = io.imread("examples/images/charlie.png")
+charlie_on_gpu = mp.GPUArray(charlie)
+charlie_on_gpu.to_greyscale()
+imsave("output/charlie_original.png", charlie)
+imsave("output/charlie_grey.png", charlie_on_gpu.__array__())
+
 
 
 
