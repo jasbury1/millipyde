@@ -48,13 +48,16 @@ PyGPUArray_add_one(PyGPUArrayObject *self, void *closure);
 PyObject *
 PyGPUArray_color_to_greyscale(PyGPUArrayObject *self, void *closure);
 
-static PyMemberDef PyGPUArray_members[] = {
-    {NULL}
-};
+PyObject *
+PyGPUArray_transpose(PyGPUArrayObject *self, void *closure);
 
 /*******************************************************************************
 * TYPE DATA
 *******************************************************************************/
+
+static PyMemberDef PyGPUArray_members[] = {
+    {NULL}
+};
 
 static PyMethodDef PyGPUArray_methods[] = {
     {"__array__", (PyCFunction) PyGPUArray_to_array, METH_NOARGS,
@@ -72,12 +75,15 @@ static PyMethodDef PyGPUArray_methods[] = {
     {"to_greyscale", (PyCFunction) PyGPUArray_color_to_greyscale, METH_NOARGS,
      "TODO"
     },
+    {"transpose", (PyCFunction) PyGPUArray_transpose, METH_NOARGS,
+     "TODO"
+    },
     {NULL}
 };
 
 static PyTypeObject PyGPUArray_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name = "millipyde.GPUArray",
+    .tp_name = "millipyde.gpuarray",
     .tp_doc = "Custom objects",
     .tp_basicsize = sizeof(PyGPUArrayObject),
     .tp_itemsize = 0,

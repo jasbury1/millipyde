@@ -5,7 +5,6 @@
 #include <stdio.h>
 #include "ndgpuarray.h"
 #include "GPUKernels.h"
-#include "millipyde_funcs.h"
 
 #define INIT_NUMPY_ARRAY_CPP
 #include "use_numpy.h"
@@ -118,7 +117,7 @@ PyInit_millipyde(void)
     }
 
     Py_INCREF(&PyGPUArray_Type);
-    if (PyModule_AddObject(m, "GPUArray", (PyObject *) &PyGPUArray_Type) < 0) {
+    if (PyModule_AddObject(m, "gpuarray", (PyObject *) &PyGPUArray_Type) < 0) {
         Py_DECREF(&PyGPUArray_Type);
         Py_DECREF(m);
         return NULL;

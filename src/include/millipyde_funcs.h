@@ -1,4 +1,0 @@
-#ifndef MILLIPYDE_FUNCS_H
-#define MILLIPYDE_FUNCS_H
-
-#endif // MILLIPYDE_FUNCS_H

@@ -6,7 +6,9 @@
 #include "ndgpuarray.h"
 #include "GPUKernels.h"
 #include "millipyde_image.h"
+#include "gpuarray_funcs.h"
 #include "use_numpy.h"
+
 
 PyObject *
 PyGPUArray_add_one(PyGPUArrayObject *self, void *closure)
@@ -38,7 +40,15 @@ PyGPUArray_color_to_greyscale(PyGPUArrayObject *self, void *closure)
     self->base_array = mpimg_color_to_greyscale(array);
     Py_DECREF(array);
     return Py_None;
- }
+}
+
+PyObject *
+PyGPUArray_transpose(PyGPUArrayObject *self, void *closure)
+{
+    PyObject *array = self->base_array;
+    self->base_array = gpuarray_transpose(array);
+    return Py_None;
+}
 
 
 void

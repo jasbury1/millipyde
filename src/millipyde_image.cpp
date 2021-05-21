@@ -62,8 +62,8 @@ PyObject * mpimg_color_to_greyscale(PyObject *array){
     HIP_CHECK(hipMemcpy(rgbImg_d, PyArray_DATA(array), Nbytes, hipMemcpyHostToDevice));
 
     hipLaunchKernelGGL(color_to_greyscale_kernel, 
-            dim3(ceil(width / 16.0), ceil(height / 16.0), 1),
-            dim3(16, 16, 1),
+            dim3(ceil(width / 32.0), ceil(height / 32.0), 1),
+            dim3(32, 32, 1),
             0,
             0,
             rgbImg_d,
