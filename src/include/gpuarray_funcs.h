@@ -7,7 +7,6 @@
 
 #include "gpuarray.h"
 
-#define TRANSPOSE_BLOCK_DIM 32
 
 #ifdef __cplusplus
 extern "C" {

@@ -7,11 +7,14 @@
 
 #include "gpuarray.h"
 
+#define TRANSPOSE_BLOCK_DIM 32
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 void mpimg_color_to_greyscale(PyGPUArrayObject *array);
+void mpimg_transpose(PyGPUArrayObject *array);
 
 #ifdef __cplusplus
 }

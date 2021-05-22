@@ -29,6 +29,36 @@ __global__ void g_color_to_greyscale(unsigned char * rgbImg, double * greyImg,
     }
 }
 
+/*
+ * We use this technique to optimize transposition using shared memory:
+ * https://developer.amd.com/wp-content/resources/ROCm%20Learning%20Centre/chapter3/HIP-Coding-3.pdf
+ */
+template <typename T>
+__global__ void g_transpose(T *in_arr, T *out_arr, int width, int height)
+{
+    // Block dimensions must be square for shared memory intermediate block
+    __shared__ T shared_block[TRANSPOSE_BLOCK_DIM][TRANSPOSE_BLOCK_DIM];
+	
+    int x = hipThreadIdx_x + hipBlockIdx_x * hipBlockDim_x;
+    int y = hipThreadIdx_y + hipBlockIdx_y * hipBlockDim_y;
+
+	if (x < width && y < height) {
+		int in_idx = y * width + x;
+		shared_block[hipThreadIdx_y][hipThreadIdx_x] = in_arr[in_idx];
+	}
+
+	__syncthreads();
+
+    x = hipThreadIdx_x + hipBlockIdx_y * TRANSPOSE_BLOCK_DIM;
+    y = hipThreadIdx_y + hipBlockIdx_x * TRANSPOSE_BLOCK_DIM;
+
+
+	if (x < height && y < width) {
+		int out_idx = y * height + x;
+		out_arr[out_idx] = shared_block[hipThreadIdx_x][hipThreadIdx_y];
+	}
+}
+
 extern "C"{
 
 void mpimg_color_to_greyscale(PyGPUArrayObject *array){
@@ -43,7 +73,7 @@ void mpimg_color_to_greyscale(PyGPUArrayObject *array){
         d_rgb = (unsigned char*)(array->device_data);
     }
     else {
-        printf("OOOPS!\n");
+        //TODO
         return;
     }
 
@@ -70,5 +100,49 @@ void mpimg_color_to_greyscale(PyGPUArrayObject *array){
 
     HIP_CHECK(hipFree(d_rgb));
 }
+
+
+void mpimg_transpose(PyGPUArrayObject *array)
+{
+    int height = array->dims[0];
+    int width = array->dims[1];
+
+    double *d_img;
+    double *d_transpose;
+
+    if (array->device_data != NULL) {
+        d_img = (double *)(array->device_data);
+    }
+    else {
+        //TODO
+        return;
+    }
+
+    HIP_CHECK(hipMalloc(&d_transpose, array->nbytes));
+    
+    int temp = array->dims[0];
+    array->dims[0] = array->dims[1];
+    array->dims[1] = temp;
+    array->dims[array->ndims] = array->dims[0] * sizeof(double);
+    array->dims[array->ndims + 1] = sizeof(double);
+
+
+    hipLaunchKernelGGL(g_transpose, 
+            dim3(ceil(width / 32.0), ceil(height / 32.0), 1),
+            dim3(TRANSPOSE_BLOCK_DIM, TRANSPOSE_BLOCK_DIM, 1),
+            //TODO: Double check this
+            TRANSPOSE_BLOCK_DIM * TRANSPOSE_BLOCK_DIM * array->dims[array->ndims + 1],
+            0,
+            d_img,
+            d_transpose,
+            width,
+            height);
+
+
+    array->device_data = d_transpose;
+
+    HIP_CHECK(hipFree(d_img));
+}
+
 
 } // extern "C"

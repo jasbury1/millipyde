@@ -47,10 +47,8 @@ PyGPUArray_color_to_greyscale(PyGPUArrayObject *self, void *closure)
 PyObject *
 PyGPUArray_transpose(PyGPUArrayObject *self, void *closure)
 {
-    /*
-    PyObject *array = self->base_array;
-    self->base_array = gpuarray_transpose(array);
-    */
+    // TODO: Type checking, etc
+    mpimg_transpose(self);
     return Py_None;
 }
 
