@@ -15,9 +15,13 @@
 
 typedef struct {
     PyObject_HEAD
-    PyObject *base_array;
-    /* Type-specific fields */
+    void *array_data;
+    void *device_data;
+    int ndims;
+    int *dims;
+    int type;
     int mem_loc;
+    size_t nbytes;
 } PyGPUArrayObject;
 
 /*******************************************************************************
@@ -72,7 +76,10 @@ static PyMethodDef PyGPUArray_methods[] = {
     {"add_one", (PyCFunction) PyGPUArray_add_one, METH_NOARGS,
      "TODO"
     },
-    {"to_greyscale", (PyCFunction) PyGPUArray_color_to_greyscale, METH_NOARGS,
+    {"rgb2grey", (PyCFunction) PyGPUArray_color_to_greyscale, METH_NOARGS,
+     "TODO"
+    },
+    {"rgba2grey", (PyCFunction) PyGPUArray_color_to_greyscale, METH_NOARGS,
      "TODO"
     },
     {"transpose", (PyCFunction) PyGPUArray_transpose, METH_NOARGS,

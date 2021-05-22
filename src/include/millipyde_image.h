@@ -5,11 +5,13 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
+#include "gpuarray.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-PyObject * mpimg_color_to_greyscale(PyObject *array);
+void mpimg_color_to_greyscale(PyGPUArrayObject *array);
 
 #ifdef __cplusplus
 }

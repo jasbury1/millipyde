@@ -8,7 +8,7 @@ long_description = (here / 'README.md').read_text(encoding='utf-8')
 
 millipyde_module = Extension('millipyde',
                              sources=['src/millipyde_module.c', 
-                                 'src/ndgpuarray.c',
+                                 'src/gpuarray.c',
                                  'src/bit_extract.cpp',
                                  'src/millipyde_image.cpp',
                                  'src/gpuarray_funcs.cpp'],

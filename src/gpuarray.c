@@ -1,9 +1,10 @@
+#include <stdlib.h>
 #include <stdio.h>
 
 // PY_SSIZE_T_CLEAN Should be defined before including Python.h
 #include <Python.h>
 
-#include "ndgpuarray.h"
+#include "gpuarray.h"
 #include "GPUKernels.h"
 #include "millipyde_image.h"
 #include "gpuarray_funcs.h"
@@ -13,6 +14,7 @@
 PyObject *
 PyGPUArray_add_one(PyGPUArrayObject *self, void *closure)
 {
+    /*
     printf("Adding one...\n");
     PyArrayObject *array = self->base_array;
     int dim = PyArray_NDIM(array);
@@ -30,23 +32,25 @@ PyGPUArray_add_one(PyGPUArrayObject *self, void *closure)
 
     int result = add_one(data, elements);
     printf("Result was: %d\n", result);
+    */
     return Py_None;
 }
 
 PyObject *
 PyGPUArray_color_to_greyscale(PyGPUArrayObject *self, void *closure)
 {
-    PyObject *array = self->base_array;
-    self->base_array = mpimg_color_to_greyscale(array);
-    Py_DECREF(array);
+    // TODO: Type checking, etc
+    mpimg_color_to_greyscale(self);
     return Py_None;
 }
 
 PyObject *
 PyGPUArray_transpose(PyGPUArrayObject *self, void *closure)
 {
+    /*
     PyObject *array = self->base_array;
     self->base_array = gpuarray_transpose(array);
+    */
     return Py_None;
 }
 
@@ -54,7 +58,9 @@ PyGPUArray_transpose(PyGPUArrayObject *self, void *closure)
 void
 PyGPUArray_dealloc(PyGPUArrayObject *self)
 {
-    Py_XDECREF(self->base_array);
+    gpuarray_dealloc_device_data(self);
+    PyMem_Free(self->array_data);
+    PyMem_Free(self->dims);
     Py_TYPE(self)->tp_free((PyObject *) self);
 }
 
@@ -64,7 +70,12 @@ PyGPUArray_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     PyGPUArrayObject *self;
     self = (PyGPUArrayObject *)type->tp_alloc(type, 0);
     if(self != NULL) {
-        // Initialize any data members here
+        self->array_data = NULL;
+        self->device_data = NULL;
+        self->ndims = 0;
+        self->dims = NULL;
+        self->type = -1;
+        self->nbytes = (size_t)0;
     }
     return (PyObject *) self;
 }
@@ -72,18 +83,36 @@ PyGPUArray_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 int
 PyGPUArray_init(PyGPUArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    //if(PyArray_Type.tp_init((PyObject *)self, args, kwds) < 0) {
-    //    return -1;
-    //}
-    PyObject *array = NULL;
+    PyObject *any = NULL;
 
-    if (!PyArg_ParseTuple(args, "O", &array)) {
+    if (!PyArg_ParseTuple(args, "O", &any)) {
+        return -1;
+    }
+    if (!any || !PyArray_Check(any)) {
         return -1;
     }
 
-    if(array) {
-        Py_INCREF(array);
-        self->base_array = array;
+    PyArrayObject *array = (PyArrayObject *)any;
+
+    // Get information from numpy array
+    size_t array_nbytes = (size_t)PyArray_NBYTES(array);
+    void *array_data = PyArray_DATA(array);
+    npy_intp *array_dims = PyArray_DIMS(array);
+    npy_intp *array_strides = PyArray_STRIDES(array);
+
+    // Transfer memory from numpy array to our device pointer
+    gpuarray_transfer_from_host(self, array_data, array_nbytes);
+    
+    self->ndims = PyArray_NDIM(array);
+    self->type = PyArray_TYPE(array);
+    
+    // Allocate space and store dimensions and strides
+    self->dims = PyMem_Malloc(self->ndims * 2 * sizeof(int));
+    for(int i = 0; i < self->ndims; ++i) {
+        self->dims[i] = array_dims[i];
+    }
+    for(int i = 0; i < self->ndims; ++i) {
+        self->dims[i + self->ndims] = array_strides[i];
     }
 
     self->mem_loc = 0;
@@ -93,8 +122,24 @@ PyGPUArray_init(PyGPUArrayObject *self, PyObject *args, PyObject *kwds)
 PyObject *
 PyGPUArray_to_array(PyGPUArrayObject *self, void *closure)
 {
-    Py_INCREF(self->base_array);
-    return (PyObject*)self->base_array;
+    void *data = gpuarray_transfer_to_host(self);
+
+    npy_intp *array_dims = malloc(self->ndims * sizeof(npy_intp));
+    for(int i = 0; i < self->ndims; ++i) {
+        array_dims[i] = self->dims[i];
+    }
+
+    PyObject *array = PyArray_SimpleNewFromData(self->ndims, array_dims, self->type, data);
+    if (array == NULL) {
+        //TODO: set an error
+        return NULL;
+    }
+    PyArray_ENABLEFLAGS((PyArrayObject*)array, NPY_ARRAY_OWNDATA);
+    Py_INCREF(array);
+    
+    free(array_dims);
+    
+    return array;
 }
 
 PyObject *

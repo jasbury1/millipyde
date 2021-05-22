@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <iostream>
+
 #include "hip/hip_runtime.h"
 #include "millipyde_hip_util.h"
+#include "gpuarray.h"
 #include "gpuarray_funcs.h"
 
 // PY_SSIZE_T_CLEAN Should be defined before including Python.h
@@ -43,6 +45,7 @@ __global__ void g_transpose(T *in_arr, T *out_arr, int width, int height)
 
 extern "C"{
 
+/*
 PyObject * gpuarray_transpose(PyObject *array)
 {
     int ndims = PyArray_NDIM(array);
@@ -82,19 +85,6 @@ PyObject * gpuarray_transpose(PyObject *array)
     HIP_CHECK(hipFree(d_img));
     HIP_CHECK(hipFree(d_transpose));
 
-    /*
-    npy_intp temp = dims[0];
-    dims[0] = dims[1];
-    dims[1] = temp;
-    temp = dims[ndims];
-    dims[ndims] = dims[ndims + 1];
-    dims[ndims + 1] = temp;
-
-    PyArray_Dims new_dims;
-    new_dims.ptr = dims;
-    new_dims.len = ndims;
-    */
-
     npy_intp *new_dims = (npy_intp *)malloc(sizeof(npy_intp) * 2 * ndims);
     memcpy(new_dims, dims, sizeof(npy_intp) * 2 * ndims);
     new_dims[1] = dims[0];
@@ -112,6 +102,35 @@ PyObject * gpuarray_transpose(PyObject *array)
 
     return PyArray_Newshape((PyArrayObject *)array, &dim_data, NPY_CORDER);
     //return PyArray_Flatten((PyArrayObject *)array, NPY_CORDER);
+}
+
+void gpuarray_mem_transfer_to_host(PyObject *gpuarray)
+{
+    
+}
+*/
+
+void gpuarray_transfer_from_host(PyGPUArrayObject *array, void *data, size_t nbytes) {
+    // Free any existing data
+    if(array->device_data != NULL) {
+        HIP_CHECK(hipFree(array->device_data));
+    }
+    HIP_CHECK(hipMalloc(&(array->device_data), nbytes));
+    HIP_CHECK(hipMemcpy(array->device_data, data, nbytes, hipMemcpyHostToDevice));
+    array->nbytes = nbytes;
+}
+
+void *gpuarray_transfer_to_host(PyGPUArrayObject *array) {
+    void *data = PyMem_Malloc(array->nbytes);
+    HIP_CHECK(hipMemcpy(data, array->device_data, array->nbytes, hipMemcpyDeviceToHost));
+    return data;
+}
+
+void gpuarray_dealloc_device_data(PyGPUArrayObject *array) {
+    if(array->device_data != NULL) {
+        HIP_CHECK(hipFree(array->device_data));
+    }
+    array->device_data = NULL; 
 }
 
 } // extern "C"
