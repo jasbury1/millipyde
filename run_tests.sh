@@ -1,2 +1,2 @@
 #!/bin/bash
-python3 test.py
+python3 tests/millipyde_tests.py -v

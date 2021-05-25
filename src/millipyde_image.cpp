@@ -138,7 +138,6 @@ void mpimg_transpose(PyGPUArrayObject *array)
             width,
             height);
 
-
     array->device_data = d_transpose;
 
     HIP_CHECK(hipFree(d_img));
