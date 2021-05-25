@@ -1,5 +1,7 @@
 import sys
-sys.path.append('/home/jasbury/Thesis/millipyde')
+import pathlib
+cur_lib_path = pathlib.Path().absolute()
+sys.path.append(str(cur_lib_path))
 
 import unittest
 
@@ -12,7 +14,7 @@ import millipyde as mp
 
 class TestMillipydeImages(unittest.TestCase):
 
-    def test_sample(self):
+    def test_create_arrays(self):
         self.assertEqual('foo'.upper(), 'FOO')
 
 if __name__ == '__main__':

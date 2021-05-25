@@ -1,5 +1,7 @@
 import sys
-sys.path.append('/home/jasbury/Thesis/millipyde')
+import pathlib
+cur_lib_path = pathlib.Path().absolute()
+sys.path.append(str(cur_lib_path))
 
 import numpy as np
 from skimage import data, io, filters, transform
