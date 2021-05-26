@@ -32,7 +32,7 @@ def greyscale_charlie():
     charlie = io.imread("examples/images/charlie.png")
 
     start = time.perf_counter()
-    grey_charlie = rgb2gray(rgb2gray(rgba2rgb(charlie)))
+    grey_charlie = rgb2gray(rgba2rgb(charlie))
     stop = time.perf_counter()
     print("\nTime to convert image: {}\n".format(stop - start))
 

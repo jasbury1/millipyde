@@ -13,6 +13,8 @@ from skimage.color import rgb2gray, rgba2rgb
 
 import millipyde as mp
 
+DECIMAL_ERROR = 4
+
 class TestMillipydeImages(unittest.TestCase):
 
     def test_create_gpuarray(self):
@@ -35,17 +37,29 @@ class TestMillipydeImages(unittest.TestCase):
         charlie = io.imread("examples/images/charlie.png")
         charlie_on_gpu = mp.gpuarray(io.imread("examples/images/charlie.png"))
         charlie2 = np.array(charlie_on_gpu)
-        npt.assert_almost_equal(charlie, charlie2, decimal=4)
+        npt.assert_almost_equal(charlie, charlie2, decimal=DECIMAL_ERROR)
 
     def test_rgb2grey(self):
         charlie = io.imread("examples/images/charlie.png")
-        grey_charlie = rgb2gray(rgb2gray(rgba2rgb(charlie)))
+        grey_charlie = rgb2gray(rgba2rgb(charlie))
 
         charlie_on_gpu = mp.gpuarray(io.imread("examples/images/charlie.png"))
         charlie_on_gpu.rgb2grey()
         grey_charlie2 = np.array(charlie_on_gpu)
 
-        npt.assert_almost_equal(grey_charlie, grey_charlie2, decimal=4)
+        npt.assert_almost_equal(grey_charlie, grey_charlie2, decimal=DECIMAL_ERROR)
+
+    def test_transpose(self):
+        charlie = io.imread("examples/images/charlie.png")
+        charlie = np.transpose(rgb2gray(rgba2rgb(charlie)))
+
+        charlie2 = mp.gpuarray(io.imread("examples/images/charlie.png"))
+        charlie2.rgb2grey()
+        charlie2.transpose()
+        charlie2 = np.array(charlie2)
+
+        npt.assert_almost_equal(charlie, charlie2, decimal=DECIMAL_ERROR)
+
 
 
 if __name__ == '__main__':
