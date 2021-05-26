@@ -9,3 +9,8 @@ echo -e "\n${CYAN}Running Python Unittests...${NC}\n"
 python3 tests/millipyde_tests.py -v
 
 echo -e "\n${CYAN}Running Backend Unittests...${NC}\n"
+
+cd ./tests/backend/
+make clean
+make test
+
