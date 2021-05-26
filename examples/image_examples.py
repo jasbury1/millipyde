@@ -23,10 +23,10 @@ def greyscale_charlie():
     stop = time.perf_counter()
     print("\nTime to convert image: {}\n".format(stop - start))
 
-    #start = time.perf_counter()
-    #imsave("output/charlie_grey.png", charlie_on_gpu.__array__())
-    #stop = time.perf_counter()
-    #print("\nTime to save: {}\n".format(stop - start))
+    start = time.perf_counter()
+    imsave("output/charlie_grey.png", np.array(charlie_on_gpu))
+    stop = time.perf_counter()
+    print("\nTime to save: {}\n".format(stop - start))
 
     print('\033[95m' + "\nGreyscaling Charlie using SciKit-Image\n" + '\033[0m')
     charlie = io.imread("examples/images/charlie.png")
@@ -36,10 +36,10 @@ def greyscale_charlie():
     stop = time.perf_counter()
     print("\nTime to convert image: {}\n".format(stop - start))
 
-    #start = time.perf_counter()
-    #imsave("output/charlie_grey_skimage.png", grey_charlie)
-    #stop = time.perf_counter()
-    #print("\nTime to save: {}\n".format(stop - start))
+    start = time.perf_counter()
+    imsave("output/charlie_grey_skimage.png", grey_charlie)
+    stop = time.perf_counter()
+    print("\nTime to save: {}\n".format(stop - start))
 
 def greyscale_and_transpose_charlie():
     print('\033[95m' + "\nGreyscaling and transposing Charlie\n" + '\033[0m')

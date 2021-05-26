@@ -25,7 +25,7 @@ __global__ void g_color_to_greyscale(unsigned char * rgbImg, double * greyImg,
         unsigned char r = rgbImg[rgbOffset];
         unsigned char g = rgbImg[rgbOffset + 1];
         unsigned char b = rgbImg[rgbOffset + 2];
-        greyImg[greyOffset] = 0.21 * r + 0.71 * g + 0.07 * b;
+        greyImg[greyOffset] = (0.2125 * r + 0.7154 * g + 0.0721 * b) / 255;
     }
 }
 

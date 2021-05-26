@@ -87,6 +87,7 @@ PyGPUArray_init(PyGPUArrayObject *self, PyObject *args, PyObject *kwds)
         return -1;
     }
     if (!any || !PyArray_Check(any)) {
+        PyErr_SetString(PyExc_ValueError, "Construcing gpuarrays requires an ndarray argument.");
         return -1;
     }
 
