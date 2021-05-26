@@ -82,16 +82,29 @@ int
 PyGPUArray_init(PyGPUArrayObject *self, PyObject *args, PyObject *kwds)
 {
     PyObject *any = NULL;
+    PyArrayObject *array = NULL;
 
     if (!PyArg_ParseTuple(args, "O", &any)) {
         return -1;
     }
-    if (!any || !PyArray_Check(any)) {
-        PyErr_SetString(PyExc_ValueError, "Construcing gpuarrays requires an ndarray argument.");
+    if(!any) {
+        PyErr_SetString(PyExc_ValueError, 
+                "Error constructing gpuarray from argument.");
         return -1;
     }
-
-    PyArrayObject *array = (PyArrayObject *)any;
+    // Typecast to PyArrayObject if it is already of that type
+    if(PyArray_Check(any)) {
+        array = (PyArrayObject *)any;
+    }
+    // Attempt to create an array from the type passed to initializer
+    else {
+        array = PyArray_FROM_OTF(any, NPY_NOTYPE, NPY_ARRAY_IN_ARRAY);
+        if (array == NULL || !PyArray_Check(array)) {
+            PyErr_SetString(PyExc_ValueError, 
+                    "Construcing gpuarrays requires an ndarray or array compatible argument.");
+            return -1;
+        }
+    }
 
     // Get information from numpy array
     size_t array_nbytes = (size_t)PyArray_NBYTES(array);
