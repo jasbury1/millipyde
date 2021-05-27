@@ -14,6 +14,7 @@ while test $# -gt 0; do
       echo "Runs the millipyde test suite"
       echo " "
       echo "options:"
+      echo "-h, --help                this screen right here"
       echo "-b, --build               rebuild before running"
       echo "-p, --python              run only the python tests"
       echo "-c, --c                   run only the c/c++ tests"
@@ -30,6 +31,9 @@ while test $# -gt 0; do
     -c|--c)
       run_python=false
       shift
+      ;;
+    *)
+      break
       ;;
   esac
 done

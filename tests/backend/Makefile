@@ -26,7 +26,7 @@ INCLUDE  := -Iinclude/ \
 -I$(SOURCES_PATH)/include/ \
 -I/opt/rocm-4.1.0/hip/include/hip \
 -I/usr/include/python3.8
-LINK := -L/usr/lib/python3.8/config-3.8-x86_64-linux-gnu
+#LINK := -L/usr/lib/python3.8/config-3.8-x86_64-linux-gnu
 
 # Show how to use PLATFORM to specify different options for each compiler:
 ifeq (${HIP_PLATFORM}, nvcc)
@@ -34,25 +34,28 @@ ifeq (${HIP_PLATFORM}, nvcc)
 endif
 
 EXE=test
-objects = gpuarray.o millipyde_image.o millipyde_module.o gpuarray_funcs.o bit_extract.o
+objects = gpuarray.o millipyde_image.o millipyde_module.o gpuarray_funcs.o bit_extract.o test_cases.o
 
 gpuarray.o: $(SOURCES_PATH)/gpuarray.c
-	$(HIPCC) $(HIPCC_FLAGS) $(CCFLAGS) $(INCLUDE) $(LINK) -c $< -o $@
+	$(HIPCC) $(HIPCC_FLAGS) $(CCFLAGS) $(INCLUDE) -c $< -o $@
 
 millipyde_image.o: $(SOURCES_PATH)/millipyde_image.cpp
-	$(HIPCC) $(HIPCC_FLAGS) $(CCFLAGS) $(INCLUDE) $(LINK) -c $< -o $@
+	$(HIPCC) $(HIPCC_FLAGS) $(CCFLAGS) $(INCLUDE) -c $< -o $@
 
 millipyde_module.o: $(SOURCES_PATH)/millipyde_module.c
-	$(HIPCC) $(HIPCC_FLAGS) $(CCFLAGS) $(INCLUDE) $(LINK) -c $< -o $@
+	$(HIPCC) $(HIPCC_FLAGS) $(CCFLAGS) $(INCLUDE) -c $< -o $@
 
 gpuarray_funcs.o: $(SOURCES_PATH)/gpuarray_funcs.cpp
-	$(HIPCC) $(HIPCC_FLAGS) $(CCFLAGS) $(INCLUDE) $(LINK) -c $< -o $@
+	$(HIPCC) $(HIPCC_FLAGS) $(CCFLAGS) $(INCLUDE) -c $< -o $@
 
-bit_extract.o: $(SOURCES_PATH)/gpuarray_funcs.cpp
-	$(HIPCC) $(HIPCC_FLAGS) $(CCFLAGS) $(INCLUDE) $(LINK) -c $< -o $@
+bit_extract.o: $(SOURCES_PATH)/bit_extract.cpp
+	$(HIPCC) $(HIPCC_FLAGS) $(CCFLAGS) $(INCLUDE) -c $< -o $@
 
-test : $(objects)
-	$(HIPCC $(HIPCC_FLAGS) $(LINKFLAGS) $(objects) -o $(EXE)
+test_cases.o: test_cases.cpp
+	$(HIPCC) $(HIPCC_FLAGS) $(CCFLAGS) $(INCLUDE) -c $< -o $@
+
+test: $(objects)
+	$(HIPCC) $(HIPCC_FLAGS) $(LINKFLAGS) $(objects) -o $(EXE)
 
 clean:
 	rm -f *.o $(EXE)
