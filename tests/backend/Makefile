@@ -34,15 +34,12 @@ ifeq (${HIP_PLATFORM}, nvcc)
 endif
 
 EXE=test
-objects = gpuarray.o millipyde_image.o millipyde_module.o gpuarray_funcs.o bit_extract.o test_cases.o
+objects = gpuarray.o millipyde_image.o gpuarray_funcs.o bit_extract.o test_cases.o
 
 gpuarray.o: $(SOURCES_PATH)/gpuarray.c
 	$(HIPCC) $(HIPCC_FLAGS) $(CCFLAGS) $(INCLUDE) -c $< -o $@
 
 millipyde_image.o: $(SOURCES_PATH)/millipyde_image.cpp
-	$(HIPCC) $(HIPCC_FLAGS) $(CCFLAGS) $(INCLUDE) -c $< -o $@
-
-millipyde_module.o: $(SOURCES_PATH)/millipyde_module.c
 	$(HIPCC) $(HIPCC_FLAGS) $(CCFLAGS) $(INCLUDE) -c $< -o $@
 
 gpuarray_funcs.o: $(SOURCES_PATH)/gpuarray_funcs.cpp

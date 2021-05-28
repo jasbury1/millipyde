@@ -99,11 +99,16 @@ PyGPUArray_init(PyGPUArrayObject *self, PyObject *args, PyObject *kwds)
     // Attempt to create an array from the type passed to initializer
     else {
         array = PyArray_FROM_OTF(any, NPY_NOTYPE, NPY_ARRAY_IN_ARRAY);
-        if (array == NULL || !PyArray_Check(array)) {
+        if (array == NULL) {
             PyErr_SetString(PyExc_ValueError, 
                     "Construcing gpuarrays requires an ndarray or array compatible argument.");
             return -1;
         }
+    }
+    if (!PyArray_ISNUMBER(array)) {
+        PyErr_SetString(PyExc_ValueError,
+                "Construcing gpuarrays requires a numerical array type.");
+        return -1; 
     }
 
     // Get information from numpy array
