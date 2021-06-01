@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include "gpuarray.h"
 #include "GPUKernels.h"
+#include "millipyde_devices.h"
 
 #define INIT_NUMPY_ARRAY_CPP
 #include "use_numpy.h"
@@ -44,6 +45,8 @@ PyInit_millipyde(void)
     import_array();
     PyObject *m;
     if (PyType_Ready(&PyGPUArray_Type) < 0){
+        PyErr_Print();
+        fprintf(stderr, "Error: could not import module 'millipyde'\n");
         return NULL;
     }
     m = PyModule_Create(&millipydeModule);
@@ -51,10 +54,18 @@ PyInit_millipyde(void)
         return NULL;
     }
 
+    if (-1 == mphip_get_default_device()) {
+        PyErr_SetString(PyExc_ImportError, 
+                    "Millipyde could not succesfully find default GPU device(s) on this system.");
+        return NULL;
+    }
+
     Py_INCREF(&PyGPUArray_Type);
     if (PyModule_AddObject(m, "gpuarray", (PyObject *) &PyGPUArray_Type) < 0) {
         Py_DECREF(&PyGPUArray_Type);
         Py_DECREF(m);
+        PyErr_Print();
+        fprintf(stderr, "Error: could not import module 'millipyde'\n");
         return NULL;
     }
 
