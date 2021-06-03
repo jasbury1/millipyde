@@ -1,5 +1,5 @@
-#ifndef ND_GPU_ARRAY_H
-#define ND_GPU_ARRAY_H
+#ifndef MP_GPU_ARRAY_H
+#define MP_GPU_ARRAY_H
 
 #include <stdio.h>
 
@@ -49,12 +49,6 @@ PyGPUArray_array_function(PyGPUArrayObject *self, void *closure);
 PyObject *
 PyGPUArray_add_one(PyGPUArrayObject *self, void *closure);
 
-PyObject *
-PyGPUArray_color_to_greyscale(PyGPUArrayObject *self, void *closure);
-
-PyObject *
-PyGPUArray_transpose(PyGPUArrayObject *self, void *closure);
-
 /*******************************************************************************
 * TYPE DATA
 *******************************************************************************/
@@ -76,15 +70,6 @@ static PyMethodDef PyGPUArray_methods[] = {
     {"add_one", (PyCFunction) PyGPUArray_add_one, METH_NOARGS,
      "TODO"
     },
-    {"rgb2grey", (PyCFunction) PyGPUArray_color_to_greyscale, METH_NOARGS,
-     "TODO"
-    },
-    {"rgba2grey", (PyCFunction) PyGPUArray_color_to_greyscale, METH_NOARGS,
-     "TODO"
-    },
-    {"transpose", (PyCFunction) PyGPUArray_transpose, METH_NOARGS,
-     "TODO"
-    },
     {NULL}
 };
 
@@ -104,4 +89,4 @@ static PyTypeObject PyGPUArray_Type = {
 
 
 
-#endif // ND_GPU_ARRAY_H
+#endif // MP_GPU_ARRAY_H

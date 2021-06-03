@@ -10,14 +10,11 @@ extern "C"{
 
 int mphip_get_default_device() {
     int device_id;
-    int ret_val;
-    ret_val = hipGetDevice(&device_id);
-    if (ret_val != hipSuccess) {
+    if (hipGetDevice(&device_id) != hipSuccess) {
         return -1;
     }
     hipDeviceProp_t props;
-    ret_val = hipGetDeviceProperties(&props, device_id);
-    if (ret_val != hipSuccess) {
+    if (hipGetDeviceProperties(&props, device_id) != hipSuccess) {
         return -1;
     }
     return device_id;

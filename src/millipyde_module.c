@@ -4,6 +4,7 @@
 #include <math.h>
 #include <stdio.h>
 #include "gpuarray.h"
+#include "gpuimage.h"
 #include "GPUKernels.h"
 #include "millipyde_devices.h"
 
@@ -62,6 +63,21 @@ PyInit_millipyde(void)
 
     Py_INCREF(&PyGPUArray_Type);
     if (PyModule_AddObject(m, "gpuarray", (PyObject *) &PyGPUArray_Type) < 0) {
+        Py_DECREF(&PyGPUArray_Type);
+        Py_DECREF(m);
+        PyErr_Print();
+        fprintf(stderr, "Error: could not import module 'millipyde'\n");
+        return NULL;
+    }
+
+    PyGPUImage_Type.tp_base = &PyGPUArray_Type;
+    if (PyType_Ready(&PyGPUImage_Type) < 0){
+        return NULL;
+    }
+
+    Py_INCREF(&PyGPUImage_Type);
+    if (PyModule_AddObject(m, "gpuimage", (PyObject *) &PyGPUImage_Type) < 0) {
+        Py_DECREF(&PyGPUImage_Type);
         Py_DECREF(&PyGPUArray_Type);
         Py_DECREF(m);
         PyErr_Print();

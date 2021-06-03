@@ -9,6 +9,7 @@ long_description = (here / 'README.md').read_text(encoding='utf-8')
 millipyde_module = Extension('millipyde',
                              sources=['src/millipyde_module.c', 
                                  'src/gpuarray.c',
+                                 'src/gpuimage.c',
                                  'src/bit_extract.cpp',
                                  'src/millipyde_image.cpp',
                                  'src/gpuarray_funcs.cpp',
@@ -31,6 +32,8 @@ setup(
     author_email='jasbury@calpoly.edu',
 
     keywords='gpu, parallel, array',
+
+    #packages = ['millipyde', 'millipyde.img'],
 
     ext_modules=[millipyde_module],
 

@@ -65,8 +65,12 @@ def greyscale_and_transpose_charlie():
 
 
 def main():
+    '''
     greyscale_charlie()
     greyscale_and_transpose_charlie()
+    '''
+    image = mp.gpuimage([1, 2, 3])
+    image.say_hello()
 
 
 if __name__ == '__main__':

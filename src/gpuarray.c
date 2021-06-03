@@ -6,7 +6,6 @@
 
 #include "gpuarray.h"
 #include "GPUKernels.h"
-#include "millipyde_image.h"
 #include "gpuarray_funcs.h"
 #include "use_numpy.h"
 
@@ -35,23 +34,6 @@ PyGPUArray_add_one(PyGPUArrayObject *self, void *closure)
     */
     return Py_None;
 }
-
-PyObject *
-PyGPUArray_color_to_greyscale(PyGPUArrayObject *self, void *closure)
-{
-    // TODO: Type checking, etc
-    mpimg_color_to_greyscale(self);
-    return Py_None;
-}
-
-PyObject *
-PyGPUArray_transpose(PyGPUArrayObject *self, void *closure)
-{
-    // TODO: Type checking, etc
-    mpimg_transpose(self);
-    return Py_None;
-}
-
 
 void
 PyGPUArray_dealloc(PyGPUArrayObject *self)
