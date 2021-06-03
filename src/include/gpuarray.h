@@ -76,15 +76,15 @@ static PyMethodDef PyGPUArray_methods[] = {
 static PyTypeObject PyGPUArray_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
     .tp_name = "millipyde.gpuarray",
-    .tp_doc = "Custom objects",
     .tp_basicsize = sizeof(PyGPUArrayObject),
     .tp_itemsize = 0,
-    .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
-    .tp_new = PyGPUArray_new,
-    .tp_init = (initproc) PyGPUArray_init,
     .tp_dealloc = (destructor) PyGPUArray_dealloc,
-    .tp_members = PyGPUArray_members,
+    .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+    .tp_doc = "Custom objects",
     .tp_methods = PyGPUArray_methods,
+    .tp_members = PyGPUArray_members,
+    .tp_init = (initproc) PyGPUArray_init,
+    .tp_new = PyGPUArray_new,
 };
 
 

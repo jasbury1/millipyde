@@ -5,7 +5,7 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-#include "gpuarray.h"
+#include "gpuimage.h"
 
 #define TRANSPOSE_BLOCK_DIM 32
 
@@ -13,8 +13,8 @@
 extern "C" {
 #endif
 
-void mpimg_color_to_greyscale(PyGPUArrayObject *array);
-void mpimg_transpose(PyGPUArrayObject *array);
+void mpimg_color_to_greyscale(PyGPUImageObject *gpuimage);
+void mpimg_transpose(PyGPUImageObject *gpuimage);
 
 #ifdef __cplusplus
 }

@@ -30,7 +30,7 @@ PyGPUImage_init(PyGPUImageObject *self, PyObject *args, PyObject *kwds) {
     }
     // Attempt to create an array from the type passed to initializer
     else {
-        array = PyArray_FROM_OTF(any, NPY_NOTYPE, NPY_ARRAY_IN_ARRAY);
+        array = (PyArrayObject *)PyArray_FROM_OTF(any, NPY_NOTYPE, NPY_ARRAY_IN_ARRAY);
         if (array == NULL) {
             PyErr_SetString(PyExc_ValueError, 
                     "Construcing gpuimages requires an ndarray or array compatible argument.");

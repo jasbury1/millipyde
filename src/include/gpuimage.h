@@ -8,6 +8,7 @@
 #include <Python.h>
 
 #include "structmember.h"
+#include "gpuarray.h"
 
 /*******************************************************************************
 * STRUCTS
@@ -62,13 +63,13 @@ static PyMethodDef PyGPUImage_methods[] = {
 static PyTypeObject PyGPUImage_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
     .tp_name = "millipyde.gpuimage",
-    .tp_doc = "Custom objects",
     .tp_basicsize = sizeof(PyGPUImageObject),
     .tp_itemsize = 0,
     .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
-    .tp_init = (initproc) PyGPUImage_init,
+    .tp_doc = "Custom objects",
+    .tp_methods = PyGPUImage_methods,
     .tp_members = PyGPUImage_members,
-    .tp_methods = PyGPUImage_methods
+    .tp_init = (initproc) PyGPUImage_init,
 };
 
 

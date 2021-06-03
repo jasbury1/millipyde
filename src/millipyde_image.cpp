@@ -9,7 +9,7 @@
 #include <Python.h>
 
 #include "use_numpy.h"
-#include "gpuarray.h"
+#include "gpuimage.h"
 
 __global__ void g_color_to_greyscale(unsigned char * rgbImg, double * greyImg, 
         int width, int height, int channels)
@@ -61,7 +61,9 @@ __global__ void g_transpose(T *in_arr, T *out_arr, int width, int height)
 
 extern "C"{
 
-void mpimg_color_to_greyscale(PyGPUArrayObject *array){
+void mpimg_color_to_greyscale(PyGPUImageObject *gpuimage){
+    PyGPUArrayObject *array = (PyGPUArrayObject *)gpuimage;
+
     int channels = array->dims[2];
     int height = array->dims[0];
     int width = array->dims[1];
@@ -102,8 +104,10 @@ void mpimg_color_to_greyscale(PyGPUArrayObject *array){
 }
 
 
-void mpimg_transpose(PyGPUArrayObject *array)
+void mpimg_transpose(PyGPUImageObject *gpuimage)
 {
+    PyGPUArrayObject *array = (PyGPUArrayObject *)gpuimage;
+
     int height = array->dims[0];
     int width = array->dims[1];
 
