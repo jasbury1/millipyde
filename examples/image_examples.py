@@ -16,7 +16,7 @@ import millipyde as mp
 def greyscale_charlie():
     print('\033[95m' + "\nGreyscaling Charlie\n" + '\033[0m')
     charlie = io.imread("examples/images/charlie.png")
-    charlie_on_gpu = mp.gpuarray(charlie)
+    charlie_on_gpu = mp.gpuimage(charlie)
 
     start = time.perf_counter()
     charlie_on_gpu.rgb2grey()
@@ -44,7 +44,7 @@ def greyscale_charlie():
 def greyscale_and_transpose_charlie():
     print('\033[95m' + "\nGreyscaling and transposing Charlie\n" + '\033[0m')
     charlie = io.imread("examples/images/charlie.png")
-    charlie_on_gpu = mp.gpuarray(charlie)
+    charlie_on_gpu = mp.gpuimage(charlie)
 
     start = time.perf_counter()
     charlie_on_gpu.rgb2grey()
@@ -65,12 +65,8 @@ def greyscale_and_transpose_charlie():
 
 
 def main():
-    '''
     greyscale_charlie()
     greyscale_and_transpose_charlie()
-    '''
-    image = mp.gpuimage([1, 2, 3])
-    image.say_hello()
 
 
 if __name__ == '__main__':
