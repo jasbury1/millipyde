@@ -51,15 +51,17 @@ PyInit_millipyde(void)
         return NULL;
     }
     m = PyModule_Create(&millipydeModule);
-    if(m == NULL) {
+    if (m == NULL) {
         return NULL;
     }
 
-    if (-1 == mphip_get_default_device()) {
+    if (-1 == mpdev_initialize()) {
         PyErr_SetString(PyExc_ImportError, 
                     "Millipyde could not succesfully find default GPU device(s) on this system.");
         return NULL;
     }
+    mpdev_setup_peer_to_peer();
+    
 
     Py_INCREF(&PyGPUArray_Type);
     if (PyModule_AddObject(m, "gpuarray", (PyObject *) &PyGPUArray_Type) < 0) {

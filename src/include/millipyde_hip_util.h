@@ -2,7 +2,6 @@
 #define MILLIPYDE_HIP_UTIL_H
 
 #include <stdio.h>
-#include <iostream>
 #include "hip/hip_runtime.h"
 
 #define HIP_CHECK(cmd)                                                         \

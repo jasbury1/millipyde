@@ -25,7 +25,7 @@ __global__ void g_color_to_greyscale(unsigned char * rgbImg, double * greyImg,
         unsigned char r = rgbImg[rgbOffset];
         unsigned char g = rgbImg[rgbOffset + 1];
         unsigned char b = rgbImg[rgbOffset + 2];
-        greyImg[greyOffset] = (0.2125 * r + 0.7154 * g + 0.0721 * b) / 255;
+        greyImg[greyOffset] = fmin(1.0, (0.2125 * r + 0.7154 * g + 0.0721 * b) / 255);
     }
 }
 
@@ -58,6 +58,70 @@ __global__ void g_transpose(T *in_arr, T *out_arr, int width, int height)
 		out_arr[out_idx] = shared_block[hipThreadIdx_x][hipThreadIdx_y];
 	}
 }
+
+/*
+ * Separable Gaussian Kernel source:
+ * https://docs.nvidia.com/cuda/samples/3_Imaging/convolutionSeparable/doc/convolutionSeparable.pdf
+ */
+/*
+template <typename T>
+__global__ void g_gaussian_row(T *in_arr, T *out_arr, int width, int height)
+{
+    __shared__ T shared_data[2 * GAUSS_RADIUS + GAUSS_ROW_DIM];
+    
+    const int tile_start = hipBlockIdx_x * GAUSS_ROW_DIM;
+    const int tile_end = tile_start + GAUSS_ROW_DIM - 1;
+    const int apron_start = tile_start - GAUSS_RADIUS;
+    const int apron_end = tile_end   + GAUSS_RADIUS;
+
+    //Clamp tile and apron limits by image borders
+    const int tile_end_clamped = min(tile_end, width - 1);
+    const int apron_start_clamped = max(apron_start, 0);
+    const int apron_end_clamped = min(apron_end, width - 1);
+
+    //Row start index in d_Data[]
+    const int row_start = hipBlockIdx_y * width;
+
+    //Aligned apron start. Assuming dataW and ROW_TILE_W are multiples 
+    //of half-warp size, rowStart + apronStartAligned is also a 
+    //multiple of half-warp size, thus having proper alignment 
+    //for coalesced d_Data[] read.
+    const int apron_start_aligned = tile_start - GAUSS_RADIUS_ALIGNED;
+
+    const int load_pos = apron_start_aligned + hipThreadIdx_x;
+    //Set the entire data cache contents
+    //Load global memory values, if indices are within the image borders,
+    //or initialize with zeroes otherwise
+    if(load_pos >= apron_start){
+        const int smem_pos = load_pos - apron_start;
+
+        shared_data[smem_pos] = 
+            ((load_pos >= apron_start_clamped) && (load_pos <= apron_end_clamped)) ?
+            in_arr[row_start + load_pos] : 0;
+    }
+
+
+    //Ensure the completness of the loading stage
+    //because results, emitted by each thread depend on the data,
+    //loaded by another threads
+    __syncthreads();
+
+    const int write_pos = tile_start + hipThreadIdx_x;
+    //Assuming dataW and ROW_TILE_W are multiples of half-warp size,
+    //rowStart + tileStart is also a multiple of half-warp size,
+    //thus having proper alignment for coalesced d_Result[] write.
+    if(write_pos <= tile_end_clamped){
+        const int smes_pos = writePos - apronStart;
+        float sum = 0;
+
+        // TODO: Experiment with loop unrolling here
+        for(int k = -1 * GAUSS_RADIUS; k <= GAUSS_RADIUS; k++)
+            sum += data[smes_pos + k] * d_Kernel[KERNEL_RADIUS - k];
+
+        out_arr[row_start + write_pos] = sum;
+    }
+}
+*/
 
 extern "C"{
 

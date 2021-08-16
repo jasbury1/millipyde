@@ -74,4 +74,4 @@ static PyTypeObject PyGPUImage_Type = {
 
 
 
-#endif // ND_GPU_ARRAY_H
+#endif // MP_GPU_IMAGE_H
