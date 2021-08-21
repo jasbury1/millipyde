@@ -19,6 +19,8 @@ void mpdev_setup_peer_to_peer();
 
 MPBool mpdev_peer_to_peer_supported();
 
+MPBool mpdev_can_use_peer(int device, int peer_devce);
+
 int mpdev_get_device_count();
 
 int mpdev_get_current_device();

@@ -93,6 +93,7 @@ void mpdev_setup_peer_to_peer()
                 }
                 // This is a valid peer-to-peer combination
                 peer_to_peer_supported = true;
+                peer_access_matrix[device][peer_device] = 1;
             }
             HIP_CHECK(hipSetDevice(device));
             HIP_CHECK(hipDeviceReset());
@@ -110,6 +111,14 @@ void mpdev_teardown_peer_to_peer()
 MPBool mpdev_peer_to_peer_supported()
 {
     return peer_to_peer_supported ? MP_FALSE : MP_TRUE;
+}
+
+MPBool mpdev_can_use_peer(int device, int peer_devce)
+{
+    if (peer_to_peer_supported && peer_access_matrix[device][peer_devce] == 1) {
+        return MP_TRUE;
+    }
+    return MP_FALSE;
 }
 
 int mpdev_get_device_count()
