@@ -50,19 +50,35 @@ PyInit_millipyde(void)
         fprintf(stderr, "Error: could not import module 'millipyde'\n");
         return NULL;
     }
+
+    /* 
+     * Ceate the module object 
+     */
     m = PyModule_Create(&millipydeModule);
     if (m == NULL) {
         return NULL;
     }
 
+    /*
+     * Setup the devices on the system 
+     */
     if (-1 == mpdev_initialize()) {
         PyErr_SetString(PyExc_ImportError, 
                     "Millipyde could not succesfully find default GPU device(s) on this system.");
         return NULL;
     }
-    mpdev_setup_peer_to_peer();
-    
+    if (mpdev_get_device_count() > 1 && mpdev_peer_to_peer_supported() == MP_FALSE)
+    {
+        PyErr_WarnEx(PyExc_ImportWarning,
+                     "Multiple devices were detected, but peer2peer is not supported on this system.",
+                     1);
+    }
 
+    Py_AtExit(mpdev_teardown);
+
+    /*
+     * Create all supported Millipyde objects 
+     */
     Py_INCREF(&PyGPUArray_Type);
     if (PyModule_AddObject(m, "gpuarray", (PyObject *) &PyGPUArray_Type) < 0) {
         Py_DECREF(&PyGPUArray_Type);
@@ -72,11 +88,11 @@ PyInit_millipyde(void)
         return NULL;
     }
 
+    // Register GPUImage as a subtype of GPUArray
     PyGPUImage_Type.tp_base = &PyGPUArray_Type;
     if (PyType_Ready(&PyGPUImage_Type) < 0){
         return NULL;
     }
-
     Py_INCREF(&PyGPUImage_Type);
     if (PyModule_AddObject(m, "gpuimage", (PyObject *) &PyGPUImage_Type) < 0) {
         Py_DECREF(&PyGPUImage_Type);

@@ -13,6 +13,11 @@ static int device_count = 0;
 static int current_device = 0;
 static bool peer_to_peer_supported = false;
 
+static int** peer_access_matrix;
+
+static void _init_peer_access_matrix();
+static void _delete_peer_access_matrix();
+
 extern "C"{
 
 int mpdev_initialize()
@@ -29,7 +34,32 @@ int mpdev_initialize()
     if (hipGetDeviceProperties(&props, current_device) != hipSuccess) {
         return -1;
     }
+
+    if (device_count > 1) {
+        try {
+            _init_peer_access_matrix();
+        }
+        catch (std::bad_alloc&) {
+            return -1;
+        }
+        
+        mpdev_setup_peer_to_peer();
+
+        // teardown will assume the matrix only has to be freed if peer to peer is supported.
+        // handle the cleanup case where it we determine it cant be supported upon setup
+        if(!peer_to_peer_supported) {
+            _delete_peer_access_matrix();
+        }
+    }
+    
     return 0;
+}
+
+void mpdev_teardown()
+{
+    if (peer_to_peer_supported) {
+        _delete_peer_access_matrix();
+    }
 }
 
 void mpdev_setup_peer_to_peer()
@@ -49,18 +79,20 @@ void mpdev_setup_peer_to_peer()
                 if (hipDeviceCanAccessPeer(&can_access_peer, device, peer_device) != hipSuccess)
                 {
                     // TODO
-                    return;
+                    continue;
                 }
                 if (can_access_peer != 1)
                 {
                     // The device cannot access peer's memory
-                    return;
+                    continue;
                 }
                 if (hipSetDevice(peer_device) != hipSuccess)
                 {
                     // The peer is not useable as a device
-                    return;
+                    continue;
                 }
+                // This is a valid peer-to-peer combination
+                peer_to_peer_supported = true;
             }
             HIP_CHECK(hipSetDevice(device));
             HIP_CHECK(hipDeviceReset());
@@ -68,6 +100,11 @@ void mpdev_setup_peer_to_peer()
         // Revert back to the first device we were on
         HIP_CHECK(hipSetDevice(initial_device));
     }
+}
+
+void mpdev_teardown_peer_to_peer()
+{
+
 }
 
 MPBool mpdev_peer_to_peer_supported()
@@ -85,6 +122,21 @@ int mpdev_get_current_device()
     return current_device;
 }
 
+static void _init_peer_access_matrix()
+{
+    peer_access_matrix = new int*[device_count];
+    for (int i = 0; i < device_count; ++i) {
+        peer_access_matrix[i] = new int[device_count];
+    }
+}
+
+static void _delete_peer_access_matrix()
+{
+    for (int i = 0; i < device_count; ++i) {
+        delete [] peer_access_matrix[i];
+    }
+    delete [] peer_access_matrix;
+}
 
 
 

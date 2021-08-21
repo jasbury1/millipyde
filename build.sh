@@ -3,6 +3,7 @@ if [ ! -d "./build/" ]
 then
     # First time building
     echo "Creating build directory...\n"
+    mkdir ./build/
 fi
 
 rm -rf ./lib/*.so
