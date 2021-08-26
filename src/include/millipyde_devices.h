@@ -12,20 +12,13 @@ extern "C" {
 #endif
 
 int mpdev_initialize();
-
 void mpdev_teardown();
-
-void mpdev_setup_peer_to_peer();
-
 MPBool mpdev_peer_to_peer_supported();
-
 MPBool mpdev_can_use_peer(int device, int peer_devce);
 
 int mpdev_get_device_count();
-
 int mpdev_get_current_device();
-
-void mpdev_teardown_peer_to_peer();
+void mpdev_set_current_device(int device_Id);
 
 #ifdef __cplusplus
 }

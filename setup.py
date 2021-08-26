@@ -18,8 +18,8 @@ millipyde_module = Extension('millipyde',
                                  'src/include/',
                                  '/opt/rocm-4.1.0/hip/include/hip'])
 
-os.environ["CC"] = "/opt/rocm-4.2.0/hip/bin/hipcc"
-os.environ["CXX"] = "/opt/rocm-4.2.0/hip/bin/hipcc"
+os.environ["CC"] = "/opt/rocm-4.3.0/hip/bin/hipcc"
+os.environ["CXX"] = "/opt/rocm-4.3.0/hip/bin/hipcc"
                                 
 
 setup(

@@ -46,15 +46,15 @@ if  [ "$run_python" = true ] ; then
   python3 tests/millipyde_tests.py -v
 fi
 
-if  [ "$run_backend" = true ] ; then
-  if  [ "$rebuild" = true ] ; then
-    cd ./tests/backend/
-    make clean
-    make test
-    cd -
-  fi
-  echo -e "\n${CYAN}Running Backend Unittests...${NC}\n"
-fi
+#if  [ "$run_backend" = true ] ; then
+#  if  [ "$rebuild" = true ] ; then
+#    cd ./tests/backend/
+#    make clean
+#    make test
+#    cd -
+#  fi
+#  echo -e "\n${CYAN}Running Backend Unittests...${NC}\n"
+#fi
 
 
 

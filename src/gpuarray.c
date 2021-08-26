@@ -8,6 +8,7 @@
 #include "GPUKernels.h"
 #include "gpuarray_funcs.h"
 #include "use_numpy.h"
+#include "millipyde.h"
 
 
 PyObject *
@@ -114,7 +115,7 @@ PyGPUArray_init(PyGPUArrayObject *self, PyObject *args, PyObject *kwds)
         self->dims[i + self->ndims] = array_strides[i];
     }
 
-    self->mem_loc = 0;
+    self->mem_loc = HOST_LOC;
     return 0;
 }
 

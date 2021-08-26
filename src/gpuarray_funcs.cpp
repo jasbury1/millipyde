@@ -5,6 +5,8 @@
 #include "millipyde_hip_util.h"
 #include "gpuarray.h"
 #include "gpuarray_funcs.h"
+#include "millipyde_devices.h"
+#include "millipyde.h"
 
 // PY_SSIZE_T_CLEAN Should be defined before including Python.h
 #define PY_SSIZE_T_CLEAN
@@ -23,11 +25,13 @@ void gpuarray_transfer_from_host(PyGPUArrayObject *array, void *data, size_t nby
     HIP_CHECK(hipMalloc(&(array->device_data), nbytes));
     HIP_CHECK(hipMemcpy(array->device_data, data, nbytes, hipMemcpyHostToDevice));
     array->nbytes = nbytes;
+    array->mem_loc = mpdev_get_current_device();
 }
 
 void *gpuarray_transfer_to_host(PyGPUArrayObject *array) {
     void *data = PyMem_Malloc(array->nbytes);
     HIP_CHECK(hipMemcpy(data, array->device_data, array->nbytes, hipMemcpyDeviceToHost));
+    array->mem_loc = HOST_LOC;
     return data;
 }
 
