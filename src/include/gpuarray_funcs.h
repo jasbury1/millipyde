@@ -13,8 +13,14 @@ extern "C" {
 #endif
 
 //PyObject * gpuarray_transpose(PyObject *array);
-void gpuarray_transfer_from_host(PyGPUArrayObject *array, void *data, size_t nbytes);
-void *gpuarray_transfer_to_host(PyGPUArrayObject *array);
+void gpuarray_copy_from_host(PyGPUArrayObject *array, void *data, size_t nbytes);
+void *gpuarray_copy_to_host(PyGPUArrayObject *array);
+
+void gpuarray_change_device(PyGPUArrayObject *array, int device_id);
+
+void gpuarray_move_between_devices(PyGPUArrayObject *src_array, PyGPUArrayObject *dest_array);
+void gpuarray_copy_between_devices(PyGPUArrayObject *src_array, PyGPUArrayObject *dest_array);
+
 void gpuarray_dealloc_device_data(PyGPUArrayObject *array);
 
 

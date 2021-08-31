@@ -57,6 +57,7 @@ PyGPUArray_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
         self->dims = NULL;
         self->type = -1;
         self->nbytes = (size_t)0;
+        self->mem_loc = HOST_LOC;
     }
     return (PyObject *) self;
 }
@@ -101,7 +102,7 @@ PyGPUArray_init(PyGPUArrayObject *self, PyObject *args, PyObject *kwds)
     npy_intp *array_strides = PyArray_STRIDES(array);
 
     // Transfer memory from numpy array to our device pointer
-    gpuarray_transfer_from_host(self, array_data, array_nbytes);
+    gpuarray_copy_from_host(self, array_data, array_nbytes);
     
     self->ndims = PyArray_NDIM(array);
     self->type = PyArray_TYPE(array);
@@ -115,14 +116,13 @@ PyGPUArray_init(PyGPUArrayObject *self, PyObject *args, PyObject *kwds)
         self->dims[i + self->ndims] = array_strides[i];
     }
 
-    self->mem_loc = HOST_LOC;
     return 0;
 }
 
 PyObject *
 PyGPUArray_to_array(PyGPUArrayObject *self, void *closure)
 {
-    void *data = gpuarray_transfer_to_host(self);
+    void *data = gpuarray_copy_to_host(self);
 
     npy_intp *array_dims = malloc(self->ndims * sizeof(npy_intp));
     for(int i = 0; i < self->ndims; ++i) {
