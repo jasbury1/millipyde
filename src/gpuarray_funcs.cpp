@@ -41,6 +41,7 @@ void *gpuarray_copy_to_host(PyGPUArrayObject *array)
 
 void gpuarray_change_device(PyGPUArrayObject *array, int new_device_id)
 {
+    //TODO: Should we set it back to the old device at the end??
     int cur_device_id = mpdev_get_current_device();
     int prev_device_id = array->mem_loc;
 

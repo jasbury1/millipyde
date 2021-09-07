@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include "gpuarray.h"
 #include "gpuimage.h"
+#include "gpuoperation.h"
 #include "GPUKernels.h"
 #include "millipyde_devices.h"
 
@@ -45,15 +46,34 @@ PyInit_millipyde(void)
 {
     import_array();
     PyObject *m;
+    
+    /*
+     * Prepare all of the types
+     */
+
     if (PyType_Ready(&PyGPUArray_Type) < 0){
         PyErr_Print();
-        fprintf(stderr, "Error: could not import module 'millipyde'\n");
+        fprintf(stderr, "Error: could not import module 'millipyde' while creating internal type 'gpuarray'\n");
+        return NULL;
+    }
+
+    PyGPUImage_Type.tp_base = &PyGPUArray_Type;
+    if (PyType_Ready(&PyGPUImage_Type) < 0){
+        PyErr_Print();
+        fprintf(stderr, "Error: could not import module 'millipyde' while creating internal type 'gpuimage'\n");
+        return NULL;
+    }
+
+    if (PyType_Ready(&PyGPUOperation_Type) < 0){
+        PyErr_Print();
+        fprintf(stderr, "Error: could not import module 'millipyde' while creating internal type 'Operation'\n");
         return NULL;
     }
 
     /* 
      * Ceate the module object 
      */
+
     m = PyModule_Create(&millipydeModule);
     if (m == NULL) {
         return NULL;
@@ -62,6 +82,7 @@ PyInit_millipyde(void)
     /*
      * Setup the devices on the system 
      */
+    
     if (-1 == mpdev_initialize()) {
         PyErr_SetString(PyExc_ImportError, 
                     "Millipyde could not succesfully find default GPU device(s) on this system.");
@@ -74,32 +95,40 @@ PyInit_millipyde(void)
                      1);
     }
 
+    // Register cleanup function for the device information
     Py_AtExit(mpdev_teardown);
 
     /*
      * Create all supported Millipyde objects 
      */
+
     Py_INCREF(&PyGPUArray_Type);
     if (PyModule_AddObject(m, "gpuarray", (PyObject *) &PyGPUArray_Type) < 0) {
+        PyErr_Print();
+        fprintf(stderr, "Error: could not import module 'millipyde' while loading internal type 'gpuarray'\n");
         Py_DECREF(&PyGPUArray_Type);
         Py_DECREF(m);
+        return NULL;
+    }
+    
+    Py_INCREF(&PyGPUImage_Type);
+    if (PyModule_AddObject(m, "gpuimage", (PyObject *) &PyGPUImage_Type) < 0) {
         PyErr_Print();
-        fprintf(stderr, "Error: could not import module 'millipyde'\n");
+        fprintf(stderr, "Error: could not import module 'millipyde' while loading internal type 'gpuimage'\n");
+        Py_DECREF(&PyGPUImage_Type);
+        Py_DECREF(&PyGPUArray_Type);
+        Py_DECREF(m);
         return NULL;
     }
 
-    // Register GPUImage as a subtype of GPUArray
-    PyGPUImage_Type.tp_base = &PyGPUArray_Type;
-    if (PyType_Ready(&PyGPUImage_Type) < 0){
-        return NULL;
-    }
-    Py_INCREF(&PyGPUImage_Type);
-    if (PyModule_AddObject(m, "gpuimage", (PyObject *) &PyGPUImage_Type) < 0) {
+    Py_INCREF(&PyGPUOperation_Type);
+    if (PyModule_AddObject(m, "Operation", (PyObject *) &PyGPUOperation_Type) < 0) {
+        fprintf(stderr, "Error: could not import module 'millipyde' while loading internal type 'Operation'\n");
+        Py_DECREF(&PyGPUOperation_Type);
         Py_DECREF(&PyGPUImage_Type);
         Py_DECREF(&PyGPUArray_Type);
         Py_DECREF(m);
         PyErr_Print();
-        fprintf(stderr, "Error: could not import module 'millipyde'\n");
         return NULL;
     }
 

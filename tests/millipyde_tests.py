@@ -101,7 +101,7 @@ class TestMillipydeImages(unittest.TestCase):
         npt.assert_almost_equal(grey_charlie, grey_charlie2, decimal=DECIMAL_ERROR)
 
 
-    def test_transpose(self):
+    def test_grey_and_transpose(self):
         charlie = io.imread("examples/images/charlie.png")
         charlie = np.transpose(rgb2gray(rgba2rgb(charlie)))
 
