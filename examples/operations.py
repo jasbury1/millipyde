@@ -38,13 +38,14 @@ def main():
     mp.test_func3(charlie_on_gpu, "rgb2grey")
     '''
 
-    arr = mp.gpuarray(np.array([1, 2, 3, 4]))
-    operation = mp.Operation("print_two_ints", 4, 5)
+    #arr = mp.gpuarray(np.array([1, 2, 3, 4]))
+   #operation = mp.Operation("print_two_ints", 4, 5)
 
-    operation.run_on(arr)
+    #operation.run_on(arr)
 
-    operation2 = mp.Operation(say_hi)
-    operation2.run()
+    operation2 = mp.Operation(say_hi, probability = .2)
+    for _ in range(1000):
+        operation2.run()
     
 
 

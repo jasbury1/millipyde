@@ -119,12 +119,53 @@ class TestMillipydeImages(unittest.TestCase):
             operation = Operation()
 
 
+    def test_create_invalid_operation2(self):
+        def do_nothing():
+            pass
+
+        with self.assertRaises(ValueError):
+            operation = Operation(do_nothing, probability=7)
+
+
+    def test_create_invalid_operation3(self):
+        def do_nothing():
+            pass
+
+        with self.assertRaises(ValueError):
+            operation = Operation(do_nothing, probability=1)
+
+
+    def test_create_invalid_operation4(self):
+        def do_nothing():
+            pass
+
+        with self.assertRaises(ValueError):
+            operation = Operation(do_nothing, probability=0)
+
+
+    def test_create_invalid_operation5(self):
+        def do_nothing():
+            pass
+
+        with self.assertRaises(ValueError):
+            operation = Operation(do_nothing, probability=-1)
+
+
     def test_create_operation(self):
 
         def do_nothing():
             pass
 
         operation = Operation(do_nothing)
+        self.assertIsNotNone(operation)
+
+
+    def test_create_operation2(self):
+
+        def do_nothing():
+            pass
+
+        operation = Operation(do_nothing, probability=.6)
         self.assertIsNotNone(operation)
 
 
@@ -156,10 +197,10 @@ class TestMillipydeImages(unittest.TestCase):
         charlie = np.transpose(rgb2gray(rgba2rgb(charlie)))
 
         charlie2 = mp.gpuimage(io.imread("examples/images/charlie.png"))
-        greyoperation = mp.Operation("rgb2grey")
-        transposeoperation = mp.Operation("transpose")
-        greyoperation.run_on(charlie2)
-        transposeoperation.run_on(charlie2)
+
+        operations = [mp.Operation("rgb2grey"), mp.Operation("transpose")]
+        for op in operations:
+            op.run_on(charlie2)
 
         charlie2 = np.array(charlie2)
         npt.assert_almost_equal(charlie, charlie2, decimal=DECIMAL_ERROR)

@@ -8,6 +8,10 @@
 #include "gpuoperation.h"
 
 
+static PyObject *
+_gpuoperation_run(PyGPUOperationObject *self, PyObject *callable);
+
+
 void
 PyGPUOperation_dealloc(PyGPUOperationObject *self)
 {
@@ -26,6 +30,7 @@ PyGPUOperation_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
         self->callable = NULL;
         self->arg_tuple = NULL;
         self->requires_instance = MP_FALSE;
+        self->probability = -1.0;
     }
     return (PyObject *) self;
     
@@ -35,6 +40,11 @@ PyGPUOperation_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 int
 PyGPUOperation_init(PyGPUOperationObject *self, PyObject *args, PyObject *kwds)
 {
+    static char* kwlist[] = {"probability", NULL};
+    
+    PyObject *prob;
+    double fprob = 1.0;
+
     PyObject *callable = NULL;
     PyObject *call_args;
 
@@ -45,6 +55,39 @@ PyGPUOperation_init(PyGPUOperationObject *self, PyObject *args, PyObject *kwds)
                 "Error constructing gpuarray from argument.");
         return -1;
     }
+
+    if(kwds) {
+        prob = PyDict_GetItemString(kwds, "probability");
+        
+        if (prob && PyDict_Size(kwds) == 1) {
+            if(PyFloat_Check(prob)) {
+                fprob = PyFloat_AsDouble(prob);
+            }
+            else {
+                PyErr_SetString(PyExc_ValueError, 
+                    "Operation probability must be of type float.");
+                return -1;
+            }
+
+            if (fprob <= 0.0 || fprob >= 1.0) {
+                PyErr_SetString(PyExc_ValueError, 
+                    "Operation probability must be a float between 0 and 1 (exclusive).");
+                return -1;
+            }
+
+            // Remove the probability from the calling arguments
+            num_call_args -= 1;
+            self->probability = fprob;
+
+        }
+        else {
+            PyErr_SetString(PyExc_ValueError, 
+                    "Constructing Operations can only include one named argument designated 'probability'.");
+            return -1;
+        }    
+    }
+    
+    
 
     callable = PyTuple_GetItem(args, 0);
 
@@ -75,29 +118,61 @@ PyGPUOperation_init(PyGPUOperationObject *self, PyObject *args, PyObject *kwds)
 PyObject *
 PyGPUOperation_run(PyGPUOperationObject *self, PyObject *Py_UNUSED(ignored))
 {
-    PyObject *result;
-    result = PyObject_Call(self->callable, self->arg_tuple, NULL);
-    return result;
+    return _gpuoperation_run(self, self->callable);
 }
 
 
 PyObject *
-PyGPUOperation_run_on(PyGPUOperationObject *self, PyObject *args, void *closure)
+PyGPUOperation_run_on(PyGPUOperationObject *self, PyObject *instance)
 {
-    // TODO: Make sure we are an instance method
     PyObject *result;
-    PyObject *instance;
+    PyObject *callable;
 
     const char *method_name = PyUnicode_AsUTF8(self->callable);
-
-
-    if (!PyArg_ParseTuple(args, "O", &instance)) {
-        // TODO
+    if (!method_name) {
+        PyErr_SetString(PyExc_ValueError, 
+                    "Operation's method name must be a string.");
+        return NULL;
+    }
+    
+    callable = PyObject_GetAttrString(instance, method_name);
+    if(!callable) {
+        PyErr_SetString(PyExc_ValueError, 
+                    "Operations method name could not be found for given object.");
+        return NULL; 
     }
 
+
     Py_INCREF(instance);
-    result = PyObject_Call(PyObject_GetAttrString(instance, method_name), self->arg_tuple, NULL);
+    result = _gpuoperation_run(self, callable);
     Py_DECREF(instance);
 
+    return result;
+}
+
+
+static PyObject *
+_gpuoperation_run(PyGPUOperationObject *self, PyObject *callable)
+{
+    PyObject *result;
+    double r;
+    unsigned int seed;
+    FILE *f;
+    
+    
+    if(self->probability > 0) {
+        f = fopen("/dev/random", "r");
+        fread(&seed, sizeof(seed), 1, f);
+        fclose(f);
+
+        srand(seed);
+        r = (double)rand() / RAND_MAX;
+
+        if (r > self->probability) {
+            return Py_None;
+        }
+    }
+    
+    result = PyObject_Call(callable, self->arg_tuple, NULL);
     return result;
 }

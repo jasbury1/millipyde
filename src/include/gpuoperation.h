@@ -17,6 +17,7 @@ typedef struct {
     PyObject *callable;
     PyObject *arg_tuple;
     MPBool requires_instance;
+    double probability;
 } PyGPUOperationObject;
 
 /*******************************************************************************
@@ -37,7 +38,7 @@ PyObject *
 PyGPUOperation_run(PyGPUOperationObject *self, PyObject *ignored);
 
 PyObject *
-PyGPUOperation_run_on(PyGPUOperationObject *self, PyObject *subject, void *closure);
+PyGPUOperation_run_on(PyGPUOperationObject *self, PyObject *instance);
 
 
 /*******************************************************************************
@@ -52,7 +53,7 @@ static PyMemberDef PyGPUOperation_members[] = {
 static PyMethodDef PyGPUOperation_methods[] = {
     {"run", (PyCFunction) PyGPUOperation_run, METH_NOARGS,
     "Run the function represented by the Operation instance"},
-    {"run_on", (PyCFunction) PyGPUOperation_run_on, METH_VARARGS,
+    {"run_on", (PyCFunction) PyGPUOperation_run_on, METH_O,
     "Run the instance method represented by the Operation instance on the object supplied"},
     {NULL}
 };
