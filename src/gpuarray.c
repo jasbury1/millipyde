@@ -156,5 +156,3 @@ PyGPUArray_array_function(PyGPUArrayObject *self, void *closure)
     printf("Called __array_function__()\n");
     return NULL;
 }
-
-

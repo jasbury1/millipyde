@@ -12,6 +12,7 @@ from skimage.io import imsave, imread
 from skimage.color import rgb2gray, rgba2rgb
 
 import millipyde as mp
+from millipyde import Operation
 
 DECIMAL_ERROR = 4
 
@@ -111,6 +112,59 @@ class TestMillipydeImages(unittest.TestCase):
         charlie2 = np.array(charlie2)
 
         npt.assert_almost_equal(charlie, charlie2, decimal=DECIMAL_ERROR)
+
+
+    def test_create_invalid_operation(self):
+        with self.assertRaises(ValueError):
+            operation = Operation()
+
+
+    def test_create_operation(self):
+
+        def do_nothing():
+            pass
+
+        operation = Operation(do_nothing)
+        self.assertIsNotNone(operation)
+
+
+    def test_run_operation(self):
+
+        def add_two_nums(x, y):
+            return x + y
+
+        operation = Operation(add_two_nums, 4, 6)
+        result = operation.run()
+        self.assertEqual(result, 10)
+
+
+    def test_operation_grey(self):
+        charlie = io.imread("examples/images/charlie.png")
+        grey_charlie = rgb2gray(rgba2rgb(charlie))
+
+        charlie_on_gpu = mp.gpuimage(io.imread("examples/images/charlie.png"))
+
+        greyoperation = mp.Operation("rgb2grey")
+        greyoperation.run_on(charlie_on_gpu)
+        grey_charlie2 = np.array(charlie_on_gpu)
+
+        npt.assert_almost_equal(grey_charlie, grey_charlie2, decimal=DECIMAL_ERROR)
+
+
+    def test_operation_grey_and_transpose(self):
+        charlie = io.imread("examples/images/charlie.png")
+        charlie = np.transpose(rgb2gray(rgba2rgb(charlie)))
+
+        charlie2 = mp.gpuimage(io.imread("examples/images/charlie.png"))
+        greyoperation = mp.Operation("rgb2grey")
+        transposeoperation = mp.Operation("transpose")
+        greyoperation.run_on(charlie2)
+        transposeoperation.run_on(charlie2)
+
+        charlie2 = np.array(charlie2)
+        npt.assert_almost_equal(charlie, charlie2, decimal=DECIMAL_ERROR)
+        
+
 
 
 

@@ -23,6 +23,15 @@ static PyObject * test_func(PyObject* self, PyObject* args)
     return self;
 }
 
+
+static PyObject *mpmod_get_device_count(PyObject *self, PyObject *args)
+{
+    PyObject *result;
+    int device_count = mpdev_get_device_count();
+    result = Py_BuildValue("i", device_count);
+    return result;
+}
+
 /*  define functions in module */
 static PyMethodDef MillipydeMethods[] =
 {
@@ -82,7 +91,7 @@ PyInit_millipyde(void)
     /*
      * Setup the devices on the system 
      */
-    
+
     if (-1 == mpdev_initialize()) {
         PyErr_SetString(PyExc_ImportError, 
                     "Millipyde could not succesfully find default GPU device(s) on this system.");

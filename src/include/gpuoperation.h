@@ -6,6 +6,7 @@
 #include <Python.h>
 
 #include "structmember.h"
+#include "millipyde.h"
 
 /*******************************************************************************
 * STRUCTS
@@ -15,6 +16,7 @@ typedef struct {
     PyObject_HEAD
     PyObject *callable;
     PyObject *arg_tuple;
+    MPBool requires_instance;
 } PyGPUOperationObject;
 
 /*******************************************************************************
@@ -31,6 +33,11 @@ PyGPUOperation_new(PyTypeObject *type, PyObject *args, PyObject *kwds);
 int
 PyGPUOperation_init(PyGPUOperationObject *self, PyObject *args, PyObject *kwds);
 
+PyObject *
+PyGPUOperation_run(PyGPUOperationObject *self, PyObject *ignored);
+
+PyObject *
+PyGPUOperation_run_on(PyGPUOperationObject *self, PyObject *subject, void *closure);
 
 
 /*******************************************************************************
@@ -43,6 +50,10 @@ static PyMemberDef PyGPUOperation_members[] = {
 };
 
 static PyMethodDef PyGPUOperation_methods[] = {
+    {"run", (PyCFunction) PyGPUOperation_run, METH_NOARGS,
+    "Run the function represented by the Operation instance"},
+    {"run_on", (PyCFunction) PyGPUOperation_run_on, METH_VARARGS,
+    "Run the instance method represented by the Operation instance on the object supplied"},
     {NULL}
 };
 
