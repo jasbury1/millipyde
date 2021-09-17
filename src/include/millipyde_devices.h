@@ -11,7 +11,7 @@
 extern "C" {
 #endif
 
-int mpdev_initialize();
+MPStatus mpdev_initialize();
 void mpdev_teardown();
 MPBool mpdev_peer_to_peer_supported();
 MPBool mpdev_can_use_peer(int device, int peer_devce);

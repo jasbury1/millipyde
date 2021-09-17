@@ -3,6 +3,7 @@
 #include <Python.h>
 #include <math.h>
 #include <stdio.h>
+#include "millipyde.h"
 #include "gpuarray.h"
 #include "gpuimage.h"
 #include "gpuoperation.h"
@@ -15,6 +16,7 @@
 void helper() {
     printf("Trying something!\n");
 }
+
 
 static PyObject * test_func(PyObject* self, PyObject* args)
 {
@@ -55,27 +57,32 @@ PyInit_millipyde(void)
 {
     import_array();
     PyObject *m;
-    
+
+    MPStatus status;
+
     /*
      * Prepare all of the types
      */
 
-    if (PyType_Ready(&PyGPUArray_Type) < 0){
-        PyErr_Print();
-        fprintf(stderr, "Error: could not import module 'millipyde' while creating internal type 'gpuarray'\n");
+    if (PyType_Ready(&PyGPUArray_Type) < 0)
+    {
+        PyErr_SetString(PyExc_ImportError,
+                        mperr_str(MOD_ERROR_CREATE_GPUARRAY_TYPE));
         return NULL;
     }
 
     PyGPUImage_Type.tp_base = &PyGPUArray_Type;
-    if (PyType_Ready(&PyGPUImage_Type) < 0){
-        PyErr_Print();
-        fprintf(stderr, "Error: could not import module 'millipyde' while creating internal type 'gpuimage'\n");
+    if (PyType_Ready(&PyGPUImage_Type) < 0)
+    {
+        PyErr_SetString(PyExc_ImportError,
+                        mperr_str(MOD_ERROR_CREATE_GPUIMAGE_TYPE));
         return NULL;
     }
 
-    if (PyType_Ready(&PyGPUOperation_Type) < 0){
-        PyErr_Print();
-        fprintf(stderr, "Error: could not import module 'millipyde' while creating internal type 'Operation'\n");
+    if (PyType_Ready(&PyGPUOperation_Type) < 0)
+    {
+        PyErr_SetString(PyExc_ImportError,
+                        mperr_str(MOD_ERROR_CREATE_OPERATION_TYPE));
         return NULL;
     }
 
@@ -91,16 +98,16 @@ PyInit_millipyde(void)
     /*
      * Setup the devices on the system 
      */
-
-    if (-1 == mpdev_initialize()) {
+    status = mpdev_initialize();
+    if (status != MILLIPYDE_SUCCESS) {
         PyErr_SetString(PyExc_ImportError, 
-                    "Millipyde could not succesfully find default GPU device(s) on this system.");
+                    mperr_str(status));
         return NULL;
     }
     if (mpdev_get_device_count() > 1 && mpdev_peer_to_peer_supported() == MP_FALSE)
     {
         PyErr_WarnEx(PyExc_ImportWarning,
-                     "Multiple devices were detected, but peer2peer is not supported on this system.",
+                     mperr_str(DEV_WARN_NO_PEER_ACCESS),
                      1);
     }
 
@@ -114,7 +121,7 @@ PyInit_millipyde(void)
     Py_INCREF(&PyGPUArray_Type);
     if (PyModule_AddObject(m, "gpuarray", (PyObject *) &PyGPUArray_Type) < 0) {
         PyErr_Print();
-        fprintf(stderr, "Error: could not import module 'millipyde' while loading internal type 'gpuarray'\n");
+        fprintf(stderr, mperr_str(MOD_ERROR_ADD_GPUARRAY));
         Py_DECREF(&PyGPUArray_Type);
         Py_DECREF(m);
         return NULL;
@@ -123,7 +130,7 @@ PyInit_millipyde(void)
     Py_INCREF(&PyGPUImage_Type);
     if (PyModule_AddObject(m, "gpuimage", (PyObject *) &PyGPUImage_Type) < 0) {
         PyErr_Print();
-        fprintf(stderr, "Error: could not import module 'millipyde' while loading internal type 'gpuimage'\n");
+        fprintf(stderr, mperr_str(MOD_ERROR_ADD_GPUIMAGE));
         Py_DECREF(&PyGPUImage_Type);
         Py_DECREF(&PyGPUArray_Type);
         Py_DECREF(m);
@@ -132,7 +139,7 @@ PyInit_millipyde(void)
 
     Py_INCREF(&PyGPUOperation_Type);
     if (PyModule_AddObject(m, "Operation", (PyObject *) &PyGPUOperation_Type) < 0) {
-        fprintf(stderr, "Error: could not import module 'millipyde' while loading internal type 'Operation'\n");
+        fprintf(stderr, mperr_str(MOD_ERROR_ADD_OPERATION));
         Py_DECREF(&PyGPUOperation_Type);
         Py_DECREF(&PyGPUImage_Type);
         Py_DECREF(&PyGPUArray_Type);

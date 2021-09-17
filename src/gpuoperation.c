@@ -40,8 +40,6 @@ PyGPUOperation_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 int
 PyGPUOperation_init(PyGPUOperationObject *self, PyObject *args, PyObject *kwds)
 {
-    static char* kwlist[] = {"probability", NULL};
-    
     PyObject *prob;
     double fprob = 1.0;
 
@@ -50,59 +48,66 @@ PyGPUOperation_init(PyGPUOperationObject *self, PyObject *args, PyObject *kwds)
 
     Py_ssize_t num_call_args = PyTuple_Size(args);
 
-    if (num_call_args < 1) {
-        PyErr_SetString(PyExc_ValueError, 
-                "Error constructing gpuarray from argument.");
+    if (num_call_args < 1)
+    {
+        PyErr_SetString(PyExc_ValueError,
+                        mperr_str(GPUOPERATION_ERROR_CONSTRUCTION_NO_ARGS));
         return -1;
     }
 
-    if(kwds) {
+    if (kwds)
+    {
         prob = PyDict_GetItemString(kwds, "probability");
-        
-        if (prob && PyDict_Size(kwds) == 1) {
-            if(PyFloat_Check(prob)) {
+
+        if (prob && PyDict_Size(kwds) == 1)
+        {
+            if (PyFloat_Check(prob))
+            {
                 fprob = PyFloat_AsDouble(prob);
             }
-            else {
-                PyErr_SetString(PyExc_ValueError, 
-                    "Operation probability must be of type float.");
+            else
+            {
+                PyErr_SetString(PyExc_ValueError,
+                                mperr_str(GPUOPERATION_ERROR_INVALID_PROBABILITY));
                 return -1;
             }
 
-            if (fprob <= 0.0 || fprob >= 1.0) {
-                PyErr_SetString(PyExc_ValueError, 
-                    "Operation probability must be a float between 0 and 1 (exclusive).");
+            if (fprob <= 0.0 || fprob >= 1.0)
+            {
+                PyErr_SetString(PyExc_ValueError,
+                                mperr_str(GPUOPERATION_ERROR_INVALID_PROBABILITY));
                 return -1;
             }
 
             // Remove the probability from the calling arguments
             num_call_args -= 1;
             self->probability = fprob;
-
         }
-        else {
-            PyErr_SetString(PyExc_ValueError, 
-                    "Constructing Operations can only include one named argument designated 'probability'.");
+        else
+        {
+            PyErr_SetString(PyExc_ValueError,
+                            mperr_str(GPUOPERATION_ERROR_CONSTRUCTION_NAMED_ARGS));
             return -1;
-        }    
+        }
     }
-    
-    
 
     callable = PyTuple_GetItem(args, 0);
 
     // Instance methods are denoted by a string rather than a callable
-    if (PyUnicode_Check(callable)) {
+    if (PyUnicode_Check(callable))
+    {
         self->requires_instance = MP_TRUE;
     }
 
     // If we only have the function name, we have no args so create empty tuple
-    if (num_call_args == 1) {
+    if (num_call_args == 1)
+    {
         call_args = PyTuple_New(0);
     }
     // Create tuple from all args except the function name
-    else {
-        call_args  = PyTuple_GetSlice(args, 1, num_call_args);
+    else
+    {
+        call_args = PyTuple_GetSlice(args, 1, num_call_args);
     }
 
     Py_INCREF(callable);
@@ -113,7 +118,6 @@ PyGPUOperation_init(PyGPUOperationObject *self, PyObject *args, PyObject *kwds)
 
     return 0;
 }
-
 
 PyObject *
 PyGPUOperation_run(PyGPUOperationObject *self, PyObject *Py_UNUSED(ignored))
@@ -129,19 +133,20 @@ PyGPUOperation_run_on(PyGPUOperationObject *self, PyObject *instance)
     PyObject *callable;
 
     const char *method_name = PyUnicode_AsUTF8(self->callable);
-    if (!method_name) {
-        PyErr_SetString(PyExc_ValueError, 
-                    "Operation's method name must be a string.");
+    if (!method_name)
+    {
+        PyErr_SetString(PyExc_ValueError,
+                        mperr_str(GPUOPERATION_ERROR_RUN_WITHOUT_STRING_METHOD));
         return NULL;
     }
-    
-    callable = PyObject_GetAttrString(instance, method_name);
-    if(!callable) {
-        PyErr_SetString(PyExc_ValueError, 
-                    "Operations method name could not be found for given object.");
-        return NULL; 
-    }
 
+    callable = PyObject_GetAttrString(instance, method_name);
+    if (!callable)
+    {
+        PyErr_SetString(PyExc_ValueError,
+                        mperr_str(GPUOPERATION_ERROR_RUN_UNKNOWN_STRING_METHOD));
+        return NULL;
+    }
 
     Py_INCREF(instance);
     result = _gpuoperation_run(self, callable);
@@ -149,7 +154,6 @@ PyGPUOperation_run_on(PyGPUOperationObject *self, PyObject *instance)
 
     return result;
 }
-
 
 static PyObject *
 _gpuoperation_run(PyGPUOperationObject *self, PyObject *callable)
@@ -162,7 +166,18 @@ _gpuoperation_run(PyGPUOperationObject *self, PyObject *callable)
     
     if(self->probability > 0) {
         f = fopen("/dev/random", "r");
-        fread(&seed, sizeof(seed), 1, f);
+        if (!f)
+        {
+            PyErr_SetString(PyExc_FileNotFoundError,
+                            mperr_str(GPUOPERATION_ERROR_RUN_NO_DEV_RANDOM));
+            return NULL;
+        }
+        if (fread(&seed, sizeof(seed), 1, f) != sizeof(seed))
+        {
+            PyErr_SetString(PyExc_RuntimeError,
+                            mperr_str(GPUOPERATION_ERROR_RUN_CANNOT_READ_DEV_RANDOM));
+            return NULL;
+        }
         fclose(f);
 
         srand(seed);

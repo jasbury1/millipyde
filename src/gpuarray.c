@@ -68,31 +68,37 @@ PyGPUArray_init(PyGPUArrayObject *self, PyObject *args, PyObject *kwds)
     PyObject *any = NULL;
     PyArrayObject *array = NULL;
 
-    if (!PyArg_ParseTuple(args, "O", &any)) {
+    if (!PyArg_ParseTuple(args, "O", &any))
+    {
         return -1;
     }
-    if(!any) {
-        PyErr_SetString(PyExc_ValueError, 
-                "Error constructing gpuarray from argument.");
+    if (!any)
+    {
+        PyErr_SetString(PyExc_ValueError,
+                        mperr_str(GPUARRAY_ERROR_CONSTRUCTION_WITHOUT_ARRAY_TYPE));
         return -1;
     }
     // Typecast to PyArrayObject if it is already of that type
-    if(PyArray_Check(any)) {
+    if (PyArray_Check(any))
+    {
         array = (PyArrayObject *)any;
     }
     // Attempt to create an array from the type passed to initializer
-    else {
+    else
+    {
         array = (PyArrayObject *)PyArray_FROM_OTF(any, NPY_NOTYPE, NPY_ARRAY_IN_ARRAY);
-        if (array == NULL) {
-            PyErr_SetString(PyExc_ValueError, 
-                    "Construcing gpuarrays requires an ndarray or array compatible argument.");
+        if (array == NULL)
+        {
+            PyErr_SetString(PyExc_ValueError,
+                            mperr_str(GPUARRAY_ERROR_CONSTRUCTION_WITHOUT_ARRAY_TYPE));
             return -1;
         }
     }
-    if (!PyArray_ISNUMBER(array)) {
+    if (!PyArray_ISNUMBER(array))
+    {
         PyErr_SetString(PyExc_ValueError,
-                "Construcing gpuarrays requires a numerical array type.");
-        return -1; 
+                        mperr_str(GPUARRAY_ERROR_CONSTRUCTION_WITHOUT_NUMERIC_ARRAY));
+        return -1;
     }
 
     // Get information from numpy array
@@ -103,16 +109,18 @@ PyGPUArray_init(PyGPUArrayObject *self, PyObject *args, PyObject *kwds)
 
     // Transfer memory from numpy array to our device pointer
     gpuarray_copy_from_host(self, array_data, array_nbytes);
-    
+
     self->ndims = PyArray_NDIM(array);
     self->type = PyArray_TYPE(array);
-    
+
     // Allocate space and store dimensions and strides
     self->dims = PyMem_Malloc(self->ndims * 2 * sizeof(int));
-    for(int i = 0; i < self->ndims; ++i) {
+    for (int i = 0; i < self->ndims; ++i)
+    {
         self->dims[i] = array_dims[i];
     }
-    for(int i = 0; i < self->ndims; ++i) {
+    for (int i = 0; i < self->ndims; ++i)
+    {
         self->dims[i + self->ndims] = array_strides[i];
     }
 
@@ -125,20 +133,22 @@ PyGPUArray_to_array(PyGPUArrayObject *self, void *closure)
     void *data = gpuarray_copy_to_host(self);
 
     npy_intp *array_dims = malloc(self->ndims * sizeof(npy_intp));
-    for(int i = 0; i < self->ndims; ++i) {
+    for (int i = 0; i < self->ndims; ++i)
+    {
         array_dims[i] = self->dims[i];
     }
 
     PyObject *array = PyArray_SimpleNewFromData(self->ndims, array_dims, self->type, data);
-    if (array == NULL) {
+    if (array == NULL)
+    {
         //TODO: set an error
         return NULL;
     }
-    PyArray_ENABLEFLAGS((PyArrayObject*)array, NPY_ARRAY_OWNDATA);
+    PyArray_ENABLEFLAGS((PyArrayObject *)array, NPY_ARRAY_OWNDATA);
     Py_INCREF(array);
-    
+
     free(array_dims);
-    
+
     return array;
 }
 

@@ -5,6 +5,7 @@
 // PY_SSIZE_T_CLEAN Should be defined before including Python.h
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
+#include "millipyde.h"
 #include "millipyde_devices.h"
 #include "millipyde_hip_util.h"
 
@@ -21,19 +22,19 @@ static void _delete_peer_access_matrix();
 
 extern "C"{
 
-int mpdev_initialize()
+MPStatus mpdev_initialize()
 {
     if (hipGetDeviceCount(&device_count) != hipSuccess)
     {
-        return -1;
+        return DEV_ERROR_DEVICE_COUNT;
     }
     if (hipGetDevice(&current_device) != hipSuccess)
     {
-        return -1;
+        return DEV_ERROR_DEVICE_COUNT;
     }
     hipDeviceProp_t props;
     if (hipGetDeviceProperties(&props, current_device) != hipSuccess) {
-        return -1;
+        return DEV_ERROR_DEVICE_PROPERTIES;
     }
 
     if (device_count > 1) {
@@ -41,7 +42,7 @@ int mpdev_initialize()
             _init_peer_access_matrix();
         }
         catch (std::bad_alloc&) {
-            return -1;
+            return DEV_ERROR_PEER_ACCESS_MATRIX_ALLOC;
         }
         
         _setup_peer_to_peer();
@@ -53,7 +54,7 @@ int mpdev_initialize()
         }
     }
     
-    return 0;
+    return MILLIPYDE_SUCCESS;
 }
 
 void mpdev_teardown()
@@ -100,7 +101,7 @@ static void _setup_peer_to_peer()
     for (int device = 0; device < device_count; ++device) {
         if (hipSetDevice(device) != hipSuccess)
         {
-            // TODO
+            // TODO: Mark this device as unusable somehow
             continue;
         }
         for (int peer_device = 0; peer_device < device_count; ++peer_device) {

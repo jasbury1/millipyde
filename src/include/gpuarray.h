@@ -10,6 +10,38 @@
 #include "structmember.h"
 
 /*******************************************************************************
+* DOCUMENTATION
+*******************************************************************************/
+
+#define __GPUARRAY_DOC PyDoc_STR( \
+    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, \n \
+sed do eiusmod tempor incididunt ut labore et dolore magna \n \
+aliqua. Ut enim ad minim veniam, quis nostrud exercitation \n \
+ullamco laboris nisi ut aliquip ex ea commodo consequat. \n \
+Duis aute irure dolor in reprehenderit in voluptate velit \n \
+esse cillum dolore eu fugiat nulla pariatur. \n \
+Excepteur sint occaecat cupidatat non proident")
+
+#define __GPUARRAY_TO_ARRAY_DOC PyDoc_STR( \
+    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, \n \
+sed do eiusmod tempor incididunt ut labore et dolore magna \n \
+aliqua. Ut enim ad minim veniam, quis nostrud exercitation \n \
+ullamco laboris nisi ut aliquip ex ea commodo consequat. \n \
+Duis aute irure dolor in reprehenderit in voluptate velit \n \
+esse cillum dolore eu fugiat nulla pariatur. \n \
+Excepteur sint occaecat cupidatat non proident")
+
+#define __GPUARRAY_ARRAY_FUNCTION_DOC PyDoc_STR( \
+    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, \n \
+sed do eiusmod tempor incididunt ut labore et dolore magna \n \
+aliqua. Ut enim ad minim veniam, quis nostrud exercitation \n \
+ullamco laboris nisi ut aliquip ex ea commodo consequat. \n \
+Duis aute irure dolor in reprehenderit in voluptate velit \n \
+esse cillum dolore eu fugiat nulla pariatur. \n \
+Excepteur sint occaecat cupidatat non proident")
+
+
+/*******************************************************************************
 * STRUCTS
 *******************************************************************************/
 
@@ -58,20 +90,16 @@ static PyMemberDef PyGPUArray_members[] = {
 };
 
 static PyMethodDef PyGPUArray_methods[] = {
-    {"__array__", (PyCFunction) PyGPUArray_to_array, METH_NOARGS,
-     "Return an array representation of a GPUArray"
-    },
+    {"__array__", (PyCFunction)PyGPUArray_to_array, METH_NOARGS,
+     __GPUARRAY_TO_ARRAY_DOC},
     // {"__array_ufunc__", (PyCFunction) PyGPUArray_array_ufunc, METH_VARARGS,
     //  "TODO"
     // },
-    {"__array_function__", (PyCFunction) PyGPUArray_array_function, METH_VARARGS,
-     "TODO"
-    },
-    {"add_one", (PyCFunction) PyGPUArray_add_one, METH_NOARGS,
-     "TODO"
-    },
-    {NULL}
-};
+    {"__array_function__", (PyCFunction)PyGPUArray_array_function, METH_VARARGS,
+     __GPUARRAY_ARRAY_FUNCTION_DOC},
+    {"add_one", (PyCFunction)PyGPUArray_add_one, METH_NOARGS,
+     "TODO"},
+    {NULL}};
 
 static PyTypeObject PyGPUArray_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
@@ -80,7 +108,7 @@ static PyTypeObject PyGPUArray_Type = {
     .tp_itemsize = 0,
     .tp_dealloc = (destructor) PyGPUArray_dealloc,
     .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
-    .tp_doc = "Custom objects",
+    .tp_doc = __GPUARRAY_DOC,
     .tp_methods = PyGPUArray_methods,
     .tp_members = PyGPUArray_members,
     .tp_init = (initproc) PyGPUArray_init,

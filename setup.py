@@ -7,7 +7,8 @@ here = pathlib.Path(__file__).parent.resolve()
 long_description = (here / 'README.md').read_text(encoding='utf-8')
 
 millipyde_module = Extension('millipyde',
-                             sources=['src/millipyde_module.c', 
+                             sources=['src/millipyde_module.c',
+                                 'src/millipyde.c',
                                  'src/gpuarray.c',
                                  'src/gpuimage.c',
                                  'src/gpuoperation.c',

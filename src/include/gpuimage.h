@@ -10,6 +10,38 @@
 #include "structmember.h"
 #include "gpuarray.h"
 
+
+/*******************************************************************************
+* DOCUMENTATION
+*******************************************************************************/
+
+#define __GPUIMAGE_DOC PyDoc_STR( \
+    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, \n \
+sed do eiusmod tempor incididunt ut labore et dolore magna \n \
+aliqua. Ut enim ad minim veniam, quis nostrud exercitation \n \
+ullamco laboris nisi ut aliquip ex ea commodo consequat. \n \
+Duis aute irure dolor in reprehenderit in voluptate velit \n \
+esse cillum dolore eu fugiat nulla pariatur. \n \
+Excepteur sint occaecat cupidatat non proident")
+
+#define __GPUIMAGE_RGB_TO_GREY_DOC PyDoc_STR( \
+    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, \n \
+sed do eiusmod tempor incididunt ut labore et dolore magna \n \
+aliqua. Ut enim ad minim veniam, quis nostrud exercitation \n \
+ullamco laboris nisi ut aliquip ex ea commodo consequat. \n \
+Duis aute irure dolor in reprehenderit in voluptate velit \n \
+esse cillum dolore eu fugiat nulla pariatur. \n \
+Excepteur sint occaecat cupidatat non proident")
+
+#define __GPUIMAGE_TRANSPOSE_DOC PyDoc_STR( \
+    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, \n \
+sed do eiusmod tempor incididunt ut labore et dolore magna \n \
+aliqua. Ut enim ad minim veniam, quis nostrud exercitation \n \
+ullamco laboris nisi ut aliquip ex ea commodo consequat. \n \
+Duis aute irure dolor in reprehenderit in voluptate velit \n \
+esse cillum dolore eu fugiat nulla pariatur. \n \
+Excepteur sint occaecat cupidatat non proident")
+
 /*******************************************************************************
 * STRUCTS
 *******************************************************************************/
@@ -43,19 +75,19 @@ static PyMemberDef PyGPUImage_members[] = {
 
 static PyMethodDef PyGPUImage_methods[] = {
     {"rgb2gray", (PyCFunction) PyGPUImage_color_to_greyscale, METH_NOARGS,
-     "TODO"
+     __GPUIMAGE_RGB_TO_GREY_DOC
     },
     {"rgb2grey", (PyCFunction) PyGPUImage_color_to_greyscale, METH_NOARGS,
-     "TODO"
+     __GPUIMAGE_RGB_TO_GREY_DOC
     },
     {"rgba2gray", (PyCFunction) PyGPUImage_color_to_greyscale, METH_NOARGS,
-     "TODO"
+     __GPUIMAGE_RGB_TO_GREY_DOC
     },
     {"rgba2grey", (PyCFunction) PyGPUImage_color_to_greyscale, METH_NOARGS,
-     "TODO"
+     __GPUIMAGE_RGB_TO_GREY_DOC
     },
     {"transpose", (PyCFunction) PyGPUImage_transpose, METH_NOARGS,
-     "TODO"
+     __GPUIMAGE_TRANSPOSE_DOC
     },
     {NULL}
 };
@@ -66,7 +98,7 @@ static PyTypeObject PyGPUImage_Type = {
     .tp_basicsize = sizeof(PyGPUImageObject),
     .tp_itemsize = 0,
     .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
-    .tp_doc = "Custom objects",
+    .tp_doc = __GPUIMAGE_DOC,
     .tp_methods = PyGPUImage_methods,
     .tp_members = PyGPUImage_members,
     .tp_init = (initproc) PyGPUImage_init,
