@@ -12,10 +12,12 @@ millipyde_module = Extension('millipyde',
                                  'src/gpuarray.c',
                                  'src/gpuimage.c',
                                  'src/gpuoperation.c',
+                                 'src/gpupipeline.c',
                                  'src/bit_extract.cpp',
                                  'src/millipyde_image.cpp',
                                  'src/gpuarray_funcs.cpp',
-                                 'src/millipyde_devices.cpp'],
+                                 'src/millipyde_devices.cpp',
+                                 'src/millipyde_manager.cpp'],
                              include_dirs=[numpy.get_include(), 
                                  'src/include/',
                                  '/opt/rocm-4.1.0/hip/include/hip'],
@@ -35,7 +37,7 @@ setup(
     author='James Asbury',
     author_email='jasbury@calpoly.edu',
 
-    keywords='gpu, parallel, array',
+    keywords='gpu, parallel, array, rocm, hip, amd, framework, image, augmentation',
 
     #packages = ['millipyde', 'millipyde.img'],
 

@@ -8,6 +8,7 @@
 #include <Python.h>
 
 #include "structmember.h"
+#include "millipyde.h"
 
 /*******************************************************************************
 * DOCUMENTATION
@@ -53,6 +54,8 @@ typedef struct {
     int *dims;
     int type;
     int mem_loc;
+    int stream;
+    MPBool pinned;
     size_t nbytes;
 } PyGPUArrayObject;
 

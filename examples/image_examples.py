@@ -64,9 +64,74 @@ def greyscale_and_transpose_charlie():
     print("\nTime to convert image: {}\n".format(stop - start))
 
 
+def greyscale_and_transpose_pipeline():
+    print('\033[95m' + "\nGreyscaling and transposing Charlie without pipeline\n" + '\033[0m')
+    d_charlie = mp.gpuimage(io.imread("examples/images/charlie.png"))
+    d_charlie2 = mp.gpuimage(io.imread("examples/images/charlie.png"))
+    start = time.perf_counter()
+    d_charlie.rgb2grey()
+    d_charlie.transpose()
+    d_charlie2.rgb2grey()
+    d_charlie2.transpose()
+    stop = time.perf_counter()
+    print("\nTime to beat: {}\n".format(stop - start))
+
+
+    print('\033[95m' + "\nGreyscaling and transposing Charlie with pipeline\n" + '\033[0m')
+    d_charlie = mp.gpuimage(io.imread("examples/images/charlie.png"))
+    d_charlie2 = mp.gpuimage(io.imread("examples/images/charlie.png"))
+    inputs = [d_charlie, d_charlie2]
+    operations = [mp.Operation("rgb2grey"), mp.Operation("transpose")]
+    p = mp.Pipeline(inputs, operations)
+    start = time.perf_counter()
+    p.start()
+    stop = time.perf_counter()
+    print("\nTime to run pipeline: {}\n".format(stop - start))
+
+
+def greyscale_and_transpose_pipeline2():
+    print('\033[95m' + "\nGreyscaling and transposing Charlie without pipeline\n" + '\033[0m')
+    d_charlie = mp.gpuimage(io.imread("examples/images/charlie.png"))
+    d_charlie2 = mp.gpuimage(io.imread("examples/images/charlie.png"))
+    d_charlie3 = mp.gpuimage(io.imread("examples/images/charlie.png"))
+    d_charlie4 = mp.gpuimage(io.imread("examples/images/charlie.png"))
+    start = time.perf_counter()
+    d_charlie.rgb2grey()
+    d_charlie.transpose()
+    d_charlie.transpose()
+    d_charlie2.rgb2grey()
+    d_charlie2.transpose()
+    d_charlie2.transpose()
+    d_charlie3.rgb2grey()
+    d_charlie3.transpose()
+    d_charlie3.transpose()
+    d_charlie4.rgb2grey()
+    d_charlie4.transpose()
+    d_charlie4.transpose()
+    stop = time.perf_counter()
+    print("\nTime to beat: {}\n".format(stop - start))
+
+
+    print('\033[95m' + "\nGreyscaling and transposing Charlie with pipeline\n" + '\033[0m')
+    d_charlie = mp.gpuimage(io.imread("examples/images/charlie.png"))
+    d_charlie2 = mp.gpuimage(io.imread("examples/images/charlie.png"))
+    d_charlie3 = mp.gpuimage(io.imread("examples/images/charlie.png"))
+    d_charlie4 = mp.gpuimage(io.imread("examples/images/charlie.png"))
+    inputs = [d_charlie, d_charlie2, d_charlie3, d_charlie4]
+    operations = [mp.Operation("rgb2grey"), mp.Operation("transpose"), mp.Operation("transpose")]
+    p = mp.Pipeline(inputs, operations)
+    start = time.perf_counter()
+    p.start()
+    stop = time.perf_counter()
+    print("\nTime to run pipeline: {}\n".format(stop - start))
+
+
+
 def main():
-    greyscale_charlie()
-    greyscale_and_transpose_charlie()
+    #greyscale_charlie()
+    #greyscale_and_transpose_charlie()
+    greyscale_and_transpose_pipeline()
+    greyscale_and_transpose_pipeline2()
 
 
 if __name__ == '__main__':

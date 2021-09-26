@@ -15,12 +15,16 @@ const char *mperr_str(MPStatus status)
         return "Could not import module 'millipyde' while creating internal type 'gpuimage'";
     case MOD_ERROR_CREATE_OPERATION_TYPE:
         return "Could not import module 'millipyde' while creating internal type 'Operation'";
+    case MOD_ERROR_CREATE_PIPELINE_TYPE:
+        return "Could not import module 'millipyde' while creating internal type 'Pipeline'";
     case MOD_ERROR_ADD_GPUARRAY:
         return "Could not import module 'millipyde' while loading internal type 'gpuarray'";
     case MOD_ERROR_ADD_GPUIMAGE:
         return "Could not import module 'millipyde' while loading internal type 'gpuimage'";
     case MOD_ERROR_ADD_OPERATION:
         return "Could not import module 'millipyde' while loading internal type 'Operation'";
+    case MOD_ERROR_ADD_PIPELINE:
+        return "Could not import module 'millipyde' while loading internal type 'Pipeline'";
 
     case DEV_ERROR_CURRENT_DEVICE:
         return "GPU runtime failed while querying the current device";
@@ -62,6 +66,11 @@ const char *mperr_str(MPStatus status)
         return "Unable to use /dev/random for random number generation";
     case GPUOPERATION_ERROR_RUN_CANNOT_READ_DEV_RANDOM:
         return "Unable to read from /dev/random for random number generation";
+
+    case GPUPIPELINE_ERROR_NONLIST_INPUTS:
+        return "Constructing Pipeline requires a List of inputs";
+    case GPUPIPELINE_ERROR_NONLIST_OPERATIONS:
+        return "Constructing Pipeline requires a List of operations";
 
     default:
         return "Unknown failure occurred";

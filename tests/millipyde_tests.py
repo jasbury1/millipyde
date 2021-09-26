@@ -204,6 +204,69 @@ class TestMillipydeImages(unittest.TestCase):
 
         charlie2 = np.array(charlie2)
         npt.assert_almost_equal(charlie, charlie2, decimal=DECIMAL_ERROR)
+
+    
+    def test_create_pipeline(self):
+        p = mp.Pipeline([], [])
+        self.assertIsNotNone(p)
+
+    
+    def test_create_invalid_pipeline(self):
+        with self.assertRaises(ValueError):
+            p = mp.Pipeline(1, [])
+
+
+    def test_create_invalid_pipeline2(self):
+        with self.assertRaises(ValueError):
+            p = mp.Pipeline([], 1)
+
+
+    def test_create_invalid_pipeline3(self):
+        with self.assertRaises(ValueError):
+            p = mp.Pipeline(np.array([1, 2, 3]), [])
+
+
+    def test_create_invalid_pipeline4(self):
+        with self.assertRaises(ValueError):
+            p = mp.Pipeline([], np.array([1, 2, 3]))
+
+
+    def test_pipeline_start(self):
+        charlie = io.imread("examples/images/charlie.png")
+        charlie = np.transpose(rgb2gray(rgba2rgb(charlie)))
+
+        charlie_on_gpu = mp.gpuimage(io.imread("examples/images/charlie.png"))
+        inputs = [charlie_on_gpu]
+        operations = [mp.Operation("rgb2grey"), mp.Operation("transpose")]
+
+        p = mp.Pipeline(inputs, operations)
+        p.start()
+
+        charlie2 = np.array(charlie_on_gpu)
+        npt.assert_almost_equal(charlie, charlie2, decimal=DECIMAL_ERROR)
+
+
+    def test_pipeline_start2(self):
+        h_charlie = io.imread("examples/images/charlie.png")
+        h_charlie2 = io.imread("examples/images/charlie.png")
+        h_charlie = np.transpose(rgb2gray(rgba2rgb(h_charlie)))
+        h_charlie2 = np.transpose(rgb2gray(rgba2rgb(h_charlie2)))
+
+        d_charlie = mp.gpuimage(io.imread("examples/images/charlie.png"))
+        d_charlie2 = mp.gpuimage(io.imread("examples/images/charlie.png"))
+
+        inputs = [d_charlie, d_charlie2]
+        operations = [mp.Operation("rgb2grey"), mp.Operation("transpose")]
+
+        p = mp.Pipeline(inputs, operations)
+        p.start()
+
+        d_charlie = np.array(d_charlie)
+        d_charlie2 = np.array(d_charlie2)
+
+        npt.assert_almost_equal(d_charlie, h_charlie, decimal=DECIMAL_ERROR)
+        npt.assert_almost_equal(d_charlie2, h_charlie2, decimal=DECIMAL_ERROR)
+
         
 
 

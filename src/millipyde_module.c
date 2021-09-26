@@ -3,12 +3,16 @@
 #include <Python.h>
 #include <math.h>
 #include <stdio.h>
+
 #include "millipyde.h"
+#include "millipyde_devices.h"
+#include "millipyde_manager.h"
 #include "gpuarray.h"
 #include "gpuimage.h"
 #include "gpuoperation.h"
+#include "gpupipeline.h"
 #include "GPUKernels.h"
-#include "millipyde_devices.h"
+
 
 #define INIT_NUMPY_ARRAY_CPP
 #include "use_numpy.h"
@@ -86,6 +90,13 @@ PyInit_millipyde(void)
         return NULL;
     }
 
+    if (PyType_Ready(&PyGPUPipeline_Type) < 0)
+    {
+        PyErr_SetString(PyExc_ImportError,
+                        mperr_str(MOD_ERROR_CREATE_PIPELINE_TYPE));
+        return NULL;
+    }
+
     /* 
      * Ceate the module object 
      */
@@ -98,6 +109,7 @@ PyInit_millipyde(void)
     /*
      * Setup the devices on the system 
      */
+
     status = mpdev_initialize();
     if (status != MILLIPYDE_SUCCESS) {
         PyErr_SetString(PyExc_ImportError, 
@@ -111,8 +123,23 @@ PyInit_millipyde(void)
                      1);
     }
 
-    // Register cleanup function for the device information
+    /*
+     * Setup the device manager
+     */
+
+    status = mpman_initialize();
+    if (status != MILLIPYDE_SUCCESS) {
+        PyErr_SetString(PyExc_ImportError, 
+                    mperr_str(status));
+        return NULL;
+    }
+
+    /*
+     * Register cleanup functions
+     */
+
     Py_AtExit(mpdev_teardown);
+    Py_AtExit(mpman_teardown);
 
     /*
      * Create all supported Millipyde objects 
@@ -143,6 +170,18 @@ PyInit_millipyde(void)
         Py_DECREF(&PyGPUOperation_Type);
         Py_DECREF(&PyGPUImage_Type);
         Py_DECREF(&PyGPUArray_Type);
+        Py_DECREF(m);
+        PyErr_Print();
+        return NULL;
+    }
+
+    Py_INCREF(&PyGPUPipeline_Type);
+    if (PyModule_AddObject(m, "Pipeline", (PyObject *) &PyGPUPipeline_Type) < 0) {
+        fprintf(stderr, mperr_str(MOD_ERROR_ADD_PIPELINE));
+        Py_DECREF(&PyGPUOperation_Type);
+        Py_DECREF(&PyGPUImage_Type);
+        Py_DECREF(&PyGPUArray_Type);
+        Py_DECREF(&PyGPUOperation_Type);
         Py_DECREF(m);
         PyErr_Print();
         return NULL;
