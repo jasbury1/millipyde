@@ -10,51 +10,18 @@
 #include "gpuimage.h"
 #include "millipyde.h"
 #include "millipyde_devices.h"
-#include "millipyde_manager.h"
+#include "millipyde_workers.h"
 #include "millipyde_hip_util.h"
 
 // TODO: make this more C++ friendly
 
 
-hipStream_t streams[5];
-static MPBool manager_running = MP_TRUE;
-static const int thread_count = 4;
-
-MPDeviceWorkPool *manager_work_pool;
-
 
 extern "C"{
 
-MPStatus 
-mpman_initialize()
-{   
-    int i;
-    streams[0] = 0;
-    for(i = 1; i < 5; ++i)
-    {
-        hipStreamCreate(&streams[i + 1]);
-    }
-
-    manager_work_pool = mpman_create_work_pool(thread_count);
-
-    return MILLIPYDE_SUCCESS;
-}
-
-void 
-mpman_teardown()
-{
-    int i;
-    for(i = 1; i < 5; ++i)
-    {
-        hipStreamDestroy(streams[i]);
-    }
-
-    mpman_destroy_work_pool(manager_work_pool);
-}
-
 
 MPWorkNode *
-mpman_create_work_node(MPWorkItem work, void *arg)
+mpwrk_create_work_node(MPWorkItem work, void *arg)
 {
     MPWorkNode *node;
 
@@ -70,7 +37,8 @@ mpman_create_work_node(MPWorkItem work, void *arg)
     return node;
 }
 
-void mpman_destroy_work_node(MPWorkNode *node)
+
+void mpwrk_destroy_work_node(MPWorkNode *node)
 {
     if (node)
     {
@@ -78,8 +46,9 @@ void mpman_destroy_work_node(MPWorkNode *node)
     }
 }
 
+
 MPWorkNode *
-mpman_work_queue_pop(MPDeviceWorkPool *work_pool)
+mpwrk_work_queue_pop(MPDeviceWorkPool *work_pool)
 {
     MPWorkNode *node;
 
@@ -101,12 +70,13 @@ mpman_work_queue_pop(MPDeviceWorkPool *work_pool)
     return node;
 }
 
+
 void
-mpman_work_queue_push(MPDeviceWorkPool *work_pool, MPWorkItem work, void *arg)
+mpwrk_work_queue_push(MPDeviceWorkPool *work_pool, MPWorkItem work, void *arg)
 {
     MPWorkNode *node;
 
-    node = mpman_create_work_node(work, arg);
+    node = mpwrk_create_work_node(work, arg);
     if (!node)
     {
         return;
@@ -128,14 +98,15 @@ mpman_work_queue_push(MPDeviceWorkPool *work_pool, MPWorkItem work, void *arg)
     pthread_mutex_unlock(&(work_pool->mux));
 }
 
+
 void
-mpman_work_wait(MPDeviceWorkPool *work_pool)
+mpwrk_work_wait(MPDeviceWorkPool *work_pool)
 {
     pthread_mutex_lock(&(work_pool->mux));
     while (true)
     {
-        if ((manager_running && work_pool->num_threads != 0) ||
-            (!manager_running && work_pool->num_threads != 0))
+        if ((work_pool->running && work_pool->num_threads != 0) ||
+            (!work_pool->running && work_pool->num_threads != 0))
         {
             pthread_cond_wait(&(work_pool->working), &(work_pool->mux));
         }
@@ -146,8 +117,9 @@ mpman_work_wait(MPDeviceWorkPool *work_pool)
     pthread_mutex_unlock(&(work_pool->mux));
 }
 
+
 void *
-mpman_process_work(void *arg)
+mpwrk_process_work(void *arg)
 {
     MPDeviceWorkPool *work_pool = (MPDeviceWorkPool *)arg;
     MPWorkNode *node;
@@ -156,30 +128,30 @@ mpman_process_work(void *arg)
     {
         pthread_mutex_lock(&(work_pool->mux));
 
-        while (work_pool->queue.head == NULL && manager_running)
+        while (work_pool->queue.head == NULL && work_pool->running)
         {
             pthread_cond_wait(&(work_pool->work_available), &(work_pool->mux));
         }
 
-        if(!manager_running)
+        if(!work_pool->running)
         {
             break;
         }
         
-        node = mpman_work_queue_pop(work_pool);
+        node = mpwrk_work_queue_pop(work_pool);
         work_pool->num_threads_busy++;
         pthread_mutex_unlock(&(work_pool->mux));
 
         if (node != NULL)
         {
             node->work(node->arg);
-            mpman_destroy_work_node(node);
+            mpwrk_destroy_work_node(node);
         }
 
         pthread_mutex_lock(&(work_pool->mux));
         work_pool->num_threads_busy--;
 
-        if (manager_running && work_pool->num_threads_busy == 0 && work_pool->queue.head == NULL)
+        if (work_pool->running && work_pool->num_threads_busy == 0 && work_pool->queue.head == NULL)
         {
             pthread_cond_signal(&(work_pool->working));
         }
@@ -196,7 +168,7 @@ mpman_process_work(void *arg)
 
 
 MPDeviceWorkPool * 
-mpman_create_work_pool(int num_threads)
+mpwrk_create_work_pool(int num_threads)
 {
     MPDeviceWorkPool *work_pool;
     pthread_t thread;
@@ -204,6 +176,7 @@ mpman_create_work_pool(int num_threads)
 
     work_pool = (MPDeviceWorkPool *)calloc(1, sizeof(MPDeviceWorkPool));
     work_pool->num_threads = num_threads;
+    work_pool->running = MP_TRUE;
     
     pthread_mutex_init(&(work_pool->mux), NULL);
     pthread_cond_init(&(work_pool->work_available), NULL);
@@ -214,7 +187,7 @@ mpman_create_work_pool(int num_threads)
 
     for(i = 0; i < num_threads; ++i)
     {
-        pthread_create(&thread, NULL, mpman_process_work, work_pool);
+        pthread_create(&thread, NULL, mpwrk_process_work, work_pool);
         pthread_detach(thread);
     }
 
@@ -223,7 +196,7 @@ mpman_create_work_pool(int num_threads)
 
 
 void
-mpman_destroy_work_pool(MPDeviceWorkPool *work_pool)
+mpwrk_destroy_work_pool(MPDeviceWorkPool *work_pool)
 {
     MPWorkNode *cur_node;
     MPWorkNode *next_node;
@@ -238,15 +211,15 @@ mpman_destroy_work_pool(MPDeviceWorkPool *work_pool)
     while(cur_node != NULL)
     {
         next_node = cur_node->next;
-        mpman_destroy_work_node(cur_node);
+        mpwrk_destroy_work_node(cur_node);
         cur_node = next_node;
     }
 
-    manager_running = MP_FALSE;
+    work_pool->running = MP_FALSE;
     pthread_cond_broadcast(&(work_pool->work_available));
     pthread_mutex_unlock(&(work_pool->mux));
 
-    mpman_work_wait(work_pool);
+    mpwrk_work_wait(work_pool);
 
     pthread_mutex_destroy(&(work_pool->mux));
     pthread_cond_destroy(&(work_pool->work_available));

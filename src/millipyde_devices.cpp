@@ -9,6 +9,12 @@
 #include "millipyde_devices.h"
 #include "millipyde_hip_util.h"
 
+typedef struct mp_device {
+    MPBool valid;
+    hipStream_t streams[DEVICE_STREAM_COUNT];
+    MPDeviceWorkPool *work_pool;
+} MPDevice;
+
 
 static int device_count = 0;
 static int current_device = 0;
@@ -16,13 +22,16 @@ static bool peer_to_peer_supported = false;
 
 static int** peer_access_matrix;
 
+MPDevice *device_array = NULL;
+
 static void _setup_peer_to_peer();
 static void _init_peer_access_matrix();
 static void _delete_peer_access_matrix();
 
 extern "C"{
 
-MPStatus mpdev_initialize()
+MPStatus 
+mpdev_initialize()
 {
     if (hipGetDeviceCount(&device_count) != hipSuccess)
     {
@@ -53,24 +62,74 @@ MPStatus mpdev_initialize()
             _delete_peer_access_matrix();
         }
     }
+
+    try {
+        device_array = new MPDevice[device_count];
+    }
+    catch (std::bad_alloc&) {
+        return DEV_ERROR_DEVICE_ARRAY_ALLOC;
+    }
+
+    // Initialize each device in the device array
+    for (int i = 0; i < device_count; ++i)
+    {
+        MPDevice &device = device_array[i];
+
+        // Initialize the null stream
+        device.streams[0] = 0;
+
+        // Initialize remaining streams
+        for (int j = 1; j < DEVICE_STREAM_COUNT; ++j)
+        {
+            hipStreamCreate(&(device.streams[j])); 
+        }
+
+        // Set up the pool of workers for this device
+        device.work_pool = mpwrk_create_work_pool(WORKPOOL_NUM_WORKERS);
+
+        device.valid = MP_TRUE;
+    }
     
     return MILLIPYDE_SUCCESS;
 }
 
-void mpdev_teardown()
+
+void 
+mpdev_teardown()
 {
     if (peer_to_peer_supported) {
         _delete_peer_access_matrix();
     }
+
+    if (device_array != NULL)
+    {
+        for (int i = 0; i < device_count; ++i)
+        {
+            MPDevice &device = device_array[i];
+
+            // Destroy the streams we created
+            for (int j = 1; j < DEVICE_STREAM_COUNT; ++j)
+            {
+                hipStreamDestroy(device.streams[j]);
+            }
+
+            // Set up the pool of workers for this device
+            mpwrk_destroy_work_pool(device.work_pool);
+        }
+        delete[] device_array;
+    }
 }
 
 
-MPBool mpdev_peer_to_peer_supported()
+MPBool 
+mpdev_peer_to_peer_supported()
 {
     return peer_to_peer_supported ? MP_FALSE : MP_TRUE;
 }
 
-MPBool mpdev_can_use_peer(int device, int peer_devce)
+
+MPBool 
+mpdev_can_use_peer(int device, int peer_devce)
 {
     if (peer_to_peer_supported && peer_access_matrix[device][peer_devce] == 1) {
         return MP_TRUE;
@@ -78,21 +137,28 @@ MPBool mpdev_can_use_peer(int device, int peer_devce)
     return MP_FALSE;
 }
 
-int mpdev_get_device_count()
+
+int 
+mpdev_get_device_count()
 {
     return device_count;
 }
 
-int mpdev_get_current_device()
+
+int 
+mpdev_get_current_device()
 {
     return current_device;
 }
 
-void mpdev_set_current_device(int device_id)
+
+void 
+mpdev_set_current_device(int device_id)
 {
     HIP_CHECK(hipSetDevice(device_id));
     current_device = device_id;
 }
+
 
 static void _setup_peer_to_peer()
 {
@@ -101,7 +167,7 @@ static void _setup_peer_to_peer()
     for (int device = 0; device < device_count; ++device) {
         if (hipSetDevice(device) != hipSuccess)
         {
-            // TODO: Mark this device as unusable somehow
+            device_array[device].valid = MP_FALSE;
             continue;
         }
         for (int peer_device = 0; peer_device < device_count; ++peer_device) {
@@ -110,7 +176,7 @@ static void _setup_peer_to_peer()
                 int can_access_peer;
                 if (hipDeviceCanAccessPeer(&can_access_peer, device, peer_device) != hipSuccess)
                 {
-                    // TODO
+                    // Testing for peer access throws an error
                     continue;
                 }
                 if (can_access_peer != 1)
@@ -135,6 +201,7 @@ static void _setup_peer_to_peer()
     }
 }
 
+
 static void _init_peer_access_matrix()
 {
     peer_access_matrix = new int*[device_count];
@@ -142,6 +209,7 @@ static void _init_peer_access_matrix()
         peer_access_matrix[i] = new int[device_count];
     }
 }
+
 
 static void _delete_peer_access_matrix()
 {

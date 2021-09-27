@@ -3,7 +3,6 @@
 #include "hip/hip_runtime.h"
 #include "millipyde_hip_util.h"
 #include "millipyde_image.h"
-#include "millipyde_manager.h"
 
 // PY_SSIZE_T_CLEAN Should be defined before including Python.h
 #define PY_SSIZE_T_CLEAN
@@ -136,6 +135,8 @@ void mpimg_color_to_greyscale(PyGPUImageObject *gpuimage){
     unsigned char *d_rgb;
     double *d_grey;
 
+    hipStream_t *stream = (hipStream_t *)array->stream;
+
     if (array->device_data != NULL) {
         d_rgb = (unsigned char*)(array->device_data);
     }
@@ -178,6 +179,8 @@ void mpimg_transpose(PyGPUImageObject *gpuimage)
 
     double *d_img;
     double *d_transpose;
+
+    hipStream_t *stream = (hipStream_t *)array->stream; 
 
     if (array->device_data != NULL) {
         d_img = (double *)(array->device_data);

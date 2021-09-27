@@ -58,7 +58,7 @@ PyGPUArray_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
         self->type = -1;
         self->nbytes = (size_t)0;
         self->mem_loc = HOST_LOC;
-        self->stream = 0;
+        self->stream = NULL;
         self->pinned = MP_FALSE;
     }
     return (PyObject *) self;

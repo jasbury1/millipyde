@@ -34,6 +34,8 @@ const char *mperr_str(MPStatus status)
         return "GPU runtime failed while querying device properties";
     case DEV_ERROR_PEER_ACCESS_MATRIX_ALLOC:
         return "Could not allocate internal data-structure 'peer access matrix'";
+    case DEV_ERROR_DEVICE_ARRAY_ALLOC:
+        return "Coult not allocate internal data-structure 'device array'";
     case DEV_WARN_NO_PEER_ACCESS:
         return "Multiple devices were detected, but peer2peer is not supported on this system";
 

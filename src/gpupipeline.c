@@ -9,8 +9,6 @@
 #include "gpupipeline.h"
 #include "gpuoperation.h"
 
-#include "millipyde_manager.h"
-
 
 void
 PyGPUPipeline_dealloc(PyGPUPipelineObject *self)
@@ -81,7 +79,6 @@ PyGPUPipeline_start(PyGPUPipelineObject *self, PyObject *Py_UNUSED(ignored))
     for(iter = 0; iter < num_inputs; ++iter)
     {
         input = PyList_GetItem(self->inputs, iter);
-        ((PyGPUArrayObject *)input)->stream = (int)(iter +1);
         gpupipeline_run_stages(input, self->operations);
     }
     return Py_None;

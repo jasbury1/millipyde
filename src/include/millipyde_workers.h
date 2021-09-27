@@ -1,10 +1,12 @@
-#ifndef MILLIPYDE_MANAGER_H
-#define MILLIPYDE_MANAGER_H
+#ifndef MILLIPYDE_WORKERS_H
+#define MILLIPYDE_WORKERS_H
 
 // PY_SSIZE_T_CLEAN Should be defined before including Python.h
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include "millipyde.h"
+
+#define WORKPOOL_NUM_WORKERS 4
 
 typedef void (*MPWorkItem)(void *arg);
 
@@ -22,6 +24,7 @@ typedef struct work_queue {
 
 typedef struct work_pool {
     MPWorkQueue queue;
+    MPBool running;
     int num_threads;
     int num_threads_busy;
     pthread_mutex_t mux;
@@ -35,39 +38,34 @@ typedef struct work_pool {
 extern "C" {
 #endif
 
-MPStatus 
-mpman_initialize();
-
-void 
-mpman_teardown();
 
 MPWorkNode *
-mpman_create_work_node(MPWorkItem work, void *arg);
+mpwrk_create_work_node(MPWorkItem work, void *arg);
 
 void 
-mpman_destroy_work_node(MPWorkNode *node);
+mpwrk_destroy_work_node(MPWorkNode *node);
 
 MPWorkNode *
-mpman_work_queue_pop(MPDeviceWorkPool *work_pool);
+mpwrk_work_queue_pop(MPDeviceWorkPool *work_pool);
 
 void
-mpman_work_queue_push(MPDeviceWorkPool *work_pool, MPWorkItem work, void *arg);
+mpwrk_work_queue_push(MPDeviceWorkPool *work_pool, MPWorkItem work, void *arg);
 
 void
-mpman_work_wait(MPDeviceWorkPool *work_pool);
+mpwrk_work_wait(MPDeviceWorkPool *work_pool);
 
 void *
-mpman_process_work(void *arg);
+mpwrk_process_work(void *arg);
 
 MPDeviceWorkPool * 
-mpman_create_work_pool(int num_threads);
+mpwrk_create_work_pool(int num_threads);
 
 void
-mpman_destroy_work_pool(MPDeviceWorkPool *work_pool);
+mpwrk_destroy_work_pool(MPDeviceWorkPool *work_pool);
 
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // MILLIPYDE_MANAGER_H
+#endif // MILLIPYDE_WORKERS_H

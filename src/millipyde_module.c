@@ -6,7 +6,6 @@
 
 #include "millipyde.h"
 #include "millipyde_devices.h"
-#include "millipyde_manager.h"
 #include "gpuarray.h"
 #include "gpuimage.h"
 #include "gpuoperation.h"
@@ -65,6 +64,29 @@ PyInit_millipyde(void)
     MPStatus status;
 
     /*
+     * Setup the devices on the system 
+     */
+
+    status = mpdev_initialize();
+    if (status != MILLIPYDE_SUCCESS) {
+        PyErr_SetString(PyExc_ImportError, 
+                    mperr_str(status));
+        return NULL;
+    }
+    if (mpdev_get_device_count() > 1 && mpdev_peer_to_peer_supported() == MP_FALSE)
+    {
+        PyErr_WarnEx(PyExc_ImportWarning,
+                     mperr_str(DEV_WARN_NO_PEER_ACCESS),
+                     1);
+    }
+
+    /*
+     * Register cleanup functions
+     */
+
+    Py_AtExit(mpdev_teardown);
+
+    /*
      * Prepare all of the types
      */
 
@@ -105,41 +127,7 @@ PyInit_millipyde(void)
     if (m == NULL) {
         return NULL;
     }
-
-    /*
-     * Setup the devices on the system 
-     */
-
-    status = mpdev_initialize();
-    if (status != MILLIPYDE_SUCCESS) {
-        PyErr_SetString(PyExc_ImportError, 
-                    mperr_str(status));
-        return NULL;
-    }
-    if (mpdev_get_device_count() > 1 && mpdev_peer_to_peer_supported() == MP_FALSE)
-    {
-        PyErr_WarnEx(PyExc_ImportWarning,
-                     mperr_str(DEV_WARN_NO_PEER_ACCESS),
-                     1);
-    }
-
-    /*
-     * Setup the device manager
-     */
-
-    status = mpman_initialize();
-    if (status != MILLIPYDE_SUCCESS) {
-        PyErr_SetString(PyExc_ImportError, 
-                    mperr_str(status));
-        return NULL;
-    }
-
-    /*
-     * Register cleanup functions
-     */
-
-    Py_AtExit(mpdev_teardown);
-    Py_AtExit(mpman_teardown);
+    
 
     /*
      * Create all supported Millipyde objects 
