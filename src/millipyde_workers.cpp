@@ -105,7 +105,8 @@ mpwrk_work_wait(MPDeviceWorkPool *work_pool)
     pthread_mutex_lock(&(work_pool->mux));
     while (true)
     {
-        if ((work_pool->running && work_pool->num_threads != 0) ||
+        // If running, wait for threads to finish. If stopped, wait for threads to die
+        if ((work_pool->running && work_pool->num_threads_busy != 0) ||
             (!work_pool->running && work_pool->num_threads != 0))
         {
             pthread_cond_wait(&(work_pool->working), &(work_pool->mux));

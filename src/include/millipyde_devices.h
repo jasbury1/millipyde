@@ -27,9 +27,23 @@ mpdev_peer_to_peer_supported();
 MPBool 
 mpdev_can_use_peer(int device, int peer_devce);
 
-int mpdev_get_device_count();
-int mpdev_get_current_device();
-void mpdev_set_current_device(int device_id);
+int 
+mpdev_get_device_count();
+
+int 
+mpdev_get_current_device();
+
+void *
+mpdev_get_stream(int device_id, int stream);
+
+void
+mpdev_submit_work(int device_id, MPWorkItem work, void *arg);
+
+void
+mpdev_synchronize(int device_id);
+
+void 
+mpdev_set_current_device(int device_id);
 
 #ifdef __cplusplus
 }

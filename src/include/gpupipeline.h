@@ -39,6 +39,7 @@ typedef struct {
     PyObject_HEAD
     PyObject *inputs;
     PyObject *operations;
+    int device_id;
 } PyGPUPipelineObject;
 
 
@@ -59,8 +60,8 @@ PyGPUPipeline_init(PyGPUPipelineObject *self, PyObject *args, PyObject *kwds);
 PyObject *
 PyGPUPipeline_start(PyGPUPipelineObject *self, PyObject *ignored);
 
-PyObject *
-gpupipeline_run_stages(PyObject *input, PyObject *operations);
+void *
+gpupipeline_run_stages(void *arg);
 
 
 /*******************************************************************************

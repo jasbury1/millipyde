@@ -28,7 +28,6 @@ void gpuarray_copy_from_host(PyGPUArrayObject *array, void *data, size_t nbytes)
     HIP_CHECK(hipMalloc(&(array->device_data), nbytes));
     HIP_CHECK(hipMemcpy(array->device_data, data, nbytes, hipMemcpyHostToDevice));
     array->nbytes = nbytes;
-    array->mem_loc = mpdev_get_current_device();
 }
 
 // DO not set mem_loc. We aren't moving anything, just creating a copy

@@ -9,6 +9,7 @@
 #include "gpuarray_funcs.h"
 #include "use_numpy.h"
 #include "millipyde.h"
+#include "millipyde_devices.h"
 
 
 PyObject *
@@ -111,6 +112,9 @@ PyGPUArray_init(PyGPUArrayObject *self, PyObject *args, PyObject *kwds)
 
     // Transfer memory from numpy array to our device pointer
     gpuarray_copy_from_host(self, array_data, array_nbytes);
+
+    // The current memory location is now set. Safe to now set the stream
+    self->stream = mpdev_get_stream(self->mem_loc, 0);
 
     self->ndims = PyArray_NDIM(array);
     self->type = PyArray_TYPE(array);

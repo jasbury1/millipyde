@@ -8,6 +8,15 @@
 #include "gpuarray.h"
 #include "gpupipeline.h"
 #include "gpuoperation.h"
+#include "millipyde_devices.h"
+#include "millipyde_workers.h"
+
+typedef struct execution_arguments {
+    int stream_id;
+    int device_id;
+    PyObject *input;
+    PyObject *operations;
+} ExecutionArgs;
 
 
 void
@@ -27,6 +36,7 @@ PyGPUPipeline_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     if(self != NULL) {
         self->inputs = NULL;
         self->operations = NULL;
+        self->device_id = 0;
     }
     return (PyObject *) self;
 }
@@ -78,21 +88,40 @@ PyGPUPipeline_start(PyGPUPipelineObject *self, PyObject *Py_UNUSED(ignored))
 
     for(iter = 0; iter < num_inputs; ++iter)
     {
+        ExecutionArgs *args = (ExecutionArgs *)malloc(sizeof(ExecutionArgs));
+
         input = PyList_GetItem(self->inputs, iter);
-        gpupipeline_run_stages(input, self->operations);
+
+        args->device_id = self->device_id;
+        args->stream_id = iter % DEVICE_STREAM_COUNT;
+        args->input = input;
+        args->operations = self->operations;
+
+        gpupipeline_run_stages((void *)args);
     }
+    mpdev_synchronize(self->device_id);
     return Py_None;
 }
 
 
-PyObject *
-gpupipeline_run_stages(PyObject *input, PyObject *operations)
+void *
+gpupipeline_run_stages(void *arg)
 {
+    ExecutionArgs *args = (ExecutionArgs *)arg;
+    int stream = args->stream_id;
+    int device_id = args->device_id;
+    PyObject *operations = args->operations;
+    PyObject *input = args->input;
+
     PyGPUOperationObject *operation;
     PyObject *result;
     Py_ssize_t num_stages = PyList_Size(operations);
     Py_ssize_t iter;
-    
+
+    ((PyGPUArrayObject *)input)->stream = mpdev_get_stream(device_id, stream);
+
+    // TODO: set the device
+
     for(iter = 0; iter < num_stages; ++iter)
     {
         operation = (PyGPUOperationObject *)PyList_GetItem(operations, iter);
@@ -105,6 +134,8 @@ gpupipeline_run_stages(PyObject *input, PyObject *operations)
             result = PyGPUOperation_run(operation, NULL);
         }
     }
-    return result;
+
+    free(args);
+    return (void *)result;
 }
 

@@ -157,7 +157,7 @@ void mpimg_color_to_greyscale(PyGPUImageObject *gpuimage){
             dim3(ceil(width / 32.0), ceil(height / 32.0), 1),
             dim3(32, 32, 1),
             0,
-            0,
+            *stream,
             d_rgb,
             d_grey,
             width,
@@ -198,13 +198,12 @@ void mpimg_transpose(PyGPUImageObject *gpuimage)
     array->dims[array->ndims] = array->dims[0] * sizeof(double);
     array->dims[array->ndims + 1] = sizeof(double);
 
-
     hipLaunchKernelGGL(g_transpose, 
             dim3(ceil(width / 32.0), ceil(height / 32.0), 1),
             dim3(TRANSPOSE_BLOCK_DIM, TRANSPOSE_BLOCK_DIM, 1),
             //TODO: Double check this
             TRANSPOSE_BLOCK_DIM * TRANSPOSE_BLOCK_DIM * array->dims[array->ndims + 1],
-            0,
+            *stream,
             d_img,
             d_transpose,
             width,

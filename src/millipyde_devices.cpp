@@ -17,6 +17,8 @@ typedef struct mp_device {
 
 
 static int device_count = 0;
+
+// A global state variable for where to place things on the main Python thread
 static int current_device = 0;
 static bool peer_to_peer_supported = false;
 
@@ -74,6 +76,7 @@ mpdev_initialize()
     for (int i = 0; i < device_count; ++i)
     {
         MPDevice &device = device_array[i];
+        HIP_CHECK(hipSetDevice(i));
 
         // Initialize the null stream
         device.streams[0] = 0;
@@ -89,6 +92,8 @@ mpdev_initialize()
 
         device.valid = MP_TRUE;
     }
+
+    HIP_CHECK(hipSetDevice(0));
     
     return MILLIPYDE_SUCCESS;
 }
@@ -106,6 +111,7 @@ mpdev_teardown()
         for (int i = 0; i < device_count; ++i)
         {
             MPDevice &device = device_array[i];
+            HIP_CHECK(hipSetDevice(i));
 
             // Destroy the streams we created
             for (int j = 1; j < DEVICE_STREAM_COUNT; ++j)
@@ -157,6 +163,29 @@ mpdev_set_current_device(int device_id)
 {
     HIP_CHECK(hipSetDevice(device_id));
     current_device = device_id;
+}
+
+
+void *
+mpdev_get_stream(int device_id, int stream)
+{
+    return (void *)(&(device_array[device_id].streams[stream]));
+}
+
+
+void
+mpdev_submit_work(int device_id, MPWorkItem work, void *arg)
+{
+    mpwrk_work_queue_push(device_array[device_id].work_pool, work, arg);
+}
+
+
+void
+mpdev_synchronize(int device_id)
+{
+    mpwrk_work_wait(device_array[device_id].work_pool);
+    HIP_CHECK(hipSetDevice(device_id));
+    HIP_CHECK(hipDeviceSynchronize());
 }
 
 
