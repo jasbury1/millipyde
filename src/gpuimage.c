@@ -8,7 +8,7 @@
 #include "gpuimage.h"
 #include "GPUKernels.h"
 #include "millipyde_image.h"
-#include "gpuarray_funcs.h"
+#include "millipyde_objects.h"
 #include "use_numpy.h"
 #include "millipyde.h"
 

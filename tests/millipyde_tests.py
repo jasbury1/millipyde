@@ -210,6 +210,28 @@ class TestMillipydeImages(unittest.TestCase):
         p = mp.Pipeline([], [])
         self.assertIsNotNone(p)
 
+
+    def test_create_pipeline2(self):
+        d_charlie = mp.gpuimage(io.imread("examples/images/charlie.png"))
+        d_charlie2 = mp.gpuimage(io.imread("examples/images/charlie.png"))
+
+        inputs = [d_charlie, d_charlie2]
+        operations = [mp.Operation("rgb2grey"), mp.Operation("transpose")]
+
+        p = mp.Pipeline(inputs, operations)
+        self.assertIsNotNone(p)
+
+    
+    def test_create_pipeline3(self):
+        d_charlie = mp.gpuimage(io.imread("examples/images/charlie.png"))
+        d_charlie2 = mp.gpuimage(io.imread("examples/images/charlie.png"))
+
+        inputs = [d_charlie, d_charlie2]
+        operations = [mp.Operation("rgb2grey"), mp.Operation("transpose")]
+
+        p = mp.Pipeline(inputs, operations, device=0)
+        self.assertIsNotNone(p)
+
     
     def test_create_invalid_pipeline(self):
         with self.assertRaises(ValueError):
@@ -230,6 +252,39 @@ class TestMillipydeImages(unittest.TestCase):
         with self.assertRaises(ValueError):
             p = mp.Pipeline([], np.array([1, 2, 3]))
 
+    
+    def test_create_invalid_pipeline5(self):
+        d_charlie = mp.gpuimage(io.imread("examples/images/charlie.png"))
+        d_charlie2 = mp.gpuimage(io.imread("examples/images/charlie.png"))
+
+        inputs = [d_charlie, d_charlie2]
+        operations = [mp.Operation("rgb2grey"), mp.Operation("transpose")]
+
+        with self.assertRaises(ValueError):
+            p = mp.Pipeline(inputs, operations, device=5.3)
+
+
+    def test_create_invalid_pipeline6(self):
+        d_charlie = mp.gpuimage(io.imread("examples/images/charlie.png"))
+        d_charlie2 = mp.gpuimage(io.imread("examples/images/charlie.png"))
+
+        inputs = [d_charlie, d_charlie2]
+        operations = [mp.Operation("rgb2grey"), mp.Operation("transpose")]
+
+        with self.assertRaises(ValueError):
+            p = mp.Pipeline(inputs, operations, device=2, unused='test')
+
+
+    def test_create_invalid_pipeline7(self):
+        d_charlie = mp.gpuimage(io.imread("examples/images/charlie.png"))
+        d_charlie2 = mp.gpuimage(io.imread("examples/images/charlie.png"))
+
+        inputs = [d_charlie, d_charlie2]
+        operations = [mp.Operation("rgb2grey"), mp.Operation("transpose")]
+
+        with self.assertRaises(ValueError):
+            p = mp.Pipeline(inputs, operations, device="nah")
+    
 
     def test_pipeline_start(self):
         charlie = io.imread("examples/images/charlie.png")

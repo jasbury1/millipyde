@@ -6,10 +6,12 @@
 
 #include "use_numpy.h"
 #include "gpuarray.h"
+#include "gpuimage.h"
 #include "gpupipeline.h"
 #include "gpuoperation.h"
 #include "millipyde_devices.h"
 #include "millipyde_workers.h"
+#include "millipyde_objects.h"
 
 typedef struct execution_arguments {
     int stream_id;
@@ -47,13 +49,22 @@ PyGPUPipeline_init(PyGPUPipelineObject *self, PyObject *args, PyObject *kwds)
 {
     PyObject *inputs = NULL;
     PyObject *operations = NULL;
+    PyObject *device_arg;
+    int device_id;
+
+    int iter;
 
     Py_ssize_t num_call_args = PyTuple_Size(args);
 
-    if (!PyArg_ParseTuple(args, "OO", &inputs, &operations))
+    if(num_call_args < 2 || num_call_args > 3)
     {
+        PyErr_SetString(PyExc_ValueError,
+                        mperr_str(GPUPIPELINE_ERROR_CONSTRUCTION_INVALID_ARGS));
         return -1;
     }
+
+    inputs = PyTuple_GetItem(args, 0);
+    operations = PyTuple_GetItem(args, 1);
 
     if(!PyList_CheckExact(inputs))
     {
@@ -68,6 +79,39 @@ PyGPUPipeline_init(PyGPUPipelineObject *self, PyObject *args, PyObject *kwds)
                                 mperr_str(GPUPIPELINE_ERROR_NONLIST_OPERATIONS));
         return -1;
     }
+
+    if (kwds)
+    {
+        device_arg = PyDict_GetItemString(kwds, "device");
+
+        if (device_arg && PyDict_Size(kwds) == 1)
+        {
+            if (PyLong_Check(device_arg))
+            {
+                device_id = PyLong_AsLong(device_arg);
+            }
+            else
+            {
+                PyErr_SetString(PyExc_ValueError,
+                                mperr_str(GPUPIPELINE_ERROR_INVALID_DEVICE));
+                return -1;
+            }
+
+            if (!mpdev_is_valid_device(device_id))
+            {
+                PyErr_SetString(PyExc_ValueError,
+                                mperr_str(GPUPIPELINE_ERROR_UNUSABLE_DEVICE));
+                return -1;
+            }
+        }
+        else
+        {
+            PyErr_SetString(PyExc_ValueError,
+                            mperr_str(GPUPIPELINE_ERROR_CONSTRUCTION_NAMED_ARGS));
+            return -1;
+        }
+    }
+    
 
     Py_INCREF(inputs);
     Py_INCREF(operations);

@@ -69,10 +69,21 @@ const char *mperr_str(MPStatus status)
     case GPUOPERATION_ERROR_RUN_CANNOT_READ_DEV_RANDOM:
         return "Unable to read from /dev/random for random number generation";
 
+
+    case GPUPIPELINE_ERROR_CONSTRUCTION_INVALID_ARGS:
+        return "Constructing Pipeline requires 2 arguments, or 3 arguments for specifying a device";
+    case GPUPIPELINE_ERROR_INVALID_DEVICE:
+        return "Constructing Pipeline requires an integer device";
+    case GPUPIPELINE_ERROR_UNUSABLE_DEVICE:
+        return "Constructing Pipeline requires a device that is useable for GPU operations";
+    case GPUPIPELINE_ERROR_CONSTRUCTION_NAMED_ARGS:
+        return "Constructing Pipelines can only include one named argument designated 'device'";
     case GPUPIPELINE_ERROR_NONLIST_INPUTS:
         return "Constructing Pipeline requires a List of inputs";
     case GPUPIPELINE_ERROR_NONLIST_OPERATIONS:
         return "Constructing Pipeline requires a List of operations";
+    case GPUPIPELINE_ERROR_NONGPU_INPUT:
+        return "Constructing Pipeline requires all inputs to be GPU compatible";
 
     default:
         return "Unknown failure occurred";

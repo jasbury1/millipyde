@@ -33,6 +33,9 @@ mpdev_get_device_count();
 int 
 mpdev_get_current_device();
 
+MPBool
+mpdev_is_valid_device(int device_id);
+
 void *
 mpdev_get_stream(int device_id, int stream);
 

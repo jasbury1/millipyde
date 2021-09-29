@@ -144,6 +144,21 @@ mpdev_can_use_peer(int device, int peer_devce)
 }
 
 
+MPBool
+mpdev_is_valid_device(int device_id)
+{
+    if (device_id < 0 || device_id > device_count)
+    {
+        return MP_FALSE;
+    }
+    if (!device_array[device_id].valid)
+    {
+        return MP_FALSE;
+    }
+    return MP_TRUE;
+}
+
+
 int 
 mpdev_get_device_count()
 {

@@ -6,10 +6,10 @@
 
 #include "gpuarray.h"
 #include "GPUKernels.h"
-#include "gpuarray_funcs.h"
 #include "use_numpy.h"
 #include "millipyde.h"
 #include "millipyde_devices.h"
+#include "millipyde_objects.h"
 
 
 PyObject *
@@ -40,7 +40,7 @@ PyGPUArray_add_one(PyGPUArrayObject *self, void *closure)
 void
 PyGPUArray_dealloc(PyGPUArrayObject *self)
 {
-    gpuarray_dealloc_device_data(self);
+    mpobj_dealloc_device_data(self);
     PyMem_Free(self->array_data);
     PyMem_Free(self->dims);
     Py_TYPE(self)->tp_free((PyObject *) self);
@@ -111,7 +111,7 @@ PyGPUArray_init(PyGPUArrayObject *self, PyObject *args, PyObject *kwds)
     npy_intp *array_strides = PyArray_STRIDES(array);
 
     // Transfer memory from numpy array to our device pointer
-    gpuarray_copy_from_host(self, array_data, array_nbytes);
+    mpobj_copy_from_host(self, array_data, array_nbytes);
 
     // The current memory location is now set. Safe to now set the stream
     self->stream = mpdev_get_stream(self->mem_loc, 0);
@@ -136,7 +136,7 @@ PyGPUArray_init(PyGPUArrayObject *self, PyObject *args, PyObject *kwds)
 PyObject *
 PyGPUArray_to_array(PyGPUArrayObject *self, void *closure)
 {
-    void *data = gpuarray_copy_to_host(self);
+    void *data = mpobj_copy_to_host(self);
 
     npy_intp *array_dims = malloc(self->ndims * sizeof(npy_intp));
     for (int i = 0; i < self->ndims; ++i)
