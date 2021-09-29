@@ -89,6 +89,7 @@ PyGPUPipeline_init(PyGPUPipelineObject *self, PyObject *args, PyObject *kwds)
             if (PyLong_Check(device_arg))
             {
                 device_id = PyLong_AsLong(device_arg);
+                self->device_id = device_id;
             }
             else
             {
@@ -118,7 +119,6 @@ PyGPUPipeline_init(PyGPUPipelineObject *self, PyObject *args, PyObject *kwds)
 
     self->inputs = inputs;
     self->operations = operations;
-    self->device_id = device_id;
 
     return 0;
 }
@@ -141,7 +141,6 @@ PyGPUPipeline_start(PyGPUPipelineObject *self, PyObject *Py_UNUSED(ignored))
         args->stream_id = iter % DEVICE_STREAM_COUNT;
         args->input = input;
         args->operations = self->operations;
-
         gpupipeline_run_stages((void *)args);
     }
     mpdev_synchronize(self->device_id);
