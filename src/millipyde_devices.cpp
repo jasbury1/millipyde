@@ -18,7 +18,8 @@ typedef struct mp_device {
 
 static int device_count = 0;
 
-// A global state variable for where to place things on the main Python thread
+// A global state variable for where the user wants to place objects. Does not
+// correspond to the actual current HIP device
 static int current_device = 0;
 static bool peer_to_peer_supported = false;
 

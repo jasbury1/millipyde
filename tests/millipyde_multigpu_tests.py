@@ -18,8 +18,9 @@ DECIMAL_ERROR = 4
 
 class TestMillypdeMultiGPU(unittest.TestCase):
 
-    def test_sample(self):
-        self.assertTrue(True)
+    def test_device_count(self):
+        num_devices = mp.device_count()
+        self.assertEqual(2, num_devices)
     
 
 

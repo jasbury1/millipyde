@@ -12,16 +12,29 @@
 #include "gpupipeline.h"
 #include "GPUKernels.h"
 
-
 #define INIT_NUMPY_ARRAY_CPP
 #include "use_numpy.h"
 
-void helper() {
+
+PyDoc_STRVAR(device_count_doc,
+             "Lorem ipsum dolor sit amet, consectetur adipiscing elit, \n \
+sed do eiusmod tempor incididunt ut labore et dolore magna \n \
+aliqua. Ut enim ad minim veniam, quis nostrud exercitation \n \
+ullamco laboris nisi ut aliquip ex ea commodo consequat. \n \
+Duis aute irure dolor in reprehenderit in voluptate velit \n \
+esse cillum dolore eu fugiat nulla pariatur. \n \
+Excepteur sint occaecat cupidatat non proident");
+
+
+void 
+helper()
+{
     printf("Trying something!\n");
 }
 
 
-static PyObject * test_func(PyObject* self, PyObject* args)
+static PyObject *
+test_func(PyObject *self, PyObject *args)
 {
     int test = run_bit_extract();
     printf("Test result: %d\n", test);
@@ -29,7 +42,8 @@ static PyObject * test_func(PyObject* self, PyObject* args)
 }
 
 
-static PyObject *mpmod_get_device_count(PyObject *self, PyObject *args)
+static PyObject *
+mpmod_get_device_count(PyObject *self, PyObject *args)
 {
     PyObject *result;
     int device_count = mpdev_get_device_count();
@@ -41,6 +55,7 @@ static PyObject *mpmod_get_device_count(PyObject *self, PyObject *args)
 static PyMethodDef MillipydeMethods[] =
 {
      {"test_func", test_func, METH_VARARGS, "Does this work?"},
+     {"device_count", mpmod_get_device_count, METH_NOARGS, device_count_doc},
      {NULL, NULL, 0, NULL}
 };
 

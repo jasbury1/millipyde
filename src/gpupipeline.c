@@ -38,7 +38,7 @@ PyGPUPipeline_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     if(self != NULL) {
         self->inputs = NULL;
         self->operations = NULL;
-        self->device_id = 0;
+        self->device_id = mpdev_get_current_device();
     }
     return (PyObject *) self;
 }
@@ -118,6 +118,7 @@ PyGPUPipeline_init(PyGPUPipelineObject *self, PyObject *args, PyObject *kwds)
 
     self->inputs = inputs;
     self->operations = operations;
+    self->device_id = device_id;
 
     return 0;
 }
@@ -155,14 +156,21 @@ gpupipeline_run_stages(void *arg)
     int stream = args->stream_id;
     int device_id = args->device_id;
     PyObject *operations = args->operations;
-    PyObject *input = args->input;
+    PyGPUArrayObject *array = (PyGPUArrayObject *)(args->input);
 
     PyGPUOperationObject *operation;
     PyObject *result;
     Py_ssize_t num_stages = PyList_Size(operations);
     Py_ssize_t iter;
 
-    ((PyGPUArrayObject *)input)->stream = mpdev_get_stream(device_id, stream);
+    array->stream = mpdev_get_stream(device_id, stream);
+
+    // We pin the object to this device until it has passed all pipeline stages
+    array->pinned = MP_TRUE;
+    if (array->mem_loc != device_id)
+    {
+        mpobj_change_device(array, device_id);
+    }
 
     // TODO: set the device
 
@@ -171,7 +179,7 @@ gpupipeline_run_stages(void *arg)
         operation = (PyGPUOperationObject *)PyList_GetItem(operations, iter);
         if (operation->requires_instance)
         {
-            result = PyGPUOperation_run_on(operation, input);
+            result = PyGPUOperation_run_on(operation, (PyObject *)array);
         }
         else
         {
@@ -179,6 +187,7 @@ gpupipeline_run_stages(void *arg)
         }
     }
 
+    array->pinned = MP_FALSE;
     free(args);
     return (void *)result;
 }
