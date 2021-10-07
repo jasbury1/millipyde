@@ -7,6 +7,19 @@
 // Macro representing for indicating the host as a location
 #define HOST_LOC -1
 
+typedef int MPBool;
+
+typedef struct {
+    void *device_data;
+    int ndims;
+    int *dims;
+    int type;
+    int mem_loc;
+    void *stream;
+    MPBool pinned;
+    size_t nbytes;
+} GPUCapsule;
+
 typedef enum mp_status_codes {
     MILLIPYDE_SUCCESS = 0,
 
@@ -54,7 +67,6 @@ typedef enum mp_status_codes {
 
 } MPStatus;
 
-typedef int MPBool;
 
 const char* mperr_str(MPStatus status);
 

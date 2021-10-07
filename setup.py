@@ -21,6 +21,7 @@ millipyde_module = Extension('millipyde',
                              include_dirs=[numpy.get_include(), 
                                  'src/include/',
                                  '/opt/rocm-4.1.0/hip/include/hip'],
+                             extra_compile_args = [],
                             # Cython uses old numpy versions. Disable warning until fixed upstream.
                              define_macros=[('NPY_NO_DEPRECATED_API', 'NPY_1_7_API_VERSION')])
 

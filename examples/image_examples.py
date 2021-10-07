@@ -90,6 +90,7 @@ def greyscale_and_transpose_pipeline():
 
 
 def greyscale_and_transpose_pipeline2():
+    '''
     print('\033[95m' + "\nGreyscaling and transposing Charlie without pipeline\n" + '\033[0m')
     d_charlie = mp.gpuimage(io.imread("examples/images/charlie.png"))
     d_charlie2 = mp.gpuimage(io.imread("examples/images/charlie.png"))
@@ -110,6 +111,7 @@ def greyscale_and_transpose_pipeline2():
     d_charlie4.transpose()
     stop = time.perf_counter()
     print("\nTime to beat: {}\n".format(stop - start))
+    '''
 
     print('\033[95m' + "\nGreyscaling and transposing Charlie with pipeline\n" + '\033[0m')
     d_charlie = mp.gpuimage(io.imread("examples/images/charlie.png"))
@@ -120,7 +122,9 @@ def greyscale_and_transpose_pipeline2():
     operations = [mp.Operation("rgb2grey"), mp.Operation("transpose"), mp.Operation("transpose")]
     p = mp.Pipeline(inputs, operations)
     start = time.perf_counter()
+    print("Run was called")
     p.run()
+    print("Run finished")
     stop = time.perf_counter()
     print("\nTime to run pipeline: {}\n".format(stop - start))
 
@@ -134,6 +138,8 @@ def testytest():
     p.run()
     #This shouldn't happen until EVERYTHING is synchronized
     print("Python finished calling run")
+    
+    
     
     imsave("output/testytest.png", np.array(d_charlie))
     print("Python finished saving")

@@ -40,9 +40,18 @@ PyGPUArray_add_one(PyGPUArrayObject *self, void *closure)
 void
 PyGPUArray_dealloc(PyGPUArrayObject *self)
 {
-    mpobj_dealloc_device_data(self);
+    mpobj_dealloc_device_data(self->capsule);
     PyMem_Free(self->array_data);
-    PyMem_Free(self->dims);
+
+    if (self->capsule != NULL)
+    {
+        if (self->capsule->ndims != NULL)
+        {
+            free(self->capsule->dims);
+        }
+        free(self->capsule);
+    }
+
     Py_TYPE(self)->tp_free((PyObject *) self);
 }
 
@@ -53,14 +62,7 @@ PyGPUArray_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     self = (PyGPUArrayObject *)type->tp_alloc(type, 0);
     if(self != NULL) {
         self->array_data = NULL;
-        self->device_data = NULL;
-        self->ndims = 0;
-        self->dims = NULL;
-        self->type = -1;
-        self->nbytes = (size_t)0;
-        self->mem_loc = HOST_LOC;
-        self->stream = NULL;
-        self->pinned = MP_FALSE;
+        self->capsule = NULL;
     }
     return (PyObject *) self;
 }
@@ -70,6 +72,7 @@ PyGPUArray_init(PyGPUArrayObject *self, PyObject *args, PyObject *kwds)
 {
     PyObject *any = NULL;
     PyArrayObject *array = NULL;
+    GPUCapsule *capsule;
 
     if (!PyArg_ParseTuple(args, "O", &any))
     {
@@ -103,6 +106,16 @@ PyGPUArray_init(PyGPUArrayObject *self, PyObject *args, PyObject *kwds)
                         mperr_str(GPUARRAY_ERROR_CONSTRUCTION_WITHOUT_NUMERIC_ARRAY));
         return -1;
     }
+    self->capsule = malloc(sizeof(GPUCapsule));
+    capsule = self->capsule;
+
+    /* Set default values to be overwritten later */
+    capsule->device_data = NULL;
+    capsule->type = -1;
+    capsule->nbytes = (size_t)0;
+    capsule->mem_loc = HOST_LOC;
+    capsule->stream = NULL;
+    capsule->pinned = MP_FALSE;
 
     // Get information from numpy array
     size_t array_nbytes = (size_t)PyArray_NBYTES(array);
@@ -111,23 +124,23 @@ PyGPUArray_init(PyGPUArrayObject *self, PyObject *args, PyObject *kwds)
     npy_intp *array_strides = PyArray_STRIDES(array);
 
     // Transfer memory from numpy array to our device pointer
-    mpobj_copy_from_host(self, array_data, array_nbytes);
+    mpobj_copy_from_host(capsule, array_data, array_nbytes);
 
     // The current memory location is now set. Safe to now set the stream
-    self->stream = mpdev_get_stream(self->mem_loc, 0);
+    capsule->stream = mpdev_get_stream(capsule->mem_loc, 0);
 
-    self->ndims = PyArray_NDIM(array);
-    self->type = PyArray_TYPE(array);
+    capsule->ndims = PyArray_NDIM(array);
+    capsule->type = PyArray_TYPE(array);
 
     // Allocate space and store dimensions and strides
-    self->dims = PyMem_Malloc(self->ndims * 2 * sizeof(int));
-    for (int i = 0; i < self->ndims; ++i)
+    capsule->dims = malloc(capsule->ndims * 2 * sizeof(int));
+    for (int i = 0; i < capsule->ndims; ++i)
     {
-        self->dims[i] = array_dims[i];
+        capsule->dims[i] = array_dims[i];
     }
-    for (int i = 0; i < self->ndims; ++i)
+    for (int i = 0; i < capsule->ndims; ++i)
     {
-        self->dims[i + self->ndims] = array_strides[i];
+        capsule->dims[i + capsule->ndims] = array_strides[i];
     }
 
     return 0;
@@ -136,15 +149,17 @@ PyGPUArray_init(PyGPUArrayObject *self, PyObject *args, PyObject *kwds)
 PyObject *
 PyGPUArray_to_array(PyGPUArrayObject *self, void *closure)
 {
-    void *data = mpobj_copy_to_host(self);
+    GPUCapsule *capsule = self->capsule;
+    void *data = mpobj_copy_to_host(capsule);
 
-    npy_intp *array_dims = malloc(self->ndims * sizeof(npy_intp));
-    for (int i = 0; i < self->ndims; ++i)
+    // Fine to allocate outside python heap since lifetime is only this function
+    npy_intp *array_dims = malloc(capsule->ndims * sizeof(npy_intp));
+    for (int i = 0; i < capsule->ndims; ++i)
     {
-        array_dims[i] = self->dims[i];
+        array_dims[i] = capsule->dims[i];
     }
 
-    PyObject *array = PyArray_SimpleNewFromData(self->ndims, array_dims, self->type, data);
+    PyObject *array = PyArray_SimpleNewFromData(capsule->ndims, array_dims, capsule->type, data);
     if (array == NULL)
     {
         //TODO: set an error

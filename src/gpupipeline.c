@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <pthread.h>
 
 // PY_SSIZE_T_CLEAN Should be defined before including Python.h
 #include <Python.h>
@@ -14,11 +15,16 @@
 #include "millipyde_objects.h"
 
 typedef struct execution_arguments {
-    int stream_id;
-    int device_id;
     PyObject *input;
     PyObject *operations;
+    int device_id;
+    int stream_id;
 } ExecutionArgs;
+
+#define NUM_THREADS 4
+
+static pthread_t threads[NUM_THREADS];
+
 
 
 void
@@ -135,13 +141,28 @@ PyGPUPipeline_connect_to(PyGPUPipelineObject *self, PyObject *receiver)
 }
 
 
+void *
+gpupipeline_thread_run_sequence(void *arg)
+{
+    ExecutionArgs *args = (ExecutionArgs *)arg;
+    PyObject *input = args->input;    
+    PyObject *operations = args->operations;
+    int device_id = args->device_id;
+    int stream_id = args->stream_id;
+
+    gpupipeline_run_sequence(input, operations, device_id, stream_id);
+    free(args);
+
+    return NULL;
+}
 
 
 void 
-mpobj_run_sequence(PyObject *input, PyObject *operations, int device_id, int stream_id)
+gpupipeline_run_sequence(PyObject *input, PyObject *operations, int device_id, int stream_id)
 {
 
     PyGPUArrayObject *array;
+    GPUCapsule *capsule;
     PyObject *result;
     PyGPUOperationObject *operation;
     Py_ssize_t num_stages = PyList_Size(operations);
@@ -150,26 +171,31 @@ mpobj_run_sequence(PyObject *input, PyObject *operations, int device_id, int str
     void *stream_ptr = mpdev_get_stream(device_id, stream_id);
 
     array = (PyGPUArrayObject *)input;
+    capsule = array->capsule;
     
-    array->pinned = MP_TRUE;
-    if (array->mem_loc != device_id)
+    capsule->pinned = MP_TRUE;
+    if (capsule->mem_loc != device_id)
     {
         printf("Changing the memory location peer2peer\n");
-        mpobj_change_device(array, device_id);
+        mpobj_change_device(capsule, device_id);
     }
 
-    array->stream = stream_ptr;
+    capsule->stream = stream_ptr;
 
     mpdev_set_device(device_id);
 
+    // TODO: Segfaults when these iterations happen too fast
     for(iter = 0; iter < num_stages; ++iter)
     {
         operation = (PyGPUOperationObject *)PyList_GetItem(operations, iter);
+        
         if (operation->requires_instance)
         {
+            
             result = PyGPUOperation_run_on(operation, (PyObject *)array);
-
+            
             mpdev_stream_synchronize(device_id, stream_id);
+            
         }
         else
         {
@@ -177,8 +203,8 @@ mpobj_run_sequence(PyObject *input, PyObject *operations, int device_id, int str
         }
     }
 
-    array->pinned = MP_FALSE;
-    array->stream = mpdev_get_stream(device_id, 0);
+    capsule->pinned = MP_FALSE;
+    capsule->stream = mpdev_get_stream(device_id, 0);
     
     return;
 }
@@ -195,83 +221,35 @@ PyGPUPipeline_run(PyGPUPipelineObject *self, PyObject *Py_UNUSED(ignored))
     for(iter = 0; iter < num_inputs; ++iter)
     {
         input = PyList_GetItem(self->inputs, iter);
-        //gpupipeline_run_sequence(input, self->operations, self->device_id, iter % DEVICE_STREAM_COUNT);
-        mpobj_run_sequence(input, self->operations, self->device_id, iter % DEVICE_STREAM_COUNT);
-    }
-    return Py_None;
-}
 
-
-/*
-PyObject *
-PyGPUPipeline_run(PyGPUPipelineObject *self, PyObject *Py_UNUSED(ignored))
-{
-    PyObject *input;
-    Py_ssize_t num_inputs = PyList_Size(self->inputs);
-    Py_ssize_t iter;
-
-    for(iter = 0; iter < num_inputs; ++iter)
-    {
-        //printf("Running iteration %d\n", iter);
+        /*
         ExecutionArgs *args = (ExecutionArgs *)malloc(sizeof(ExecutionArgs));
-
-        input = PyList_GetItem(self->inputs, iter);
-
         args->device_id = self->device_id;
-        args->stream_id = iter % DEVICE_STREAM_COUNT;
         args->input = input;
         args->operations = self->operations;
+        args->stream_id = iter % DEVICE_STREAM_COUNT;
 
-        gpupipeline_run_stages((void *)args);
+        if (pthread_create(&threads[iter], NULL, gpupipeline_thread_run_sequence, args))
+        {
+            printf("Error creating thread!!\n");
+            return Py_None;
+        }
+        */
+
+        gpupipeline_run_sequence(input, self->operations, self->device_id, iter % DEVICE_STREAM_COUNT);
     }
-    printf("Synchronizing\n");
-    mpdev_synchronize(self->device_id);
+    
+    /*
+    for(iter = 0; iter < num_inputs; ++iter)
+    {
+        if(pthread_join(threads[iter], NULL))
+        {
+            printf("Error joining threads!!\n");
+        }
+    }
+    */
     return Py_None;
 }
-*/
-
-/*
-void *
-gpupipeline_run_stages(void *arg)
-{
-    ExecutionArgs *args = (ExecutionArgs *)arg;
-    int stream = args->stream_id;
-    int device_id = args->device_id;
-    PyObject *operations = args->operations;
-    PyGPUArrayObject *array = (PyGPUArrayObject *)(args->input);
-
-    PyGPUOperationObject *operation;
-    PyObject *result;
-    Py_ssize_t num_stages = PyList_Size(operations);
-    Py_ssize_t iter;
-
-    array->stream = mpdev_get_stream(device_id, stream);
-
-    array->pinned = MP_TRUE;
-    if (array->mem_loc != device_id)
-    {
-        mpobj_change_device(array, device_id);
-    }
-
-
-    for(iter = 0; iter < num_stages; ++iter)
-    {
-        operation = (PyGPUOperationObject *)PyList_GetItem(operations, iter);
-        if (operation->requires_instance)
-        {
-            result = PyGPUOperation_run_on(operation, (PyObject *)array);
-        }
-        else
-        {
-            result = PyGPUOperation_run(operation, NULL);
-        }
-    }
-
-    array->pinned = MP_FALSE;
-    free(args);
-    return (void *)result;
-}
-*/
 
 
 

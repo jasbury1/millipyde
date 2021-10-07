@@ -49,14 +49,7 @@ Excepteur sint occaecat cupidatat non proident")
 typedef struct {
     PyObject_HEAD
     void *array_data;
-    void *device_data;
-    int ndims;
-    int *dims;
-    int type;
-    int mem_loc;
-    void *stream;
-    MPBool pinned;
-    size_t nbytes;
+    GPUCapsule *capsule;
 } PyGPUArrayObject;
 
 /*******************************************************************************

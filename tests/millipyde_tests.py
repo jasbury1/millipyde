@@ -37,11 +37,11 @@ class TestMillipydeImages(unittest.TestCase):
         gpu_array = mp.gpuarray([4, 3, 2, 1])
         self.assertFalse(np.array_equal(numpy_array, np.array(gpu_array)))
     
-
+    
     def test_create_invalid_gpuarray(self):
         with self.assertRaises(ValueError):
             gpu_array = mp.gpuarray(None)
-
+    
 
     def test_create_invalid_gpuarray2(self):
         with self.assertRaises(TypeError):

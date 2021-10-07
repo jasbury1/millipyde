@@ -16,6 +16,7 @@ int
 PyGPUImage_init(PyGPUImageObject *self, PyObject *args, PyObject *kwds) {
     PyObject *any = NULL;
     PyArrayObject *array = NULL;
+    GPUCapsule *capsule;
 
     if (!PyArg_ParseTuple(args, "O", &any))
     {
@@ -63,8 +64,10 @@ PyGPUImage_init(PyGPUImageObject *self, PyObject *args, PyObject *kwds) {
     {
         return -1;
     }
-    self->width = self->array.dims[1];
-    self->height = self->array.dims[0];
+
+    capsule = self->array.capsule;
+    self->width = capsule->dims[1];
+    self->height = capsule->dims[0];
     return 0;
 }
 
@@ -72,14 +75,18 @@ PyObject *
 PyGPUImage_color_to_greyscale(PyGPUImageObject *self, void *closure)
 {
     // TODO: Type checking, etc
-    mpimg_color_to_greyscale(self);
+    GPUCapsule *capsule = self->array.capsule;
+
+    mpimg_color_to_greyscale(capsule);
     return Py_None;
 }
 
 PyObject *
 PyGPUImage_transpose(PyGPUImageObject *self, void *closure)
 {
+    GPUCapsule *capsule = self->array.capsule;
+
     // TODO: Type checking, etc
-    mpimg_transpose(self);
+    mpimg_transpose(capsule);
     return Py_None;
 }

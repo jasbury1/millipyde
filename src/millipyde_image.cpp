@@ -3,13 +3,7 @@
 #include "hip/hip_runtime.h"
 #include "millipyde_hip_util.h"
 #include "millipyde_image.h"
-
-// PY_SSIZE_T_CLEAN Should be defined before including Python.h
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
-
-#include "use_numpy.h"
-#include "gpuimage.h"
+#include "millipyde.h"
 
 __global__ void g_color_to_greyscale(unsigned char * rgbImg, double * greyImg, 
         int width, int height, int channels)
@@ -123,35 +117,37 @@ __global__ void g_gaussian_row(T *in_arr, T *out_arr, int width, int height)
 }
 */
 
-extern "C"{
+extern "C" {
 
-void mpimg_color_to_greyscale(PyGPUImageObject *gpuimage){
-    PyGPUArrayObject *array = (PyGPUArrayObject *)gpuimage;
+void *
+mpimg_color_to_greyscale(void *arg)
+{
+    GPUCapsule *capsule = (GPUCapsule *)arg;
 
-    int channels = array->dims[2];
-    int height = array->dims[0];
-    int width = array->dims[1];
+    int channels = capsule->dims[2];
+    int height = capsule->dims[0];
+    int width = capsule->dims[1];
 
     unsigned char *d_rgb;
     double *d_grey;
 
-    hipStream_t *stream = (hipStream_t *)array->stream;
+    hipStream_t *stream = (hipStream_t *)capsule->stream;
 
-    if (array->device_data != NULL) {
-        d_rgb = (unsigned char*)(array->device_data);
+    if (capsule->device_data != NULL) {
+        d_rgb = (unsigned char*)(capsule->device_data);
     }
     else {
         //TODO
-        return;
+        return NULL;
     }
 
-    HIP_CHECK(hipMalloc(&d_grey, (array->nbytes / channels) * sizeof(double)));
+    HIP_CHECK(hipMalloc(&d_grey, (capsule->nbytes / channels) * sizeof(double)));
 
-    array->nbytes = (array->nbytes / channels) * sizeof(double);
-    array->ndims = 2;
-    array->type = 12;
-    array->dims[2] = (npy_intp)(width * sizeof(double));
-    array->dims[3] = (npy_intp)(sizeof(double));
+    capsule->nbytes = (capsule->nbytes / channels) * sizeof(double);
+    capsule->ndims = 2;
+    capsule->type = 12;
+    capsule->dims[2] = (int)(width * sizeof(double));
+    capsule->dims[3] = (int)(sizeof(double));
 
     hipLaunchKernelGGL(g_color_to_greyscale, 
             dim3(ceil(width / 32.0), ceil(height / 32.0), 1),
@@ -164,54 +160,58 @@ void mpimg_color_to_greyscale(PyGPUImageObject *gpuimage){
             height,
             channels);
 
-    array->device_data = d_grey;
+    capsule->device_data = d_grey;
 
     HIP_CHECK(hipFree(d_rgb));
+    return NULL;
 }
 
 
-void mpimg_transpose(PyGPUImageObject *gpuimage)
+void *
+mpimg_transpose(void *arg)
 {
-    PyGPUArrayObject *array = (PyGPUArrayObject *)gpuimage;
+    GPUCapsule *capsule = (GPUCapsule *)arg;
 
-    int height = array->dims[0];
-    int width = array->dims[1];
+    int height = capsule->dims[0];
+    int width = capsule->dims[1];
 
     double *d_img;
     double *d_transpose;
 
-    hipStream_t *stream = (hipStream_t *)array->stream; 
+    hipStream_t *stream = (hipStream_t *)capsule->stream; 
 
-    if (array->device_data != NULL) {
-        d_img = (double *)(array->device_data);
+    if (capsule->device_data != NULL) {
+        d_img = (double *)(capsule->device_data);
     }
     else {
         //TODO
-        return;
+        return NULL;
     }
 
-    HIP_CHECK(hipMalloc(&d_transpose, array->nbytes));
+    HIP_CHECK(hipMalloc(&d_transpose, capsule->nbytes));
     
-    int temp = array->dims[0];
-    array->dims[0] = array->dims[1];
-    array->dims[1] = temp;
-    array->dims[array->ndims] = array->dims[0] * sizeof(double);
-    array->dims[array->ndims + 1] = sizeof(double);
+    int temp = capsule->dims[0];
+    capsule->dims[0] = capsule->dims[1];
+    capsule->dims[1] = temp;
+    capsule->dims[capsule->ndims] = capsule->dims[0] * sizeof(double);
+    capsule->dims[capsule->ndims + 1] = sizeof(double);
 
     hipLaunchKernelGGL(g_transpose, 
             dim3(ceil(width / 32.0), ceil(height / 32.0), 1),
             dim3(TRANSPOSE_BLOCK_DIM, TRANSPOSE_BLOCK_DIM, 1),
             //TODO: Double check this
-            TRANSPOSE_BLOCK_DIM * TRANSPOSE_BLOCK_DIM * array->dims[array->ndims + 1],
+            TRANSPOSE_BLOCK_DIM * TRANSPOSE_BLOCK_DIM * capsule->dims[capsule->ndims + 1],
             *stream,
             d_img,
             d_transpose,
             width,
             height);
 
-    array->device_data = d_transpose;
+    capsule->device_data = d_transpose;
 
     HIP_CHECK(hipFree(d_img));
+    
+    return NULL;
 }
 
 
