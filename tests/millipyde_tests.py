@@ -286,7 +286,7 @@ class TestMillipydeImages(unittest.TestCase):
             p = mp.Pipeline(inputs, operations, device="nah")
     
 
-    def test_pipeline_start(self):
+    def test_pipeline_run(self):
         charlie = io.imread("examples/images/charlie.png")
         charlie = np.transpose(rgb2gray(rgba2rgb(charlie)))
 
@@ -295,13 +295,13 @@ class TestMillipydeImages(unittest.TestCase):
         operations = [mp.Operation("rgb2grey"), mp.Operation("transpose")]
 
         p = mp.Pipeline(inputs, operations)
-        p.start()
+        p.run()
 
         charlie2 = np.array(charlie_on_gpu)
         npt.assert_almost_equal(charlie, charlie2, decimal=DECIMAL_ERROR)
 
 
-    def test_pipeline_start2(self):
+    def test_pipeline_run2(self):
         h_charlie = io.imread("examples/images/charlie.png")
         h_charlie2 = io.imread("examples/images/charlie.png")
         h_charlie = np.transpose(rgb2gray(rgba2rgb(h_charlie)))
@@ -314,7 +314,7 @@ class TestMillipydeImages(unittest.TestCase):
         operations = [mp.Operation("rgb2grey"), mp.Operation("transpose")]
 
         p = mp.Pipeline(inputs, operations)
-        p.start()
+        p.run()
 
         d_charlie = np.array(d_charlie)
         d_charlie2 = np.array(d_charlie2)

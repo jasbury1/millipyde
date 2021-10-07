@@ -21,7 +21,16 @@ Duis aute irure dolor in reprehenderit in voluptate velit \n \
 esse cillum dolore eu fugiat nulla pariatur. \n \
 Excepteur sint occaecat cupidatat non proident")
 
-#define __GPUPIPELINE_START_DOC PyDoc_STR( \
+#define __GPUPIPELINE_RUN_DOC PyDoc_STR( \
+    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, \n \
+sed do eiusmod tempor incididunt ut labore et dolore magna \n \
+aliqua. Ut enim ad minim veniam, quis nostrud exercitation \n \
+ullamco laboris nisi ut aliquip ex ea commodo consequat. \n \
+Duis aute irure dolor in reprehenderit in voluptate velit \n \
+esse cillum dolore eu fugiat nulla pariatur. \n \
+Excepteur sint occaecat cupidatat non proident")
+
+#define __GPUPIPELINE_CONNECT_TO_DOC PyDoc_STR( \
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit, \n \
 sed do eiusmod tempor incididunt ut labore et dolore magna \n \
 aliqua. Ut enim ad minim veniam, quis nostrud exercitation \n \
@@ -40,6 +49,7 @@ typedef struct {
     PyObject *inputs;
     PyObject *operations;
     int device_id;
+    PyObject *receiver;
 } PyGPUPipelineObject;
 
 
@@ -58,7 +68,13 @@ int
 PyGPUPipeline_init(PyGPUPipelineObject *self, PyObject *args, PyObject *kwds);
 
 PyObject *
-PyGPUPipeline_start(PyGPUPipelineObject *self, PyObject *ignored);
+PyGPUPipeline_run(PyGPUPipelineObject *self, PyObject *ignored);
+
+PyObject *
+PyGPUPipeline_connect_to(PyGPUPipelineObject *self, PyObject *receiver);
+
+void
+gpupipeline_run_sequence(PyObject *input, PyObject *operations, int device_id, int stream_id);
 
 void *
 gpupipeline_run_stages(void *arg);
@@ -74,8 +90,10 @@ static PyMemberDef PyGPUPipeline_members[] = {
 };
 
 static PyMethodDef PyGPUPipeline_methods[] = {
-    {"start", (PyCFunction)PyGPUPipeline_start, METH_NOARGS,
-     __GPUPIPELINE_START_DOC},
+    {"run", (PyCFunction)PyGPUPipeline_run, METH_NOARGS,
+     __GPUPIPELINE_RUN_DOC},
+     {"connect_to", (PyCFunction)PyGPUPipeline_connect_to, METH_O,
+     __GPUPIPELINE_CONNECT_TO_DOC},
     {NULL}};
 
 static PyTypeObject PyGPUPipeline_Type = {

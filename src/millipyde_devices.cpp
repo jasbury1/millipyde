@@ -89,7 +89,7 @@ mpdev_initialize()
         }
 
         // Set up the pool of workers for this device
-        device.work_pool = mpwrk_create_work_pool(WORKPOOL_NUM_WORKERS);
+        //device.work_pool = mpwrk_create_work_pool(WORKPOOL_NUM_WORKERS);
 
         device.valid = MP_TRUE;
     }
@@ -121,7 +121,7 @@ mpdev_teardown()
             }
 
             // Set up the pool of workers for this device
-            mpwrk_destroy_work_pool(device.work_pool);
+            //mpwrk_destroy_work_pool(device.work_pool);
         }
         delete[] device_array;
     }
@@ -157,6 +157,19 @@ mpdev_is_valid_device(int device_id)
         return MP_FALSE;
     }
     return MP_TRUE;
+}
+
+void 
+mpdev_set_device(int device_id)
+{
+    HIP_CHECK(hipSetDevice(device_id));
+}
+
+
+void
+mpdev_stream_synchronize(int device_id, int stream_id)
+{
+    HIP_CHECK(hipStreamSynchronize(device_array[device_id].streams[stream_id]));
 }
 
 
@@ -199,10 +212,11 @@ mpdev_submit_work(int device_id, MPWorkItem work, void *arg)
 void
 mpdev_synchronize(int device_id)
 {
+    printf("mpdev: Synchronizing device %d\n", device_id);
     mpwrk_work_wait(device_array[device_id].work_pool);
     HIP_CHECK(hipSetDevice(device_id));
     HIP_CHECK(hipDeviceSynchronize());
-}
+} 
 
 
 static void _setup_peer_to_peer()

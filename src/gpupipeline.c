@@ -125,7 +125,68 @@ PyGPUPipeline_init(PyGPUPipelineObject *self, PyObject *args, PyObject *kwds)
 
 
 PyObject *
-PyGPUPipeline_start(PyGPUPipelineObject *self, PyObject *Py_UNUSED(ignored))
+PyGPUPipeline_connect_to(PyGPUPipelineObject *self, PyObject *receiver)
+{
+    /* TODO: Type checking */
+    /* TODO: Make sure receiver is assigned to different GPU than our own.
+    If one of the the two is unassigned, auto assign. */
+    self->receiver = receiver;
+    return Py_None;
+}
+
+
+
+
+void 
+mpobj_run_sequence(PyObject *input, PyObject *operations, int device_id, int stream_id)
+{
+
+    PyGPUArrayObject *array;
+    PyObject *result;
+    PyGPUOperationObject *operation;
+    Py_ssize_t num_stages = PyList_Size(operations);
+    Py_ssize_t iter;
+
+    void *stream_ptr = mpdev_get_stream(device_id, stream_id);
+
+    array = (PyGPUArrayObject *)input;
+    
+    array->pinned = MP_TRUE;
+    if (array->mem_loc != device_id)
+    {
+        printf("Changing the memory location peer2peer\n");
+        mpobj_change_device(array, device_id);
+    }
+
+    array->stream = stream_ptr;
+
+    mpdev_set_device(device_id);
+
+    for(iter = 0; iter < num_stages; ++iter)
+    {
+        operation = (PyGPUOperationObject *)PyList_GetItem(operations, iter);
+        if (operation->requires_instance)
+        {
+            result = PyGPUOperation_run_on(operation, (PyObject *)array);
+
+            mpdev_stream_synchronize(device_id, stream_id);
+        }
+        else
+        {
+            result = PyGPUOperation_run(operation, NULL);
+        }
+    }
+
+    array->pinned = MP_FALSE;
+    array->stream = mpdev_get_stream(device_id, 0);
+    
+    return;
+}
+
+
+
+PyObject *
+PyGPUPipeline_run(PyGPUPipelineObject *self, PyObject *Py_UNUSED(ignored))
 {
     PyObject *input;
     Py_ssize_t num_inputs = PyList_Size(self->inputs);
@@ -133,6 +194,25 @@ PyGPUPipeline_start(PyGPUPipelineObject *self, PyObject *Py_UNUSED(ignored))
 
     for(iter = 0; iter < num_inputs; ++iter)
     {
+        input = PyList_GetItem(self->inputs, iter);
+        //gpupipeline_run_sequence(input, self->operations, self->device_id, iter % DEVICE_STREAM_COUNT);
+        mpobj_run_sequence(input, self->operations, self->device_id, iter % DEVICE_STREAM_COUNT);
+    }
+    return Py_None;
+}
+
+
+/*
+PyObject *
+PyGPUPipeline_run(PyGPUPipelineObject *self, PyObject *Py_UNUSED(ignored))
+{
+    PyObject *input;
+    Py_ssize_t num_inputs = PyList_Size(self->inputs);
+    Py_ssize_t iter;
+
+    for(iter = 0; iter < num_inputs; ++iter)
+    {
+        //printf("Running iteration %d\n", iter);
         ExecutionArgs *args = (ExecutionArgs *)malloc(sizeof(ExecutionArgs));
 
         input = PyList_GetItem(self->inputs, iter);
@@ -141,13 +221,16 @@ PyGPUPipeline_start(PyGPUPipelineObject *self, PyObject *Py_UNUSED(ignored))
         args->stream_id = iter % DEVICE_STREAM_COUNT;
         args->input = input;
         args->operations = self->operations;
+
         gpupipeline_run_stages((void *)args);
     }
+    printf("Synchronizing\n");
     mpdev_synchronize(self->device_id);
     return Py_None;
 }
+*/
 
-
+/*
 void *
 gpupipeline_run_stages(void *arg)
 {
@@ -164,14 +247,12 @@ gpupipeline_run_stages(void *arg)
 
     array->stream = mpdev_get_stream(device_id, stream);
 
-    // We pin the object to this device until it has passed all pipeline stages
     array->pinned = MP_TRUE;
     if (array->mem_loc != device_id)
     {
         mpobj_change_device(array, device_id);
     }
 
-    // TODO: set the device
 
     for(iter = 0; iter < num_stages; ++iter)
     {
@@ -190,4 +271,7 @@ gpupipeline_run_stages(void *arg)
     free(args);
     return (void *)result;
 }
+*/
+
+
 

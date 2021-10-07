@@ -17,12 +17,17 @@ extern "C"
 #endif
 
     //PyObject * gpuarray_transpose(PyObject *array);
-    void mpobj_copy_from_host(PyGPUArrayObject *array, void *data, size_t nbytes);
-    void *mpobj_copy_to_host(PyGPUArrayObject *array);
+    void 
+    mpobj_copy_from_host(PyGPUArrayObject *array, void *data, size_t nbytes);
 
-    void mpobj_change_device(PyGPUArrayObject *array, int device_id);
+    void *
+    mpobj_copy_to_host(PyGPUArrayObject *array);
 
-    void mpobj_dealloc_device_data(PyGPUArrayObject *array);
+    void 
+    mpobj_change_device(PyGPUArrayObject *array, int device_id);
+
+    void 
+    mpobj_dealloc_device_data(PyGPUArrayObject *array);
 
 
 #ifdef __cplusplus

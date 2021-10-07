@@ -46,6 +46,12 @@ void
 mpdev_synchronize(int device_id);
 
 void 
+mpdev_set_device(int device_id);
+
+void
+mpdev_stream_synchronize(int device_id, int stream_id);
+
+void 
 mpdev_set_current_device(int device_id);
 
 #ifdef __cplusplus

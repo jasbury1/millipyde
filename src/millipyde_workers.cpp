@@ -175,7 +175,9 @@ mpwrk_process_work(void *arg)
 
         if (node != NULL)
         {
+            printf("Calling work node's work\n");
             node->work(node->arg);
+            printf("Finished calling work node's work\n");
             mpwrk_destroy_work_node(node);
         }
 
