@@ -6,6 +6,7 @@
 
 #include "use_numpy.h"
 #include "gpuoperation.h"
+#include "millipyde_image.h"
 
 
 static PyObject *
@@ -44,7 +45,7 @@ PyGPUOperation_init(PyGPUOperationObject *self, PyObject *args, PyObject *kwds)
     double fprob = 1.0;
 
     PyObject *callable = NULL;
-    PyObject *call_args;
+    PyObject *call_args; 
 
     Py_ssize_t num_call_args = PyTuple_Size(args);
 
@@ -190,4 +191,26 @@ _gpuoperation_run(PyGPUOperationObject *self, PyObject *callable)
     
     result = PyObject_Call(callable, self->arg_tuple, NULL);
     return result;
+}
+
+MPFunc
+gpuoperation_func_from_name(PyObject *uname)    
+{
+    const char *name = PyUnicode_AsUTF8(uname);
+    
+    if(name == NULL)
+    {
+        return NULL;
+    }
+
+    if (strcmp(name, "rgb2grey") == 0)
+    {
+        return mpimg_color_to_greyscale;
+    }
+    else if (strcmp(name, "transpose") == 0)
+    {
+        return mpimg_transpose;
+    }
+
+    return NULL;
 }

@@ -71,6 +71,9 @@ PyGPUOperation_run(PyGPUOperationObject *self, PyObject *ignored);
 PyObject *
 PyGPUOperation_run_on(PyGPUOperationObject *self, PyObject *instance);
 
+MPFunc
+gpuoperation_func_from_name(PyObject *uname);
+
 
 /*******************************************************************************
 * TYPE DATA

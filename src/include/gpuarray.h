@@ -49,8 +49,11 @@ Excepteur sint occaecat cupidatat non proident")
 typedef struct {
     PyObject_HEAD
     void *array_data;
-    GPUCapsule *capsule;
+    MPObjData *obj_data;
 } PyGPUArrayObject;
+
+
+#define MP_OBJ_DATA(o) (((PyGPUArrayObject *)o)->obj_data)
 
 /*******************************************************************************
 * FUNCTION HEADERS

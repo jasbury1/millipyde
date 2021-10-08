@@ -12,16 +12,16 @@ extern "C"
 
     //PyObject * gpuarray_transpose(PyObject *array);
     void 
-    mpobj_copy_from_host(GPUCapsule *capsule, void *data, size_t nbytes);
+    mpobj_copy_from_host(MPObjData *obj_data, void *data, size_t nbytes);
 
     void *
-    mpobj_copy_to_host(GPUCapsule *capsule);
+    mpobj_copy_to_host(MPObjData *obj_data);
 
     void 
-    mpobj_change_device(GPUCapsule *capsule, int device_id);
+    mpobj_change_device(MPObjData *obj_data, int device_id);
 
     void 
-    mpobj_dealloc_device_data(GPUCapsule *capsule);
+    mpobj_dealloc_device_data(MPObjData *obj_data);
 
 
 #ifdef __cplusplus

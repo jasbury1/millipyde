@@ -119,35 +119,35 @@ __global__ void g_gaussian_row(T *in_arr, T *out_arr, int width, int height)
 
 extern "C" {
 
-void *
+void
 mpimg_color_to_greyscale(void *arg)
 {
-    GPUCapsule *capsule = (GPUCapsule *)arg;
+    MPObjData *obj_data = (MPObjData *)arg;
 
-    int channels = capsule->dims[2];
-    int height = capsule->dims[0];
-    int width = capsule->dims[1];
+    int channels = obj_data->dims[2];
+    int height = obj_data->dims[0];
+    int width = obj_data->dims[1];
 
     unsigned char *d_rgb;
     double *d_grey;
 
-    hipStream_t *stream = (hipStream_t *)capsule->stream;
+    hipStream_t *stream = (hipStream_t *)obj_data->stream;
 
-    if (capsule->device_data != NULL) {
-        d_rgb = (unsigned char*)(capsule->device_data);
+    if (obj_data->device_data != NULL) {
+        d_rgb = (unsigned char*)(obj_data->device_data);
     }
     else {
         //TODO
-        return NULL;
+        return;
     }
 
-    HIP_CHECK(hipMalloc(&d_grey, (capsule->nbytes / channels) * sizeof(double)));
+    HIP_CHECK(hipMalloc(&d_grey, (obj_data->nbytes / channels) * sizeof(double)));
 
-    capsule->nbytes = (capsule->nbytes / channels) * sizeof(double);
-    capsule->ndims = 2;
-    capsule->type = 12;
-    capsule->dims[2] = (int)(width * sizeof(double));
-    capsule->dims[3] = (int)(sizeof(double));
+    obj_data->nbytes = (obj_data->nbytes / channels) * sizeof(double);
+    obj_data->ndims = 2;
+    obj_data->type = 12;
+    obj_data->dims[2] = (int)(width * sizeof(double));
+    obj_data->dims[3] = (int)(sizeof(double));
 
     hipLaunchKernelGGL(g_color_to_greyscale, 
             dim3(ceil(width / 32.0), ceil(height / 32.0), 1),
@@ -160,58 +160,58 @@ mpimg_color_to_greyscale(void *arg)
             height,
             channels);
 
-    capsule->device_data = d_grey;
+    obj_data->device_data = d_grey;
 
     HIP_CHECK(hipFree(d_rgb));
-    return NULL;
+    return;
 }
 
 
-void *
+void
 mpimg_transpose(void *arg)
 {
-    GPUCapsule *capsule = (GPUCapsule *)arg;
+    MPObjData *obj_data = (MPObjData *)arg;
 
-    int height = capsule->dims[0];
-    int width = capsule->dims[1];
+    int height = obj_data->dims[0];
+    int width = obj_data->dims[1];
 
     double *d_img;
     double *d_transpose;
 
-    hipStream_t *stream = (hipStream_t *)capsule->stream; 
+    hipStream_t *stream = (hipStream_t *)obj_data->stream; 
 
-    if (capsule->device_data != NULL) {
-        d_img = (double *)(capsule->device_data);
+    if (obj_data->device_data != NULL) {
+        d_img = (double *)(obj_data->device_data);
     }
     else {
         //TODO
-        return NULL;
+        return;
     }
 
-    HIP_CHECK(hipMalloc(&d_transpose, capsule->nbytes));
+    HIP_CHECK(hipMalloc(&d_transpose, obj_data->nbytes));
     
-    int temp = capsule->dims[0];
-    capsule->dims[0] = capsule->dims[1];
-    capsule->dims[1] = temp;
-    capsule->dims[capsule->ndims] = capsule->dims[0] * sizeof(double);
-    capsule->dims[capsule->ndims + 1] = sizeof(double);
+    int temp = obj_data->dims[0];
+    obj_data->dims[0] = obj_data->dims[1];
+    obj_data->dims[1] = temp;
+    obj_data->dims[obj_data->ndims] = obj_data->dims[0] * sizeof(double);
+    obj_data->dims[obj_data->ndims + 1] = sizeof(double);
 
     hipLaunchKernelGGL(g_transpose, 
             dim3(ceil(width / 32.0), ceil(height / 32.0), 1),
             dim3(TRANSPOSE_BLOCK_DIM, TRANSPOSE_BLOCK_DIM, 1),
             //TODO: Double check this
-            TRANSPOSE_BLOCK_DIM * TRANSPOSE_BLOCK_DIM * capsule->dims[capsule->ndims + 1],
+            TRANSPOSE_BLOCK_DIM * TRANSPOSE_BLOCK_DIM * obj_data->dims[obj_data->ndims + 1],
             *stream,
             d_img,
             d_transpose,
             width,
             height);
 
-    capsule->device_data = d_transpose;
+    obj_data->device_data = d_transpose;
 
     HIP_CHECK(hipFree(d_img));
     
-    return NULL;
+    return;
 }
 
 

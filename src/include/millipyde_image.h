@@ -7,10 +7,10 @@
 extern "C" {
 #endif
 
-void *
+void
 mpimg_color_to_greyscale(void *arg);
 
-void *
+void
 mpimg_transpose(void *arg);
 
 #ifdef __cplusplus
