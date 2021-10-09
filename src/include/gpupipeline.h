@@ -44,15 +44,25 @@ Excepteur sint occaecat cupidatat non proident")
 * STRUCTS
 *******************************************************************************/
 
-typedef struct {
+typedef struct PyGPUPipelineObject {
     PyObject_HEAD
     PyObject *inputs;
     MPObjData **obj_data;
     PyObject *operations;
     MPRunnable *runnables;
     int device_id;
-    PyObject *receiver;
+    struct PyGPUPipelineObject *receiver;
 } PyGPUPipelineObject;
+
+
+typedef struct execution_arguments {
+    MPObjData *obj_data;
+    MPRunnable *runnables;
+    int num_stages;
+    int device_id;
+    int stream_id;
+    PyGPUPipelineObject *receiver;
+} ExecutionArgs;
 
 
 /*******************************************************************************
@@ -80,6 +90,13 @@ gpupipeline_thread_run_sequence(void *args);
 
 void 
 gpupipeline_run_sequence(MPObjData *obj_data, MPRunnable *runnables, int num_stages, int device_id, int stream_id);
+
+void
+gpupipeline_send_input(PyGPUPipelineObject *receiver, MPObjData *obj_data, int stream_id);
+
+ExecutionArgs *
+gpupipeline_create_args(MPObjData *obj_data, MPRunnable *runnables, int num_stages,
+                        int device_id, int stream_id, PyGPUPipelineObject *receiver);
 
 /*******************************************************************************
 * TYPE DATA
