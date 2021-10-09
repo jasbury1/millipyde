@@ -188,7 +188,7 @@ PyGPUPipeline_connect_to(PyGPUPipelineObject *self, PyObject *receiver)
 }
 
 
-void *
+void
 gpupipeline_thread_run_sequence(void *arg)
 {
     ExecutionArgs *args = (ExecutionArgs *)arg;
@@ -201,8 +201,6 @@ gpupipeline_thread_run_sequence(void *arg)
     gpupipeline_run_sequence(obj_data, runnables, num_stages, device_id, stream_id);
     
     free(args);
-
-    return NULL;
 }
 
 
@@ -219,7 +217,6 @@ gpupipeline_run_sequence(MPObjData *obj_data, MPRunnable *runnables, int num_sta
     obj_data->pinned = MP_TRUE;
     if (obj_data->mem_loc != device_id)
     {
-        printf("Changing the memory location peer2peer\n");
         mpobj_change_device(obj_data, device_id);
     }
 
@@ -238,7 +235,6 @@ gpupipeline_run_sequence(MPObjData *obj_data, MPRunnable *runnables, int num_sta
         else
         {
             //TODO: Here is where we have to sync with GIL
-            printf("That's a problem...\n"); 
         }
     }
 
@@ -257,31 +253,17 @@ PyGPUPipeline_run(PyGPUPipelineObject *self, PyObject *Py_UNUSED(ignored))
     Py_ssize_t num_inputs = PyList_Size(self->inputs);
     Py_ssize_t num_stages = PyList_Size(self->operations);
     Py_ssize_t iter;
+    int device_id = self->device_id;
 
     Py_BEGIN_ALLOW_THREADS
     for(iter = 0; iter < num_inputs; ++iter)
     {
         obj_data = MP_OBJ_DATA(PyList_GetItem(self->inputs, iter));
 
-        ExecutionArgs *args = gpupipeline_create_args(obj_data, self->runnables, num_stages, self->device_id, iter % DEVICE_STREAM_COUNT);
-        
-        if (pthread_create(&threads[iter], NULL, gpupipeline_thread_run_sequence, args))
-        {
-            printf("Error creating thread!!\n");
-            return Py_None;
-        }
-
-        //gpupipeline_run_sequence(obj_data, self->runnables, num_stages, self->device_id, iter % DEVICE_STREAM_COUNT);
+        ExecutionArgs *args = gpupipeline_create_args(obj_data, self->runnables, num_stages, device_id, iter % DEVICE_STREAM_COUNT);
+        mpdev_submit_work(self->device_id, gpupipeline_thread_run_sequence, args);
     }
-    
-    
-    for(iter = 0; iter < num_inputs; ++iter)
-    {
-        if(pthread_join(threads[iter], NULL))
-        {
-            printf("Error joining threads!!\n");
-        }
-    }
+    mpdev_synchronize(device_id);
     Py_END_ALLOW_THREADS
     
     return Py_None;

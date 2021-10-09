@@ -75,7 +75,7 @@ PyGPUPipeline_run(PyGPUPipelineObject *self, PyObject *ignored);
 PyObject *
 PyGPUPipeline_connect_to(PyGPUPipelineObject *self, PyObject *receiver);
 
-void *
+void
 gpupipeline_thread_run_sequence(void *args);
 
 void 

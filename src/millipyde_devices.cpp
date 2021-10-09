@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <iostream>
+#include <unistd.h>
 #include "hip/hip_runtime.h"
 
 // PY_SSIZE_T_CLEAN Should be defined before including Python.h
@@ -89,7 +90,7 @@ mpdev_initialize()
         }
 
         // Set up the pool of workers for this device
-        //device.work_pool = mpwrk_create_work_pool(WORKPOOL_NUM_WORKERS);
+        device.work_pool = mpwrk_create_work_pool(WORKPOOL_NUM_WORKERS);
 
         device.valid = MP_TRUE;
     }
@@ -121,7 +122,7 @@ mpdev_teardown()
             }
 
             // Set up the pool of workers for this device
-            //mpwrk_destroy_work_pool(device.work_pool);
+            mpwrk_destroy_work_pool(device.work_pool);
         }
         delete[] device_array;
     }
@@ -212,7 +213,7 @@ mpdev_submit_work(int device_id, MPWorkItem work, void *arg)
 void
 mpdev_synchronize(int device_id)
 {
-    printf("mpdev: Synchronizing device %d\n", device_id);
+    //sleep(5);
     mpwrk_work_wait(device_array[device_id].work_pool);
     HIP_CHECK(hipSetDevice(device_id));
     HIP_CHECK(hipDeviceSynchronize());

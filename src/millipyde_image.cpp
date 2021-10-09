@@ -122,8 +122,9 @@ extern "C" {
 void
 mpimg_color_to_greyscale(void *arg)
 {
+    int device_id;
+    hipGetDevice(&device_id);
     MPObjData *obj_data = (MPObjData *)arg;
-
     int channels = obj_data->dims[2];
     int height = obj_data->dims[0];
     int width = obj_data->dims[1];

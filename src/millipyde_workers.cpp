@@ -136,7 +136,8 @@ mpwrk_work_wait(MPDeviceWorkPool *work_pool)
     while (true)
     {
         // If running, wait for threads to finish. If stopped, wait for threads to die
-        if ((work_pool->running && work_pool->num_threads_busy != 0) ||
+        if ((work_pool->queue.head != NULL) ||
+            (work_pool->running && work_pool->num_threads_busy != 0) ||
             (!work_pool->running && work_pool->num_threads != 0))
         {
             pthread_cond_wait(&(work_pool->working), &(work_pool->mux));
@@ -175,9 +176,7 @@ mpwrk_process_work(void *arg)
 
         if (node != NULL)
         {
-            printf("Calling work node's work\n");
             node->work(node->arg);
-            printf("Finished calling work node's work\n");
             mpwrk_destroy_work_node(node);
         }
 

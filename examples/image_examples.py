@@ -116,7 +116,8 @@ def greyscale_and_transpose_pipeline2():
     d_charlie2 = mp.gpuimage(io.imread("examples/images/charlie.png"))
     d_charlie3 = mp.gpuimage(io.imread("examples/images/charlie.png"))
     d_charlie4 = mp.gpuimage(io.imread("examples/images/charlie.png"))
-    inputs = [d_charlie, d_charlie2, d_charlie3, d_charlie4]
+    #inputs = [d_charlie, d_charlie2, d_charlie3, d_charlie4]
+    inputs = [d_charlie]
     operations = [mp.Operation("rgb2grey"), mp.Operation("transpose"), mp.Operation("transpose")]
     p = mp.Pipeline(inputs, operations)
     start = time.perf_counter()
