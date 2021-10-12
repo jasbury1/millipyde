@@ -32,7 +32,7 @@ PyGPUPipeline_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     if(self != NULL) {
         self->inputs = NULL;
         self->operations = NULL;
-        self->device_id = mpdev_get_current_device();
+        self->device_id = mpdev_get_recommended_device();
         if (self->obj_data)
         {
             free(self->obj_data);

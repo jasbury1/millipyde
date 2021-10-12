@@ -17,22 +17,30 @@ typedef struct mp_device {
 } MPDevice;
 
 
+// Total number of devices recognized by millipyde
 static int device_count = 0;
 
-// A global state variable for where the user wants to place objects. Does not
-// correspond to the actual current HIP device
-static int current_device = 0;
+// Refers to the device that functionality should default to as specified by the user
+static int target_device = DEVICE_LOCATION_NO_PREFERENCE;
+
+// Refers to the device that millipyde recommends defaulting to for best performance
+static int recommended_device = 0;
+
+// Whether or not DMA peer-to-peer is supported. Gets set to 'true' during initialization if applicable
 static bool peer_to_peer_supported = false;
 
+// the value of peer_access_matrix[row][col] determines whether device 'row' and device 'col' can communicate via peer-to-peer
 static int** peer_access_matrix;
 
 MPDevice *device_array = NULL;
 
+static int _update_recommended_device();
 static void _setup_peer_to_peer();
 static void _init_peer_access_matrix();
 static void _delete_peer_access_matrix();
 
 extern "C"{
+
 
 MPStatus 
 mpdev_initialize()
@@ -41,13 +49,11 @@ mpdev_initialize()
     {
         return DEV_ERROR_DEVICE_COUNT;
     }
-    if (hipGetDevice(&current_device) != hipSuccess)
+
+    recommended_device = _update_recommended_device();
+    if (recommended_device == -1)
     {
         return DEV_ERROR_DEVICE_COUNT;
-    }
-    hipDeviceProp_t props;
-    if (hipGetDeviceProperties(&props, current_device) != hipSuccess) {
-        return DEV_ERROR_DEVICE_PROPERTIES;
     }
 
     if (device_count > 1) {
@@ -181,18 +187,24 @@ mpdev_get_device_count()
 }
 
 
-int 
-mpdev_get_current_device()
+int
+mpdev_get_target_device()
 {
-    return current_device;
+    return target_device;
 }
 
 
-void 
-mpdev_set_current_device(int device_id)
+void
+mpdev_set_target_device(int device_id)
 {
-    HIP_CHECK(hipSetDevice(device_id));
-    current_device = device_id;
+    target_device = device_id;
+}
+
+
+int 
+mpdev_get_recommended_device()
+{
+    return recommended_device;
 }
 
 
@@ -219,11 +231,15 @@ mpdev_synchronize(int device_id)
     HIP_CHECK(hipDeviceSynchronize());
 } 
 
-
+/*******************************************************************************
+ * Tries every possible combination of two unique devices for all devices
+ * recognized by the ROCm runtime. If two devices can communicate via peer to
+ * peer DMA, then the result is updated in the peer access matrix. If at least
+ * one pair exists that can communicate, then peer_to_peer_supported is updated
+ * to true.
+ ******************************************************************************/
 static void _setup_peer_to_peer()
 {
-    int initial_device = current_device;
-
     for (int device = 0; device < device_count; ++device) {
         if (hipSetDevice(device) != hipSuccess)
         {
@@ -256,8 +272,6 @@ static void _setup_peer_to_peer()
             HIP_CHECK(hipSetDevice(device));
             HIP_CHECK(hipDeviceReset());
         }
-        // Revert back to the first device we were on
-        HIP_CHECK(hipSetDevice(initial_device));
     }
 }
 
@@ -277,6 +291,38 @@ static void _delete_peer_access_matrix()
         delete [] peer_access_matrix[i];
     }
     delete [] peer_access_matrix;
+}
+
+
+/*******************************************************************************
+ * Iterates through all devices currently accessible by the ROCm runtime and 
+ * returns the "best" one. Uses (MaximumComputeUnits * MaximumClockFrequency) 
+ * as the metric for deciding the best.
+ * 
+ * @return an integer representing the device id of the recommended device, or
+ *         -1 if no valid device could be recommended
+ ******************************************************************************/
+static int _update_recommended_device()
+{
+    int device_id = -1;
+    double best_metric = 0;
+
+    for (int i = 0; i < device_count; ++i)
+    {
+        hipDeviceProp_t props;
+        if(hipGetDeviceProperties(&props, i) != hipSuccess)
+        {
+            continue;
+        }
+
+        double metric = props.clockRate * props.multiProcessorCount;
+        if (metric > best_metric)
+        {
+            device_id = i;
+            best_metric = metric;
+        }
+    }
+    return device_id;
 }
 
 
