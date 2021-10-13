@@ -6,11 +6,11 @@
 
 #include "millipyde.h"
 #include "millipyde_devices.h"
+#include "device.h"
 #include "gpuarray.h"
 #include "gpuimage.h"
 #include "gpuoperation.h"
 #include "gpupipeline.h"
-#include "GPUKernels.h"
 
 #define INIT_NUMPY_ARRAY_CPP
 #include "use_numpy.h"
@@ -26,21 +26,6 @@ esse cillum dolore eu fugiat nulla pariatur. \n \
 Excepteur sint occaecat cupidatat non proident");
 
 
-void 
-helper()
-{
-    printf("Trying something!\n");
-}
-
-
-static PyObject *
-test_func(PyObject *self, PyObject *args)
-{
-    int test = run_bit_extract();
-    printf("Test result: %d\n", test);
-    return self;
-}
-
 
 static PyObject *
 mpmod_get_device_count(PyObject *self, PyObject *args)
@@ -51,10 +36,10 @@ mpmod_get_device_count(PyObject *self, PyObject *args)
     return result;
 }
 
+
 /*  define functions in module */
 static PyMethodDef MillipydeMethods[] =
 {
-     {"test_func", test_func, METH_VARARGS, "Does this work?"},
      {"device_count", mpmod_get_device_count, METH_NOARGS, device_count_doc},
      {NULL, NULL, 0, NULL}
 };
@@ -134,6 +119,13 @@ PyInit_millipyde(void)
         return NULL;
     }
 
+    if (PyType_Ready(&PyDevice_Type) < 0)
+    {
+        PyErr_SetString(PyExc_ImportError,
+                        mperr_str(MOD_ERROR_CREATE_DEVICE_TYPE));
+        return NULL;
+    }
+
     /* 
      * Ceate the module object 
      */
@@ -185,6 +177,19 @@ PyInit_millipyde(void)
         Py_DECREF(&PyGPUImage_Type);
         Py_DECREF(&PyGPUArray_Type);
         Py_DECREF(&PyGPUOperation_Type);
+        Py_DECREF(m);
+        PyErr_Print();
+        return NULL;
+    }
+
+    Py_INCREF(&PyDevice_Type);
+    if (PyModule_AddObject(m, "Device", (PyObject *) &PyDevice_Type) < 0) {
+        fprintf(stderr, mperr_str(MOD_ERROR_ADD_DEVICE));
+        Py_DECREF(&PyGPUOperation_Type);
+        Py_DECREF(&PyGPUImage_Type);
+        Py_DECREF(&PyGPUArray_Type);
+        Py_DECREF(&PyGPUOperation_Type);
+        Py_DECREF(&PyGPUPipeline_Type);
         Py_DECREF(m);
         PyErr_Print();
         return NULL;

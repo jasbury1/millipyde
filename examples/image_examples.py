@@ -148,7 +148,9 @@ def main():
     #greyscale_charlie()
     #greyscale_and_transpose_charlie()
     #greyscale_and_transpose_pipeline()
-    greyscale_and_transpose_pipeline2()
+    #greyscale_and_transpose_pipeline2()
+    with mp.Device(1):
+        print("Inside")
 
 
 if __name__ == '__main__':

@@ -5,7 +5,6 @@
 #include <Python.h>
 
 #include "gpuarray.h"
-#include "GPUKernels.h"
 #include "use_numpy.h"
 #include "millipyde.h"
 #include "millipyde_devices.h"

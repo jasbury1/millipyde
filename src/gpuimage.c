@@ -6,7 +6,6 @@
 
 #include "gpuarray.h"
 #include "gpuimage.h"
-#include "GPUKernels.h"
 #include "millipyde_image.h"
 #include "millipyde_objects.h"
 #include "use_numpy.h"

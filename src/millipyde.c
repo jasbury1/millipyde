@@ -17,6 +17,8 @@ const char *mperr_str(MPStatus status)
         return "Could not import module 'millipyde' while creating internal type 'Operation'";
     case MOD_ERROR_CREATE_PIPELINE_TYPE:
         return "Could not import module 'millipyde' while creating internal type 'Pipeline'";
+    case MOD_ERROR_CREATE_DEVICE_TYPE:
+        return "Could not import module 'millipyde' while creating internal type 'Device'";
     case MOD_ERROR_ADD_GPUARRAY:
         return "Could not import module 'millipyde' while loading internal type 'gpuarray'";
     case MOD_ERROR_ADD_GPUIMAGE:
@@ -25,6 +27,8 @@ const char *mperr_str(MPStatus status)
         return "Could not import module 'millipyde' while loading internal type 'Operation'";
     case MOD_ERROR_ADD_PIPELINE:
         return "Could not import module 'millipyde' while loading internal type 'Pipeline'";
+    case MOD_ERROR_ADD_DEVICE:
+        return "Could not import module 'millipyde' while loading internal type 'Device'";
 
     case DEV_ERROR_CURRENT_DEVICE:
         return "GPU runtime failed while querying the current device";
