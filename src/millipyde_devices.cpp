@@ -269,13 +269,28 @@ mpdev_submit_work(int device_id, MPWorkItem work, void *arg)
 
 
 void
-mpdev_synchronize(int device_id)
+mpdev_hard_synchronize(int device_id)
 {
     //sleep(5);
     mpwrk_work_wait(device_array[device_id].work_pool);
     HIP_CHECK(hipSetDevice(device_id));
     HIP_CHECK(hipDeviceSynchronize());
 } 
+
+
+void
+mpdev_synchronize()
+{
+    HIP_CHECK(hipDeviceSynchronize());
+}
+
+
+void
+mpdev_reset()
+{
+    HIP_CHECK(hipDeviceReset());
+}
+
 
 /*******************************************************************************
  * Tries every possible combination of two unique devices for all devices

@@ -243,7 +243,7 @@ PyGPUPipeline_run(PyGPUPipelineObject *self, PyObject *Py_UNUSED(ignored))
     }
 
     // Wait for all threads to finish and for our GPU tasks to complete
-    mpdev_synchronize(device_id);
+    mpdev_hard_synchronize(device_id);
 
     // If we are piping the data elsewhere, we must wait for both ends of the pipe to finish
     // By the time our threads have ended, they should have already sent their data before our own synchronize
@@ -252,7 +252,7 @@ PyGPUPipeline_run(PyGPUPipelineObject *self, PyObject *Py_UNUSED(ignored))
     // Iterate through the chain to sync with all connected pipelines
     while (cur_receiver != NULL)
     {
-        mpdev_synchronize(cur_receiver->device_id);
+        mpdev_hard_synchronize(cur_receiver->device_id);
         cur_receiver = cur_receiver->receiver;
     }
 

@@ -43,7 +43,13 @@ void
 mpdev_submit_work(int device_id, MPWorkItem work, void *arg);
 
 void
-mpdev_synchronize(int device_id);
+mpdev_hard_synchronize(int device_id);
+
+void
+mpdev_synchronize();
+
+void
+mpdev_reset();
 
 void 
 mpdev_set_device(int device_id);
