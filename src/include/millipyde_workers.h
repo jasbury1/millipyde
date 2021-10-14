@@ -6,8 +6,6 @@
 #include <Python.h>
 #include "millipyde.h"
 
-#define WORKPOOL_NUM_WORKERS 4
-
 typedef void (*MPWorkItem)(void *arg);
 
 typedef struct work_node {

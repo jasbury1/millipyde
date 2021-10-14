@@ -54,6 +54,9 @@ mpdev_stream_synchronize(int device_id, int stream_id);
 int
 mpdev_get_target_device();
 
+int
+mpdev_get_alternative_device(int device_id);
+
 void
 mpdev_set_target_device(int device_id);
 

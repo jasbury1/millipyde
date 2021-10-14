@@ -133,6 +133,7 @@ mpimg_color_to_greyscale(void *arg)
 
     device_id = obj_data->mem_loc;
     HIP_CHECK(hipSetDevice(device_id));
+    printf("Executing greyscale on device %d\n", device_id);
 
     hipStream_t stream = (hipStream_t)obj_data->stream;
 
@@ -184,6 +185,7 @@ mpimg_transpose(void *arg)
 
     device_id = obj_data->mem_loc;
     HIP_CHECK(hipSetDevice(device_id));
+    printf("Executing transpose on device %d\n", device_id);
 
     hipStream_t stream = (hipStream_t)obj_data->stream;
 

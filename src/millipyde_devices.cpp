@@ -96,7 +96,7 @@ mpdev_initialize()
         }
 
         // Set up the pool of workers for this device
-        device.work_pool = mpwrk_create_work_pool(WORKPOOL_NUM_WORKERS);
+        device.work_pool = mpwrk_create_work_pool(THREADS_PER_DEVICE);
 
         device.valid = MP_TRUE;
     }
@@ -213,6 +213,28 @@ int
 mpdev_get_recommended_device()
 {
     return recommended_device;
+}
+
+
+/*******************************************************************************
+ * Finds a usable device that is different from the one passed in.
+ * 
+ * @param device_id The device to find an alternative to
+ * 
+ * @return A device id that is valid and is not the same as the supplied
+ *         parameter, or DEVICE_LOC_NO_AFFINITY if none exist.
+ ******************************************************************************/
+int
+mpdev_get_alternative_device(int device_id)
+{
+    for (int i = 0; i < device_count; ++i)
+    {
+        if (i != device_id && device_array[i].valid == MP_TRUE)
+        {
+
+        }
+    }
+    return DEVICE_LOC_NO_AFFINITY;
 }
 
 
