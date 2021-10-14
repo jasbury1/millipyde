@@ -173,6 +173,7 @@ mpimg_color_to_greyscale(void *arg)
 void
 mpimg_transpose(void *arg)
 {
+    int device_id;
     MPObjData *obj_data = (MPObjData *)arg;
 
     int height = obj_data->dims[0];
@@ -180,6 +181,9 @@ mpimg_transpose(void *arg)
 
     double *d_img;
     double *d_transpose;
+
+    device_id = obj_data->mem_loc;
+    HIP_CHECK(hipSetDevice(device_id));
 
     hipStream_t *stream = (hipStream_t *)obj_data->stream; 
 

@@ -21,8 +21,15 @@ PyGPUPipeline_dealloc(PyGPUPipelineObject *self)
     Py_XDECREF(self->inputs);
     Py_XDECREF(self->operations);
     Py_TYPE(self)->tp_free((PyObject *)self);
+    if (self->obj_data)
+    {
+        free(self->obj_data);
+    }
+    if (self->runnables)
+    {
+        free(self->runnables);
+    }
 }
-
 
 PyObject *
 PyGPUPipeline_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
@@ -33,14 +40,6 @@ PyGPUPipeline_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
         self->inputs = NULL;
         self->operations = NULL;
         self->device_id = mpdev_get_recommended_device();
-        if (self->obj_data)
-        {
-            free(self->obj_data);
-        }
-        if (self->runnables)
-        {
-            free(self->runnables);
-        }
     }
     return (PyObject *) self;
 }
