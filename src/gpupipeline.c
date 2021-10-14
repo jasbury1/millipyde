@@ -302,7 +302,6 @@ gpupipeline_run_sequence(MPObjData *obj_data, MPRunnable *runnables, int num_sta
                               int device_id, int stream_id)
 {
 
-    PyObject *result;
     int iter;
 
     void *stream_ptr = mpdev_get_stream(device_id, stream_id);
