@@ -40,7 +40,8 @@ PyDevice_init(PyDeviceObject *self, PyObject *args, PyObject *kwds)
 PyObject *
 PyDevice_enter(PyDeviceObject *self, void *closure)
 {
-    printf("Entered\n");
+    self->prev_device_id = mpdev_get_target_device();
+    mpdev_set_target_device(self->device_id);
     return Py_BuildValue("i", self->device_id);
 }
 
@@ -55,7 +56,13 @@ PyDevice_exit(PyDeviceObject *self, PyObject *args, PyObject *kwds)
     {
         return NULL;
     }
+    
+    if(exc_type != Py_None)
+    {
+        PyErr_SetObject(exc_type, exc_val);
+        return NULL;
+    }
 
-    printf("Exited\n");
+    mpdev_set_target_device(self->prev_device_id);
     return Py_True;
 }

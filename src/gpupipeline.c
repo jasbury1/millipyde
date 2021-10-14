@@ -180,7 +180,8 @@ PyGPUPipeline_run(PyGPUPipelineObject *self, PyObject *Py_UNUSED(ignored))
         obj_data = MP_OBJ_DATA(PyList_GetItem(self->inputs, iter));
 
         ExecutionArgs *args = gpupipeline_create_args(obj_data, self->runnables, num_stages,
-                                                      device_id, iter % DEVICE_STREAM_COUNT,
+                                                      device_id, 
+                                                      (iter % THREADS_PER_DEVICE) + 1,
                                                       receiver);
         
         mpdev_submit_work(device_id, gpupipeline_thread_run_sequence, args);

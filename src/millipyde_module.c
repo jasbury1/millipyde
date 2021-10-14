@@ -25,6 +25,24 @@ Duis aute irure dolor in reprehenderit in voluptate velit \n \
 esse cillum dolore eu fugiat nulla pariatur. \n \
 Excepteur sint occaecat cupidatat non proident");
 
+PyDoc_STRVAR(current_device_doc,
+             "Lorem ipsum dolor sit amet, consectetur adipiscing elit, \n \
+sed do eiusmod tempor incididunt ut labore et dolore magna \n \
+aliqua. Ut enim ad minim veniam, quis nostrud exercitation \n \
+ullamco laboris nisi ut aliquip ex ea commodo consequat. \n \
+Duis aute irure dolor in reprehenderit in voluptate velit \n \
+esse cillum dolore eu fugiat nulla pariatur. \n \
+Excepteur sint occaecat cupidatat non proident");
+
+PyDoc_STRVAR(best_device_doc,
+             "Lorem ipsum dolor sit amet, consectetur adipiscing elit, \n \
+sed do eiusmod tempor incididunt ut labore et dolore magna \n \
+aliqua. Ut enim ad minim veniam, quis nostrud exercitation \n \
+ullamco laboris nisi ut aliquip ex ea commodo consequat. \n \
+Duis aute irure dolor in reprehenderit in voluptate velit \n \
+esse cillum dolore eu fugiat nulla pariatur. \n \
+Excepteur sint occaecat cupidatat non proident");
+
 
 
 static PyObject *
@@ -36,11 +54,35 @@ mpmod_get_device_count(PyObject *self, PyObject *args)
     return result;
 }
 
+static PyObject *
+mpmod_get_current_device(PyObject *self, PyObject *args)
+{
+    PyObject *result;
+    int device_id = mpdev_get_target_device();
+    if (device_id == DEVICE_LOC_NO_AFFINITY)
+    {
+        device_id = mpdev_get_recommended_device();
+    }
+    result = Py_BuildValue("i", device_id);
+    return result;
+}
+
+static PyObject *
+mpmod_get_best_device(PyObject *self, PyObject *args)
+{
+    PyObject *result;
+    int device_id = mpdev_get_recommended_device();
+    result = Py_BuildValue("i", device_id);
+    return result;
+}
+
 
 /*  define functions in module */
 static PyMethodDef MillipydeMethods[] =
 {
      {"device_count", mpmod_get_device_count, METH_NOARGS, device_count_doc},
+     {"get_current_device", mpmod_get_current_device, METH_NOARGS, current_device_doc},
+     {"best_device", mpmod_get_best_device, METH_NOARGS, best_device_doc},
      {NULL, NULL, 0, NULL}
 };
 
@@ -62,6 +104,7 @@ PyInit_millipyde(void)
     PyObject *m;
 
     MPStatus status;
+    long device_count;
 
     /*
      * Setup the devices on the system 
@@ -134,6 +177,12 @@ PyInit_millipyde(void)
     if (m == NULL) {
         return NULL;
     }
+
+    /*
+     * Add constants
+     */
+    device_count = (long)(mpdev_get_device_count());
+    PyModule_AddIntConstant(m, "DEVICE_COUNT", device_count);
     
 
     /*

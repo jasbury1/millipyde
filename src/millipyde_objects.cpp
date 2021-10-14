@@ -18,11 +18,15 @@ extern "C"{
 void 
 mpobj_copy_from_host(MPObjData *obj_data, void *data, size_t nbytes)
 {
-    int device_id;
+    int device_id = mpdev_get_target_device();
+    if (device_id == DEVICE_LOC_NO_AFFINITY)
+    {
+        device_id = mpdev_get_recommended_device();
+    }
 
-    hipGetDevice(&device_id);
-    
+    HIP_CHECK(hipSetDevice(device_id));
     obj_data->mem_loc = device_id;
+
     // Free any existing data
     if(obj_data->device_data != NULL) {
         HIP_CHECK(hipFree(obj_data->device_data));
@@ -37,6 +41,7 @@ void *
 mpobj_copy_to_host(MPObjData *obj_data)
 {
     void *data = PyMem_Malloc(obj_data->nbytes);
+    HIP_CHECK(hipSetDevice(obj_data->mem_loc));
     HIP_CHECK(hipMemcpy(data, obj_data->device_data, obj_data->nbytes, hipMemcpyDeviceToHost));
     return data;
 }
@@ -44,7 +49,6 @@ mpobj_copy_to_host(MPObjData *obj_data)
 void 
 mpobj_change_device(MPObjData *obj_data, int new_device_id)
 {
-    //TODO: Should we set it back to the old device at the end??
     int prev_device_id = obj_data->mem_loc;
 
     if (prev_device_id == new_device_id || obj_data->device_data == NULL) {

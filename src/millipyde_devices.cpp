@@ -21,7 +21,7 @@ typedef struct mp_device {
 static int device_count = 0;
 
 // Refers to the device that functionality should default to as specified by the user
-static int target_device = DEVICE_LOCATION_NO_PREFERENCE;
+static int target_device = DEVICE_LOC_NO_AFFINITY;
 
 // Refers to the device that millipyde recommends defaulting to for best performance
 static int recommended_device = 0;
@@ -197,6 +197,14 @@ mpdev_get_target_device()
 void
 mpdev_set_target_device(int device_id)
 {
+    if (device_id < 0 || device_id > device_count)
+    {
+        //TODO Throw an error
+    }
+    else if (device_array[device_id].valid == MP_FALSE)
+    {
+        //TODO throw an error
+    }
     target_device = device_id;
 }
 

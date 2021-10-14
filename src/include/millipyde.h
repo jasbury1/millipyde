@@ -6,6 +6,8 @@
 
 // Macro representing for indicating the host as a location
 #define HOST_LOC -1
+// Macro representing no affinity for device memory location
+#define DEVICE_LOC_NO_AFFINITY -2
 
 typedef void (*MPFunc)(void *arg);
 

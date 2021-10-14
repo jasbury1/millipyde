@@ -123,7 +123,6 @@ void
 mpimg_color_to_greyscale(void *arg)
 {
     int device_id;
-    hipGetDevice(&device_id);
     MPObjData *obj_data = (MPObjData *)arg;
     int channels = obj_data->dims[2];
     int height = obj_data->dims[0];
@@ -131,6 +130,9 @@ mpimg_color_to_greyscale(void *arg)
 
     unsigned char *d_rgb;
     double *d_grey;
+
+    device_id = obj_data->mem_loc;
+    HIP_CHECK(hipSetDevice(device_id));
 
     hipStream_t *stream = (hipStream_t *)obj_data->stream;
 

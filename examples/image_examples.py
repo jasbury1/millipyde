@@ -117,7 +117,7 @@ def greyscale_and_transpose_pipeline2():
     d_charlie3 = mp.gpuimage(io.imread("examples/images/charlie.png"))
     d_charlie4 = mp.gpuimage(io.imread("examples/images/charlie.png"))
     #inputs = [d_charlie, d_charlie2, d_charlie3, d_charlie4]
-    inputs = [d_charlie]
+    inputs = [d_charlie, d_charlie2, d_charlie3, d_charlie4]
     operations = [mp.Operation("rgb2grey"), mp.Operation("transpose"), mp.Operation("transpose")]
     p = mp.Pipeline(inputs, operations)
     start = time.perf_counter()
@@ -125,21 +125,6 @@ def greyscale_and_transpose_pipeline2():
     stop = time.perf_counter()
     print("\nTime to run pipeline: {}\n".format(stop - start))
 
-
-def testytest():
-    d_charlie = mp.gpuimage(io.imread("examples/images/charlie.png"))
-    inputs = [d_charlie]
-    operations = [mp.Operation("rgb2grey")]
-    p = mp.Pipeline(inputs, operations)
-    print("Python is calling run")
-    p.run()
-    #This shouldn't happen until EVERYTHING is synchronized
-    print("Python finished calling run")
-    
-    
-    
-    imsave("output/testytest.png", np.array(d_charlie))
-    print("Python finished saving")
 
 
 
@@ -149,8 +134,13 @@ def main():
     #greyscale_and_transpose_charlie()
     #greyscale_and_transpose_pipeline()
     #greyscale_and_transpose_pipeline2()
-    with mp.Device(1):
-        print("Inside")
+
+    with mp.Device(0):
+        print(mp.get_current_device())
+        with mp.Device(1):
+            print(mp.get_current_device())
+            
+
 
 
 if __name__ == '__main__':

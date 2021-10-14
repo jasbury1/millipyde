@@ -9,8 +9,9 @@
 
 // The maximum number of streams to user per-device. Includes the NULL stream.
 #define DEVICE_STREAM_COUNT 5
+// The number of non-null streams of concurrency we have per device
+#define THREADS_PER_DEVICE ((DEVICE_STREAM_COUNT) - 1)
 
-#define DEVICE_LOCATION_NO_PREFERENCE -1
 
 #ifdef __cplusplus
 extern "C" {
