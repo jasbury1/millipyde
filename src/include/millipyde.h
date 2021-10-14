@@ -4,19 +4,14 @@
 #define MP_TRUE 1
 #define MP_FALSE 0
 
+#define MP_UNUSED(x) (void)(x)
+
 // Macro representing for indicating the host as a location
 #define HOST_LOC -1
 // Macro representing no affinity for device memory location
 #define DEVICE_LOC_NO_AFFINITY -2
 
-typedef void (*MPFunc)(void *arg);
-
 typedef int MPBool;
-
-typedef struct {
-    MPFunc func;
-    void *arg;
-} MPRunnable;
 
 typedef struct {
     void *device_data;
@@ -74,9 +69,17 @@ typedef enum mp_status_codes {
     GPUPIPELINE_ERROR_NONLIST_OPERATIONS, 
     GPUPIPELINE_ERROR_NONGPU_INPUT,
 
-
-
 } MPStatus;
+
+typedef MPStatus (*MPFunc)(MPObjData *, void *);
+
+typedef struct {
+    MPFunc func;
+    MPObjData *obj_data;
+    void *args;
+    double probability;
+} MPRunnable;
+
 
 
 const char* mperr_str(MPStatus status);

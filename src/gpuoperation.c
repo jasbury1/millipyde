@@ -156,42 +156,64 @@ PyGPUOperation_run_on(PyGPUOperationObject *self, PyObject *instance)
     return result;
 }
 
+
 static PyObject *
 _gpuoperation_run(PyGPUOperationObject *self, PyObject *callable)
 {
     PyObject *result;
+    MPStatus ret_val;
+    MPBool should_run;
+    
+    ret_val = gpuoperation_evaluate_probability(&should_run, self->probability);
+    if(ret_val != MILLIPYDE_SUCCESS)
+    {
+        PyErr_SetString(PyExc_RuntimeError,
+                            mperr_str(ret_val));
+        return NULL;
+    }
+
+    if (!should_run)
+    {
+        return Py_None;
+    }
+    result = PyObject_Call(callable, self->arg_tuple, NULL);
+    return result;
+}
+
+
+MPStatus
+gpuoperation_evaluate_probability(MPBool *result, double probability)
+{
     double r;
     unsigned int seed;
     FILE *f;
     
-    
-    if(self->probability > 0) {
+    *result = MP_TRUE;
+
+    if(probability > 0) {
         f = fopen("/dev/random", "r");
         if (!f)
         {
-            PyErr_SetString(PyExc_FileNotFoundError,
-                            mperr_str(GPUOPERATION_ERROR_RUN_NO_DEV_RANDOM));
-            return NULL;
+            return GPUOPERATION_ERROR_RUN_NO_DEV_RANDOM;
         }
         if (fread(&seed, sizeof(seed), 1, f) != sizeof(seed))
         {
-            PyErr_SetString(PyExc_RuntimeError,
-                            mperr_str(GPUOPERATION_ERROR_RUN_CANNOT_READ_DEV_RANDOM));
-            return NULL;
+            fclose(f);
+            return GPUOPERATION_ERROR_RUN_CANNOT_READ_DEV_RANDOM;
         }
         fclose(f);
 
         srand(seed);
         r = (double)rand() / RAND_MAX;
 
-        if (r > self->probability) {
-            return Py_None;
+        if (r > probability) {
+            *result = MP_FALSE;
         }
     }
     
-    result = PyObject_Call(callable, self->arg_tuple, NULL);
-    return result;
+    return MILLIPYDE_SUCCESS;
 }
+
 
 MPFunc
 gpuoperation_func_from_name(PyObject *uname)    

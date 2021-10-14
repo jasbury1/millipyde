@@ -101,7 +101,7 @@ PyGPUImage_color_to_greyscale(PyGPUImageObject *self, void *closure)
     }
 
     // The greyscale function will set the current device based on obj_data
-    mpimg_color_to_greyscale(obj_data);
+    mpimg_color_to_greyscale(obj_data, NULL);
     return Py_None;
 }
 
@@ -135,6 +135,6 @@ PyGPUImage_transpose(PyGPUImageObject *self, void *closure)
     }
 
     // TODO: Type checking, etc
-    mpimg_transpose(obj_data);
+    mpimg_transpose(obj_data, NULL);
     return Py_None;
 }

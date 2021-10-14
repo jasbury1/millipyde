@@ -119,11 +119,11 @@ __global__ void g_gaussian_row(T *in_arr, T *out_arr, int width, int height)
 
 extern "C" {
 
-void
-mpimg_color_to_greyscale(void *arg)
+MPStatus
+mpimg_color_to_greyscale(MPObjData* obj_data, void *args)
 {
+    MP_UNUSED(args);
     int device_id;
-    MPObjData *obj_data = (MPObjData *)arg;
     int channels = obj_data->dims[2];
     int height = obj_data->dims[0];
     int width = obj_data->dims[1];
@@ -141,7 +141,7 @@ mpimg_color_to_greyscale(void *arg)
     }
     else {
         //TODO
-        return;
+        return MILLIPYDE_SUCCESS;
     }
 
     HIP_CHECK(hipMalloc(&d_grey, (obj_data->nbytes / channels) * sizeof(double)));
@@ -166,15 +166,15 @@ mpimg_color_to_greyscale(void *arg)
     obj_data->device_data = d_grey;
 
     HIP_CHECK(hipFree(d_rgb));
-    return;
+    return MILLIPYDE_SUCCESS;
 }
 
 
-void
-mpimg_transpose(void *arg)
+MPStatus
+mpimg_transpose(MPObjData *obj_data, void *args)
 {
+    MP_UNUSED(args);
     int device_id;
-    MPObjData *obj_data = (MPObjData *)arg;
 
     int height = obj_data->dims[0];
     int width = obj_data->dims[1];
@@ -192,7 +192,7 @@ mpimg_transpose(void *arg)
     }
     else {
         //TODO
-        return;
+        return MILLIPYDE_SUCCESS;
     }
 
     HIP_CHECK(hipMalloc(&d_transpose, obj_data->nbytes));
@@ -218,7 +218,7 @@ mpimg_transpose(void *arg)
 
     HIP_CHECK(hipFree(d_img));
     
-    return;
+    return MILLIPYDE_SUCCESS;
 }
 
 

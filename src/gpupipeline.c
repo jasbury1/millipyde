@@ -142,6 +142,7 @@ PyGPUPipeline_init(PyGPUPipelineObject *self, PyObject *args, PyObject *kwds)
         if (operation->requires_instance)
         {
             self->runnables[iter].func = gpuoperation_func_from_name(operation->callable);
+            self->runnables[iter].probability = operation->probability;
         }
     }
 
@@ -276,6 +277,7 @@ gpupipeline_send_input(PyGPUPipelineObject *receiver, MPObjData *obj_data, int s
     mpdev_submit_work(device_id, gpupipeline_thread_run_sequence, args);
 }
 
+
 void
 gpupipeline_thread_run_sequence(void *arg)
 {
@@ -297,12 +299,14 @@ gpupipeline_thread_run_sequence(void *arg)
     free(args);
 }
 
+
 void 
 gpupipeline_run_sequence(MPObjData *obj_data, MPRunnable *runnables, int num_stages,
                               int device_id, int stream_id)
 {
 
     int iter;
+    MPBool should_run;
 
     void *stream_ptr = mpdev_get_stream(device_id, stream_id);
     
@@ -320,8 +324,19 @@ gpupipeline_run_sequence(MPObjData *obj_data, MPRunnable *runnables, int num_sta
     {
         if (runnables[iter].func != NULL)
         {
+            // Skip over the function if it has a probability and the odds don't work out
+            double probability = runnables[iter].probability;
+            void * args = runnables[iter].args;
+            if (probability > 0)
+            {
+                gpuoperation_evaluate_probability(&should_run, probability);
+                if (!should_run)
+                {
+                    continue;
+                }
+            }
             // Call the function contained at this stage in the sequence
-            runnables[iter].func(obj_data);
+            runnables[iter].func(obj_data, args);
             // Synchronize with the stream before attempting to execute next stage
             mpdev_stream_synchronize(device_id, stream_id);
         }
@@ -336,6 +351,7 @@ gpupipeline_run_sequence(MPObjData *obj_data, MPRunnable *runnables, int num_sta
 
     return;
 }
+
 
 ExecutionArgs *
 gpupipeline_create_args(MPObjData *obj_data, MPRunnable *runnables, int num_stages,

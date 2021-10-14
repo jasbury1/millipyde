@@ -1,5 +1,6 @@
 #ifndef MILLIPYDE_IMAGE_H
 #define MILLIPYDE_IMAGE_H
+#include "millipyde.h"
 
 #define TRANSPOSE_BLOCK_DIM 32
 
@@ -7,11 +8,11 @@
 extern "C" {
 #endif
 
-void
-mpimg_color_to_greyscale(void *arg);
+MPStatus
+mpimg_color_to_greyscale(MPObjData *obj_data, void *arg);
 
-void
-mpimg_transpose(void *arg);
+MPStatus
+mpimg_transpose(MPObjData* obj_data, void *arg);
 
 #ifdef __cplusplus
 }
