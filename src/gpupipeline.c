@@ -169,12 +169,21 @@ PyObject *
 PyGPUPipeline_connect_to(PyGPUPipelineObject *self, PyObject *other)
 {
     PyGPUPipelineObject *receiver = (PyGPUPipelineObject *)other;
+    int recommended_device = mpdev_get_recommended_device();
+    int alternative_device = mpdev_get_alternative_device(recommended_device);
+
+    // If we have no other devices available, schedule both on the same device
+    if (alternative_device == DEVICE_LOC_NO_AFFINITY)
+    {
+        self->device_id = recommended_device;
+        receiver->device_id = recommended_device;
+    }
     // If neither pipeline is assigned to a device, assign them both to separate ones
-    if ((self->device_id == DEVICE_LOC_NO_AFFINITY) &&
+    else if ((self->device_id == DEVICE_LOC_NO_AFFINITY) &&
         (receiver->device_id == DEVICE_LOC_NO_AFFINITY))
     {
-        self->device_id = mpdev_get_recommended_device();
-        receiver->device_id = mpdev_get_alternative_device(self->device_id);
+        self->device_id = recommended_device;
+        receiver->device_id = alternative_device;
     }
     // If our receiver is assigned to a device and we aren't, assign ourselves to a different one
     else if (self->device_id == DEVICE_LOC_NO_AFFINITY)
@@ -293,7 +302,6 @@ gpupipeline_run_sequence(MPObjData *obj_data, MPRunnable *runnables, int num_sta
                               int device_id, int stream_id)
 {
 
-    PyObject *result;
     int iter;
 
     void *stream_ptr = mpdev_get_stream(device_id, stream_id);

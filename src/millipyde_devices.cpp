@@ -217,7 +217,9 @@ mpdev_get_recommended_device()
 
 
 /*******************************************************************************
- * Finds a usable device that is different from the one passed in.
+ * Finds the best usable device that is different from the one passed in.
+ * 
+ * @see mpdev_get_recommended_device for how "best" is defined
  * 
  * @param device_id The device to find an alternative to
  * 
@@ -227,16 +229,30 @@ mpdev_get_recommended_device()
 int
 mpdev_get_alternative_device(int device_id)
 {
+    int alt_id = DEVICE_LOC_NO_AFFINITY;
+    double best_metric = 0;
+
     for (int i = 0; i < device_count; ++i)
     {
-        if (i != device_id && device_array[i].valid == MP_TRUE)
+        if (i != device_id)
         {
+            hipDeviceProp_t props;
+            if (hipGetDeviceProperties(&props, i) != hipSuccess)
+            {
+                continue;
+            }
 
+            double metric = props.clockRate * props.multiProcessorCount;
+            if (metric > best_metric)
+            {
+                alt_id = i;
+                best_metric = metric;
+            }
         }
     }
-    return DEVICE_LOC_NO_AFFINITY;
-}
 
+    return alt_id;
+}
 
 void *
 mpdev_get_stream(int device_id, int stream)

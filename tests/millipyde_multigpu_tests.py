@@ -84,6 +84,24 @@ class TestMillypdeMultiGPU(unittest.TestCase):
         npt.assert_almost_equal(charlie, np.array(d_charlie), decimal=DECIMAL_ERROR)
 
 
+    def test_dual_pipelines_unspecified_devices(self):
+        charlie = io.imread("examples/images/charlie.png")
+        charlie = np.transpose(rgb2gray(rgba2rgb(charlie)))
+
+        d_charlie = mp.gpuimage(io.imread("examples/images/charlie.png"))
+
+        inputs = [d_charlie]
+        operations = [mp.Operation("rgb2grey")]
+        operations2 = [mp.Operation("transpose")]
+
+        p = mp.Pipeline(inputs, operations)
+        p2 = mp.Pipeline([], operations2)
+        p.connect_to(p2)
+        p.run()
+
+        npt.assert_almost_equal(charlie, np.array(d_charlie), decimal=DECIMAL_ERROR)
+
+
  
 
 
