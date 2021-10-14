@@ -134,7 +134,7 @@ mpimg_color_to_greyscale(void *arg)
     device_id = obj_data->mem_loc;
     HIP_CHECK(hipSetDevice(device_id));
 
-    hipStream_t *stream = (hipStream_t *)obj_data->stream;
+    hipStream_t stream = (hipStream_t)obj_data->stream;
 
     if (obj_data->device_data != NULL) {
         d_rgb = (unsigned char*)(obj_data->device_data);
@@ -156,7 +156,7 @@ mpimg_color_to_greyscale(void *arg)
             dim3(ceil(width / 32.0), ceil(height / 32.0), 1),
             dim3(32, 32, 1),
             0,
-            *stream,
+            stream,
             d_rgb,
             d_grey,
             width,
@@ -185,7 +185,7 @@ mpimg_transpose(void *arg)
     device_id = obj_data->mem_loc;
     HIP_CHECK(hipSetDevice(device_id));
 
-    hipStream_t *stream = (hipStream_t *)obj_data->stream; 
+    hipStream_t stream = (hipStream_t)obj_data->stream;
 
     if (obj_data->device_data != NULL) {
         d_img = (double *)(obj_data->device_data);
@@ -208,7 +208,7 @@ mpimg_transpose(void *arg)
             dim3(TRANSPOSE_BLOCK_DIM, TRANSPOSE_BLOCK_DIM, 1),
             //TODO: Double check this
             TRANSPOSE_BLOCK_DIM * TRANSPOSE_BLOCK_DIM * obj_data->dims[obj_data->ndims + 1],
-            *stream,
+            stream,
             d_img,
             d_transpose,
             width,

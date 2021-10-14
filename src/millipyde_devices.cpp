@@ -219,7 +219,7 @@ mpdev_get_recommended_device()
 void *
 mpdev_get_stream(int device_id, int stream)
 {
-    return (void *)(&(device_array[device_id].streams[stream]));
+    return (void *)(device_array[device_id].streams[stream]);
 }
 
 

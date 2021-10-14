@@ -133,13 +133,7 @@ def main():
     #greyscale_charlie()
     #greyscale_and_transpose_charlie()
     #greyscale_and_transpose_pipeline()
-    #greyscale_and_transpose_pipeline2()
-
-    with mp.Device(0):
-        print(mp.get_current_device())
-        with mp.Device(1):
-            print(mp.get_current_device())
-            
+    greyscale_and_transpose_pipeline2() 
 
 
 
