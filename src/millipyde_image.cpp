@@ -5,6 +5,12 @@
 #include "millipyde_image.h"
 #include "millipyde.h"
 
+
+static
+MPStatus _gaussian_greyscale(MPObjData *obj_data);
+
+
+
 __global__ void g_color_to_greyscale(unsigned char * rgbImg, double * greyImg, 
         int width, int height, int channels)
 {
@@ -53,80 +59,14 @@ __global__ void g_transpose(T *in_arr, T *out_arr, int width, int height)
 	}
 }
 
+
 /*
  * Separable Gaussian Kernel source:
  * https://docs.nvidia.com/cuda/samples/3_Imaging/convolutionSeparable/doc/convolutionSeparable.pdf
  */
-/*
-template <typename T>
-__global__ void g_gaussian_row(T *in_arr, T *out_arr, int width, int height)
-{
-    __shared__ T shared_data[2 * GAUSS_RADIUS + GAUSS_ROW_DIM];
-    
-    const int tile_start = hipBlockIdx_x * GAUSS_ROW_DIM;
-    const int tile_end = tile_start + GAUSS_ROW_DIM - 1;
-    const int apron_start = tile_start - GAUSS_RADIUS;
-    const int apron_end = tile_end   + GAUSS_RADIUS;
-
-    //Clamp tile and apron limits by image borders
-    const int tile_end_clamped = min(tile_end, width - 1);
-    const int apron_start_clamped = max(apron_start, 0);
-    const int apron_end_clamped = min(apron_end, width - 1);
-
-    //Row start index in d_Data[]
-    const int row_start = hipBlockIdx_y * width;
-
-    //Aligned apron start. Assuming dataW and ROW_TILE_W are multiples 
-    //of half-warp size, rowStart + apronStartAligned is also a 
-    //multiple of half-warp size, thus having proper alignment 
-    //for coalesced d_Data[] read.
-    const int apron_start_aligned = tile_start - GAUSS_RADIUS_ALIGNED;
-
-    const int load_pos = apron_start_aligned + hipThreadIdx_x;
-    //Set the entire data cache contents
-    //Load global memory values, if indices are within the image borders,
-    //or initialize with zeroes otherwise
-    if(load_pos >= apron_start){
-        const int smem_pos = load_pos - apron_start;
-
-        shared_data[smem_pos] = 
-            ((load_pos >= apron_start_clamped) && (load_pos <= apron_end_clamped)) ?
-            in_arr[row_start + load_pos] : 0;
-    }
-
-
-    //Ensure the completness of the loading stage
-    //because results, emitted by each thread depend on the data,
-    //loaded by another threads
-    __syncthreads();
-
-    const int write_pos = tile_start + hipThreadIdx_x;
-    //Assuming dataW and ROW_TILE_W are multiples of half-warp size,
-    //rowStart + tileStart is also a multiple of half-warp size,
-    //thus having proper alignment for coalesced d_Result[] write.
-    if(write_pos <= tile_end_clamped){
-        const int smes_pos = writePos - apronStart;
-        float sum = 0;
-
-        // TODO: Experiment with loop unrolling here
-        for(int k = -1 * GAUSS_RADIUS; k <= GAUSS_RADIUS; k++)
-            sum += data[smes_pos + k] * d_kernel[KERNEL_RADIUS - k];
-
-        out_arr[row_start + write_pos] = sum;
-    }
-}
-*/
-
-#define KERNEL_RADIUS 8
-#define KERNEL_W (2 * KERNEL_RADIUS + 1)
-#define ROW_TILE_W 128
-#define KERNEL_RADIUS_ALIGNED 16
-#define COLUMN_TILE_W 16
-#define COLUMN_TILE_H 48
-
 __device__ __constant__ double d_kernel[KERNEL_W];
 
-__global__ void convolutionRowGPU(
+__global__ void g_gaussian_row_one_channel(
     double *d_Result,
     double *d_Data,
     int dataW,
@@ -189,7 +129,7 @@ __global__ void convolutionRowGPU(
 }
 
 
-__global__ void convolutionColumnGPU(
+__global__ void g_gaussian_col_one_channel(
     double *d_Result,
     double *d_Data,
     int dataW,
@@ -361,8 +301,27 @@ MPStatus
 mpimg_gaussian(MPObjData *obj_data, void *args)
 {
     MP_UNUSED(args);
-    int device_id;
 
+    // If we only have x,y dimensions, we are greyscale (one channel)
+    int channels = obj_data->ndims == 2 ? 1 : obj_data->dims[2];
+    if (channels == 1)
+    {
+        return _gaussian_greyscale(obj_data);
+    }
+    else{
+        // TODO
+    }
+    return MILLIPYDE_SUCCESS;
+}
+
+} // extern "C"
+
+static
+MPStatus _gaussian_greyscale(MPObjData *obj_data)
+{
+    int sigma = 2;
+
+    int device_id = obj_data->mem_loc;
     int height = obj_data->dims[0];
     int width = obj_data->dims[1];
 
@@ -371,8 +330,8 @@ mpimg_gaussian(MPObjData *obj_data, void *args)
     double *d_gaussian;
     double *d_image = (double *)(obj_data->device_data);
 
-    device_id = obj_data->mem_loc;
     HIP_CHECK(hipSetDevice(device_id));
+    hipStream_t stream = (hipStream_t)obj_data->stream;
 
     h_kernel = (double *)malloc(KERNEL_W * sizeof(double));
 
@@ -383,50 +342,43 @@ mpimg_gaussian(MPObjData *obj_data, void *args)
     for (int i = 0; i < KERNEL_W; i++)
     {
         double dist = (double)(i - KERNEL_RADIUS) / (double)KERNEL_RADIUS;
-        h_kernel[i] = expf(- dist * dist / 2);
+        h_kernel[i] = expf(-1 * ((dist * dist) / (2 * sigma * sigma)));
         kernel_sum += h_kernel[i];
     }
+    // Normalize the kernel
     for (int i = 0; i < KERNEL_W; ++i)
     {
         h_kernel[i] /= kernel_sum;
     }
     hipMemcpyToSymbol(HIP_SYMBOL(d_kernel), h_kernel, KERNEL_W * sizeof(double));
 
-    printf("Launching row kernel\n");
-    hipLaunchKernelGGL(
-        convolutionRowGPU,
-        dim3(ceil(width / ROW_TILE_W), height, 1),
-        dim3(ceil(KERNEL_RADIUS_ALIGNED + ROW_TILE_W + KERNEL_RADIUS)),
-        (KERNEL_RADIUS + ROW_TILE_W + KERNEL_RADIUS) * sizeof(double),
-        0,
-        d_gaussian,
-        d_image,
-        width,
-        height
-    );
+        hipLaunchKernelGGL(
+            g_gaussian_row_one_channel,
+            dim3(ceil(width / ROW_TILE_W), height, 1),
+            dim3(ceil(KERNEL_RADIUS_ALIGNED + ROW_TILE_W + KERNEL_RADIUS)),
+            (KERNEL_RADIUS + ROW_TILE_W + KERNEL_RADIUS) * sizeof(double),
+            stream,
+            d_gaussian,
+            d_image,
+            width,
+            height);
 
-    hipStreamSynchronize(0);
+        hipStreamSynchronize(stream);
 
-    printf("Launching column kernel\n");
-    hipLaunchKernelGGL(
-        convolutionColumnGPU,
-        dim3(ceil(width / COLUMN_TILE_W), ceil(height / COLUMN_TILE_H), 1),
-        dim3(COLUMN_TILE_W, 8),
-        (COLUMN_TILE_W * (KERNEL_RADIUS + COLUMN_TILE_H + KERNEL_RADIUS)) * sizeof(double),
-        0,
-        d_image,
-        d_gaussian,
-        width,
-        height,
-        COLUMN_TILE_W * 8,
-        width * 8
-    );
-    printf("Done with both kernels\n");
+        hipLaunchKernelGGL(
+            g_gaussian_col_one_channel,
+            dim3(ceil(width / COLUMN_TILE_W), ceil(height / COLUMN_TILE_H), 1),
+            dim3(COLUMN_TILE_W, 8),
+            (COLUMN_TILE_W * (KERNEL_RADIUS + COLUMN_TILE_H + KERNEL_RADIUS)) * sizeof(double),
+            stream,
+            d_image,
+            d_gaussian,
+            width,
+            height,
+            COLUMN_TILE_W * 8,
+            width * 8);
 
     HIP_CHECK(hipFree(d_gaussian));
     
     return MILLIPYDE_SUCCESS;
 }
-
-
-} // extern "C"

@@ -10,6 +10,7 @@ import numpy.testing as npt
 from skimage import data, io, filters, transform
 from skimage.io import imsave, imread
 from skimage.color import rgb2gray, rgba2rgb
+from skimage.filters import gaussian
 
 import millipyde as mp
 from millipyde import Operation
@@ -17,7 +18,7 @@ from millipyde import Operation
 DECIMAL_ERROR = 4
 
 class TestMillipydeImages(unittest.TestCase):
-
+    
     def test_create_gpuarray(self):
         numpy_array = np.array([1, 2, 3, 4])
         gpu_array = mp.gpuarray(numpy_array)
@@ -321,7 +322,7 @@ class TestMillipydeImages(unittest.TestCase):
 
         npt.assert_almost_equal(d_charlie, h_charlie, decimal=DECIMAL_ERROR)
         npt.assert_almost_equal(d_charlie2, h_charlie2, decimal=DECIMAL_ERROR)
-
+    
         
 
 
