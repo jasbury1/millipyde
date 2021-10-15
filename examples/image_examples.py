@@ -126,6 +126,13 @@ def greyscale_and_transpose_pipeline2():
     print("\nTime to run pipeline: {}\n".format(stop - start))
 
 
+def gaussian_charlie():
+    d_charlie = mp.gpuimage(io.imread("examples/images/charlie.png"))
+    d_charlie.rgb2gray()
+    d_charlie.gaussian()
+    imsave("gaussian.png", np.array(d_charlie)) 
+
+
 
 
 
@@ -133,7 +140,8 @@ def main():
     #greyscale_charlie()
     #greyscale_and_transpose_charlie()
     #greyscale_and_transpose_pipeline()
-    greyscale_and_transpose_pipeline2() 
+    #greyscale_and_transpose_pipeline2()
+    gaussian_charlie()
 
 
 

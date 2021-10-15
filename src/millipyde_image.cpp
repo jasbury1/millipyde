@@ -110,12 +110,147 @@ __global__ void g_gaussian_row(T *in_arr, T *out_arr, int width, int height)
 
         // TODO: Experiment with loop unrolling here
         for(int k = -1 * GAUSS_RADIUS; k <= GAUSS_RADIUS; k++)
-            sum += data[smes_pos + k] * d_Kernel[KERNEL_RADIUS - k];
+            sum += data[smes_pos + k] * d_kernel[KERNEL_RADIUS - k];
 
         out_arr[row_start + write_pos] = sum;
     }
 }
 */
+
+#define KERNEL_RADIUS 8
+#define KERNEL_W (2 * KERNEL_RADIUS + 1)
+#define ROW_TILE_W 128
+#define KERNEL_RADIUS_ALIGNED 16
+#define COLUMN_TILE_W 16
+#define COLUMN_TILE_H 48
+
+__device__ __constant__ double d_kernel[KERNEL_W];
+
+__global__ void convolutionRowGPU(
+    double *d_Result,
+    double *d_Data,
+    int dataW,
+    int dataH
+){
+    int radius = KERNEL_RADIUS;
+
+    //Data cache
+    __shared__ double data[KERNEL_RADIUS + ROW_TILE_W + KERNEL_RADIUS];
+
+    //Current tile and apron limits, relative to row start
+    const int         tileStart = hipBlockIdx_x * ROW_TILE_W;
+    const int           tileEnd = tileStart + ROW_TILE_W - 1;
+    const int        apronStart = tileStart - KERNEL_RADIUS;
+    const int          apronEnd = tileEnd   + KERNEL_RADIUS;
+
+    //Clamp tile and apron limits by image borders
+    const int    tileEndClamped = min(tileEnd, dataW - 1);
+    const int apronStartClamped = max(apronStart, 0);
+    const int   apronEndClamped = min(apronEnd, dataW - 1);
+
+    //Row start index in d_Data[]
+    const int          rowStart = hipBlockIdx_y * dataW;
+
+    //Aligned apron start. Assuming dataW and ROW_TILE_W are multiples 
+    //of half-warp size, rowStart + apronStartAligned is also a 
+    //multiple of half-warp size, thus having proper alignment 
+    //for coalesced d_Data[] read.
+    const int apronStartAligned = tileStart - KERNEL_RADIUS_ALIGNED;
+
+    const int loadPos = apronStartAligned + hipThreadIdx_x;
+    //Set the entire data cache contents
+    //Load global memory values, if indices are within the image borders,
+    //or initialize with zeroes otherwise
+    if(loadPos >= apronStart){
+        const int smemPos = loadPos - apronStart;
+
+        data[smemPos] = 
+            ((loadPos >= apronStartClamped) && (loadPos <= apronEndClamped)) ?
+            d_Data[rowStart + loadPos] : 0;
+    }
+
+    //Ensure the completness of the loading stage
+    //because results, emitted by each thread depend on the data,
+    //loaded by another threads
+    __syncthreads();
+    const int writePos = tileStart + hipThreadIdx_x;
+    //Assuming dataW and ROW_TILE_W are multiples of half-warp size,
+    //rowStart + tileStart is also a multiple of half-warp size,
+    //thus having proper alignment for coalesced d_Result[] write.
+    if(writePos <= tileEndClamped){
+        const int smemPos = writePos - apronStart;
+        double sum = 0;
+
+        for (int k = -1 * radius; k <= radius; ++k) {
+            sum += data[smemPos + k] * d_kernel[radius - k];
+        }
+        d_Result[rowStart + writePos] = sum;
+    }
+}
+
+
+__global__ void convolutionColumnGPU(
+    double *d_Result,
+    double *d_Data,
+    int dataW,
+    int dataH,
+    int smemStride,
+    int gmemStride
+){
+    int radius = KERNEL_RADIUS;
+
+    //Data cache
+    __shared__ double data[COLUMN_TILE_W * (KERNEL_RADIUS + COLUMN_TILE_H + KERNEL_RADIUS)];
+
+    //Current tile and apron limits, in rows
+    const int         tileStart = (hipBlockIdx_y * COLUMN_TILE_H);
+    const int           tileEnd = tileStart + COLUMN_TILE_H - 1;
+    const int        apronStart = tileStart - KERNEL_RADIUS;
+    const int          apronEnd = tileEnd   + KERNEL_RADIUS;
+
+    //Clamp tile and apron limits by image borders
+    const int    tileEndClamped = min(tileEnd, dataH - 1);
+    const int apronStartClamped = max(apronStart, 0);
+    const int   apronEndClamped = min(apronEnd, dataH - 1);
+
+    //Current column index
+    const int       columnStart = (hipBlockIdx_x * COLUMN_TILE_W) + hipThreadIdx_x;
+
+    //Shared and global memory indices for current column
+    int smemPos = (hipThreadIdx_y * COLUMN_TILE_W) + hipThreadIdx_x;
+    int gmemPos = ((apronStart + hipThreadIdx_y) * dataW) + columnStart;
+    //Cycle through the entire data cache
+    //Load global memory values, if indices are within the image borders,
+    //or initialize with zero otherwise
+    for(int y = apronStart + hipThreadIdx_y; y <= apronEnd; y += hipBlockDim_y){
+        data[smemPos] = 
+        ((y >= apronStartClamped) && (y <= apronEndClamped)) ? 
+        d_Data[gmemPos] : 0;
+        smemPos += smemStride;
+        gmemPos += gmemStride;
+    }
+
+    //Ensure the completness of the loading stage
+    //because results, emitted by each thread depend on the data, 
+    //loaded by another threads
+    __syncthreads();
+    //Shared and global memory indices for current column
+    smemPos = ((hipThreadIdx_y + KERNEL_RADIUS) * COLUMN_TILE_W) + hipThreadIdx_x;
+    gmemPos = ((tileStart + hipThreadIdx_y) * dataW) + columnStart;
+    //Cycle through the tile body, clamped by image borders
+    //Calculate and output the results
+    for(int y = tileStart + hipThreadIdx_y; y <= tileEndClamped; y += hipBlockDim_y){
+        double sum = 0;
+        for (int k = -1 * radius; k <= radius; ++k) {
+            sum += 
+                data[smemPos + k * COLUMN_TILE_W] *
+                d_kernel[radius - k];
+        }
+        d_Result[gmemPos] = sum;
+        smemPos += smemStride;
+        gmemPos += gmemStride;
+    }
+}
 
 extern "C" {
 
@@ -217,6 +352,78 @@ mpimg_transpose(MPObjData *obj_data, void *args)
     obj_data->device_data = d_transpose;
 
     HIP_CHECK(hipFree(d_img));
+    
+    return MILLIPYDE_SUCCESS;
+}
+
+
+MPStatus
+mpimg_gaussian(MPObjData *obj_data, void *args)
+{
+    MP_UNUSED(args);
+    int device_id;
+
+    int height = obj_data->dims[0];
+    int width = obj_data->dims[1];
+
+    double *h_kernel;
+
+    double *d_gaussian;
+    double *d_image = (double *)(obj_data->device_data);
+
+    device_id = obj_data->mem_loc;
+    HIP_CHECK(hipSetDevice(device_id));
+
+    h_kernel = (double *)malloc(KERNEL_W * sizeof(double));
+
+    HIP_CHECK(hipMalloc(&d_gaussian, obj_data->nbytes));
+
+    // Prepare the kernel
+    double kernel_sum = 0;
+    for (int i = 0; i < KERNEL_W; i++)
+    {
+        double dist = (double)(i - KERNEL_RADIUS) / (double)KERNEL_RADIUS;
+        h_kernel[i] = expf(- dist * dist / 2);
+        kernel_sum += h_kernel[i];
+    }
+    for (int i = 0; i < KERNEL_W; ++i)
+    {
+        h_kernel[i] /= kernel_sum;
+    }
+    hipMemcpyToSymbol(HIP_SYMBOL(d_kernel), h_kernel, KERNEL_W * sizeof(double));
+
+    printf("Launching row kernel\n");
+    hipLaunchKernelGGL(
+        convolutionRowGPU,
+        dim3(ceil(width / ROW_TILE_W), height, 1),
+        dim3(ceil(KERNEL_RADIUS_ALIGNED + ROW_TILE_W + KERNEL_RADIUS)),
+        (KERNEL_RADIUS + ROW_TILE_W + KERNEL_RADIUS) * sizeof(double),
+        0,
+        d_gaussian,
+        d_image,
+        width,
+        height
+    );
+
+    hipStreamSynchronize(0);
+
+    printf("Launching column kernel\n");
+    hipLaunchKernelGGL(
+        convolutionColumnGPU,
+        dim3(ceil(width / COLUMN_TILE_W), ceil(height / COLUMN_TILE_H), 1),
+        dim3(COLUMN_TILE_W, 8),
+        (COLUMN_TILE_W * (KERNEL_RADIUS + COLUMN_TILE_H + KERNEL_RADIUS)) * sizeof(double),
+        0,
+        d_image,
+        d_gaussian,
+        width,
+        height,
+        COLUMN_TILE_W * 8,
+        width * 8
+    );
+    printf("Done with both kernels\n");
+
+    HIP_CHECK(hipFree(d_gaussian));
     
     return MILLIPYDE_SUCCESS;
 }

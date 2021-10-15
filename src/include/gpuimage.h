@@ -42,6 +42,15 @@ Duis aute irure dolor in reprehenderit in voluptate velit \n \
 esse cillum dolore eu fugiat nulla pariatur. \n \
 Excepteur sint occaecat cupidatat non proident")
 
+#define __GPUIMAGE_GAUSSIAN_DOC PyDoc_STR( \
+    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, \n \
+sed do eiusmod tempor incididunt ut labore et dolore magna \n \
+aliqua. Ut enim ad minim veniam, quis nostrud exercitation \n \
+ullamco laboris nisi ut aliquip ex ea commodo consequat. \n \
+Duis aute irure dolor in reprehenderit in voluptate velit \n \
+esse cillum dolore eu fugiat nulla pariatur. \n \
+Excepteur sint occaecat cupidatat non proident")
+
 /*******************************************************************************
 * STRUCTS
 *******************************************************************************/
@@ -64,6 +73,9 @@ PyGPUImage_color_to_greyscale(PyGPUImageObject *self, void *closure);
 
 PyObject *
 PyGPUImage_transpose(PyGPUImageObject *self, void *closure);
+
+PyObject *
+PyGPUImage_gaussian(PyGPUImageObject *self, void *closure);
 
 /*******************************************************************************
 * TYPE DATA
@@ -88,6 +100,9 @@ static PyMethodDef PyGPUImage_methods[] = {
     },
     {"transpose", (PyCFunction) PyGPUImage_transpose, METH_NOARGS,
      __GPUIMAGE_TRANSPOSE_DOC
+    },
+    {"gaussian", (PyCFunction) PyGPUImage_gaussian, METH_NOARGS,
+     __GPUIMAGE_GAUSSIAN_DOC
     },
     {NULL}
 };

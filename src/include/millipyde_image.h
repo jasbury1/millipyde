@@ -14,6 +14,9 @@ mpimg_color_to_greyscale(MPObjData *obj_data, void *arg);
 MPStatus
 mpimg_transpose(MPObjData* obj_data, void *arg);
 
+MPStatus
+mpimg_gaussian(MPObjData* obj_data, void *arg);
+
 #ifdef __cplusplus
 }
 #endif
