@@ -8,12 +8,14 @@
 __device__ __constant__ double d_kernel[KERNEL_W];
 
 
-static
-MPStatus _gaussian_greyscale(MPObjData *obj_data, int sigma);
+static MPStatus 
+_gaussian_greyscale(MPObjData *obj_data, int sigma);
 
-static
-MPStatus _gaussian_rgba(MPObjData *obj_data, int sigma);
+static MPStatus 
+_gaussian_rgba(MPObjData *obj_data, int sigma);
 
+template <typename T>  MPStatus 
+_transpose(MPObjData *obj_data);
 
 
 __global__ void g_color_to_greyscale(unsigned char * d_rgb_data, double * d_grey_data, 
@@ -65,7 +67,7 @@ __global__ void g_transpose(T *d_data, T *d_result, int width, int height)
 }
 
 /*
- * Separable Gaussian Kernel source:
+ * Separable Gaussian Kernel using this technique:
  * https://docs.nvidia.com/cuda/samples/3_Imaging/convolutionSeparable/doc/convolutionSeparable.pdf
  */
 __global__ void g_gaussian_row_one_channel(
@@ -419,50 +421,16 @@ MPStatus
 mpimg_transpose(MPObjData *obj_data, void *args)
 {
     MP_UNUSED(args);
-    int device_id;
 
-    int height = obj_data->dims[0];
-    int width = obj_data->dims[1];
-
-    double *d_img;
-    double *d_transpose;
-
-    device_id = obj_data->mem_loc;
-    HIP_CHECK(hipSetDevice(device_id));
-
-    hipStream_t stream = (hipStream_t)obj_data->stream;
-
-    if (obj_data->device_data != NULL) {
-        d_img = (double *)(obj_data->device_data);
+    int channels = obj_data->ndims == 2 ? 1 : obj_data->dims[2];
+    if (channels == 1)
+    {
+        return _transpose<double>(obj_data);
     }
-    else {
-        //TODO
-        return MILLIPYDE_SUCCESS;
+    else if (channels == 4)
+    {
+        return _transpose<uint32_t>(obj_data);
     }
-
-    HIP_CHECK(hipMalloc(&d_transpose, obj_data->nbytes));
-    
-    int temp = obj_data->dims[0];
-    obj_data->dims[0] = obj_data->dims[1];
-    obj_data->dims[1] = temp;
-    obj_data->dims[obj_data->ndims] = obj_data->dims[0] * sizeof(double);
-    obj_data->dims[obj_data->ndims + 1] = sizeof(double);
-
-    hipLaunchKernelGGL(g_transpose, 
-            dim3(ceil(width / 32.0), ceil(height / 32.0), 1),
-            dim3(TRANSPOSE_BLOCK_DIM, TRANSPOSE_BLOCK_DIM, 1),
-            //TODO: Double check this
-            TRANSPOSE_BLOCK_DIM * TRANSPOSE_BLOCK_DIM * obj_data->dims[obj_data->ndims + 1],
-            stream,
-            d_img,
-            d_transpose,
-            width,
-            height);
-
-    obj_data->device_data = d_transpose;
-
-    HIP_CHECK(hipFree(d_img));
-    
     return MILLIPYDE_SUCCESS;
 }
 
@@ -479,8 +447,7 @@ mpimg_gaussian(MPObjData *obj_data, void *args)
     {
         return _gaussian_greyscale(obj_data, sigma);
     }
-    else{
-        // TODO
+    else if (channels == 4) {
         return _gaussian_rgba(obj_data, sigma);
     }
     return MILLIPYDE_SUCCESS;
@@ -488,8 +455,9 @@ mpimg_gaussian(MPObjData *obj_data, void *args)
 
 } // extern "C"
 
-static
-MPStatus _gaussian_greyscale(MPObjData *obj_data, int sigma)
+
+static MPStatus 
+_gaussian_greyscale(MPObjData *obj_data, int sigma)
 {
     int device_id = obj_data->mem_loc;
     int height = obj_data->dims[0];
@@ -554,8 +522,8 @@ MPStatus _gaussian_greyscale(MPObjData *obj_data, int sigma)
 }
 
 
-static
-MPStatus _gaussian_rgba(MPObjData *obj_data, int sigma)
+static MPStatus 
+_gaussian_rgba(MPObjData *obj_data, int sigma)
 {
     int device_id = obj_data->mem_loc;
     int height = obj_data->dims[0];
@@ -615,6 +583,57 @@ MPStatus _gaussian_rgba(MPObjData *obj_data, int sigma)
             width * 8);
 
     HIP_CHECK(hipFree(d_gaussian));
+    
+    return MILLIPYDE_SUCCESS;
+}
+
+
+template <typename T>  MPStatus 
+_transpose(MPObjData *obj_data)
+{
+    int device_id;
+
+    int height = obj_data->dims[0];
+    int width = obj_data->dims[1];
+
+    T *d_img;
+    T *d_transpose;
+
+    device_id = obj_data->mem_loc;
+    HIP_CHECK(hipSetDevice(device_id));
+
+    hipStream_t stream = (hipStream_t)obj_data->stream;
+
+    if (obj_data->device_data != NULL) {
+        d_img = (T *)(obj_data->device_data);
+    }
+    else {
+        //TODO
+        return MILLIPYDE_SUCCESS;
+    }
+
+    HIP_CHECK(hipMalloc(&d_transpose, obj_data->nbytes));
+    
+    int temp = obj_data->dims[0];
+    obj_data->dims[0] = obj_data->dims[1];
+    obj_data->dims[1] = temp;
+    obj_data->dims[obj_data->ndims] = obj_data->dims[0] * sizeof(T);
+    obj_data->dims[obj_data->ndims + 1] = sizeof(T);
+
+    hipLaunchKernelGGL(g_transpose, 
+            dim3(ceil(width / 32.0), ceil(height / 32.0), 1),
+            dim3(TRANSPOSE_BLOCK_DIM, TRANSPOSE_BLOCK_DIM, 1),
+            //TODO: Double check this
+            TRANSPOSE_BLOCK_DIM * TRANSPOSE_BLOCK_DIM * obj_data->dims[obj_data->ndims + 1],
+            stream,
+            d_img,
+            d_transpose,
+            width,
+            height);
+
+    obj_data->device_data = d_transpose;
+
+    HIP_CHECK(hipFree(d_img));
     
     return MILLIPYDE_SUCCESS;
 }
