@@ -128,9 +128,9 @@ def greyscale_and_transpose_pipeline2():
 
 def gaussian_charlie():
     d_charlie = mp.gpuimage(io.imread("examples/images/charlie.png"))
-    d_charlie.rgb2gray()
     d_charlie.gaussian()
-    imsave("gaussian.png", np.array(d_charlie)) 
+    print("saving")
+    imsave("gaussian.png", np.array(d_charlie))
 
 
 
