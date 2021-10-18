@@ -3,7 +3,8 @@
 #include "millipyde.h"
 
 /* Transposition constants */
-#define TRANSPOSE_BLOCK_DIM 32
+#define TRANSPOSE_TILE_DIM 32
+#define FLIP_TILE_DIM 32
 
 /* Gaussian convolution constants */
 #define KERNEL_RADIUS 8
@@ -25,6 +26,9 @@ mpimg_transpose(MPObjData* obj_data, void *arg);
 
 MPStatus
 mpimg_gaussian(MPObjData* obj_data, void *arg);
+
+MPStatus
+mpimg_fliplr(MPObjData *obj_data, void *args);
 
 #ifdef __cplusplus
 }

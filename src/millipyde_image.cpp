@@ -17,6 +17,14 @@ _gaussian_rgba(MPObjData *obj_data, int sigma);
 template <typename T>  MPStatus 
 _transpose(MPObjData *obj_data);
 
+template <typename T>  MPStatus 
+_fliplr(MPObjData *obj_data);
+
+
+/*******************************************************************************
+* GPU KERNELS
+*******************************************************************************/
+
 
 __global__ void g_color_to_greyscale(unsigned char * d_rgb_data, double * d_grey_data, 
         int width, int height, int channels)
@@ -44,26 +52,41 @@ template <typename T>
 __global__ void g_transpose(T *d_data, T *d_result, int width, int height)
 {
     // Block dimensions must be square for shared memory intermediate block
-    __shared__ T shared_block[TRANSPOSE_BLOCK_DIM][TRANSPOSE_BLOCK_DIM];
+    __shared__ T shared_tile[TRANSPOSE_TILE_DIM][TRANSPOSE_TILE_DIM];
 	
     int x = hipThreadIdx_x + hipBlockIdx_x * hipBlockDim_x;
     int y = hipThreadIdx_y + hipBlockIdx_y * hipBlockDim_y;
 
 	if (x < width && y < height) {
 		int in_idx = y * width + x;
-		shared_block[hipThreadIdx_y][hipThreadIdx_x] = d_data[in_idx];
+		shared_tile[hipThreadIdx_y][hipThreadIdx_x] = d_data[in_idx];
 	}
 
 	__syncthreads();
 
-    x = hipThreadIdx_x + hipBlockIdx_y * TRANSPOSE_BLOCK_DIM;
-    y = hipThreadIdx_y + hipBlockIdx_x * TRANSPOSE_BLOCK_DIM;
+    x = hipThreadIdx_x + hipBlockIdx_y * TRANSPOSE_TILE_DIM;
+    y = hipThreadIdx_y + hipBlockIdx_x * TRANSPOSE_TILE_DIM;
 
 
 	if (x < height && y < width) {
-		int out_idx = y * height + x;
-		d_result[out_idx] = shared_block[hipThreadIdx_x][hipThreadIdx_y];
+		int out_idx = y * width + (width - x - 1);
+		d_result[out_idx] = shared_tile[hipThreadIdx_x][hipThreadIdx_y];
 	}
+}
+
+
+template <typename T>
+__global__ void g_flip_horizontal(T *d_data, T *d_result, int width, int height)
+{
+    int x = hipThreadIdx_x + hipBlockIdx_x * hipBlockDim_x;
+    int y = hipThreadIdx_y + hipBlockIdx_y * hipBlockDim_y;
+
+    if (x < width && y < height)
+    {
+        int in_idx = y * width + x;
+        int out_idx = y * width + (width - 1 - x);
+        d_result[out_idx] = d_data[in_idx];
+    }
 }
 
 /*
@@ -345,10 +368,6 @@ __global__ void g_gaussian_col_four_channel(
             a_sum +=
                 (int)(((data[smemPos + k * COLUMN_TILE_W]) & 0xff) * 
                 d_kernel[KERNEL_RADIUS - k]);
-
-                    /*sum +=
-                data[smemPos + k * COLUMN_TILE_W] *
-                d_kernel[KERNEL_RADIUS - k];*/
         }
         d_result[gmemPos] = (0 |
                              ((r_sum & 0xff) << 24) |
@@ -361,7 +380,9 @@ __global__ void g_gaussian_col_four_channel(
 }
 
 
-
+/*******************************************************************************
+* API FUNCTIONS WITH C-LINKAGE
+*******************************************************************************/
 
 
 extern "C" {
@@ -453,7 +474,51 @@ mpimg_gaussian(MPObjData *obj_data, void *args)
     return MILLIPYDE_SUCCESS;
 }
 
+
+MPStatus
+mpimg_fliplr(MPObjData *obj_data, void *args)
+{
+    MP_UNUSED(args);
+    int sigma = 2;
+
+    // If we only have x,y dimensions, we are greyscale (one channel)
+    int channels = obj_data->ndims == 2 ? 1 : obj_data->dims[2];
+    if (channels == 1)
+    {
+        return _fliplr<double>(obj_data);
+    }
+    else if (channels == 4) {
+        return _fliplr<uint32_t>(obj_data);
+    }
+    return MILLIPYDE_SUCCESS;
+}
+
+
+MPStatus
+mpimg_rotate(MPObjData *obj_data, void *args)
+{
+    MP_UNUSED(args);
+    double angle;
+
+    // If we only have x,y dimensions, we are greyscale (one channel)
+    int channels = obj_data->ndims == 2 ? 1 : obj_data->dims[2];
+    if (channels == 1)
+    {
+        return _fliplr<double>(obj_data);
+    }
+    else if (channels == 4) {
+        return _fliplr<uint32_t>(obj_data);
+    }
+    return MILLIPYDE_SUCCESS;
+}
+
+
 } // extern "C"
+
+
+/*******************************************************************************
+* STATIC METHODS
+*******************************************************************************/
 
 
 static MPStatus 
@@ -622,9 +687,9 @@ _transpose(MPObjData *obj_data)
 
     hipLaunchKernelGGL(g_transpose, 
             dim3(ceil(width / 32.0), ceil(height / 32.0), 1),
-            dim3(TRANSPOSE_BLOCK_DIM, TRANSPOSE_BLOCK_DIM, 1),
+            dim3(TRANSPOSE_TILE_DIM, TRANSPOSE_TILE_DIM, 1),
             //TODO: Double check this
-            TRANSPOSE_BLOCK_DIM * TRANSPOSE_BLOCK_DIM * obj_data->dims[obj_data->ndims + 1],
+            TRANSPOSE_TILE_DIM * TRANSPOSE_TILE_DIM * obj_data->dims[obj_data->ndims + 1],
             stream,
             d_img,
             d_transpose,
@@ -632,6 +697,52 @@ _transpose(MPObjData *obj_data)
             height);
 
     obj_data->device_data = d_transpose;
+
+    HIP_CHECK(hipFree(d_img));
+    
+    return MILLIPYDE_SUCCESS;
+}
+
+
+template <typename T>  MPStatus 
+_fliplr(MPObjData *obj_data)
+{
+    int device_id;
+
+    int height = obj_data->dims[0];
+    int width = obj_data->dims[1];
+
+    T *d_img;
+    T *d_flipped;
+
+    device_id = obj_data->mem_loc;
+    HIP_CHECK(hipSetDevice(device_id));
+
+    hipStream_t stream = (hipStream_t)obj_data->stream;
+
+    if (obj_data->device_data != NULL) {
+        d_img = (T *)(obj_data->device_data);
+    }
+    else {
+        //TODO
+        return MILLIPYDE_SUCCESS;
+    }
+
+    HIP_CHECK(hipMalloc(&d_flipped, obj_data->nbytes));
+
+    hipLaunchKernelGGL(g_flip_horizontal, 
+            dim3(ceil(width / 32.0), ceil(height / 32.0), 1),
+            dim3(FLIP_TILE_DIM, FLIP_TILE_DIM, 1),
+            //TODO: Use coalesced shared memory in the future
+            //FLIP_TILE_DIM * FLIP_TILE_DIM * sizeof(T) * 2,
+            0,
+            stream,
+            d_img,
+            d_flipped,
+            width,
+            height);
+
+    obj_data->device_data = d_flipped;
 
     HIP_CHECK(hipFree(d_img));
     
