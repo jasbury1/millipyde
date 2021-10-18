@@ -20,6 +20,9 @@ _transpose(MPObjData *obj_data);
 template <typename T>  MPStatus 
 _fliplr(MPObjData *obj_data);
 
+template <typename T>  MPStatus 
+_rotate(MPObjData *obj_data, double angle);
+
 
 /*******************************************************************************
 * GPU KERNELS
@@ -51,7 +54,6 @@ __global__ void g_color_to_greyscale(unsigned char * d_rgb_data, double * d_grey
 template <typename T>
 __global__ void g_transpose(T *d_data, T *d_result, int width, int height)
 {
-    // Block dimensions must be square for shared memory intermediate block
     __shared__ T shared_tile[TRANSPOSE_TILE_DIM][TRANSPOSE_TILE_DIM];
 	
     int x = hipThreadIdx_x + hipBlockIdx_x * hipBlockDim_x;
@@ -85,6 +87,26 @@ __global__ void g_flip_horizontal(T *d_data, T *d_result, int width, int height)
     {
         int in_idx = y * width + x;
         int out_idx = y * width + (width - 1 - x);
+        d_result[out_idx] = d_data[in_idx];
+    }
+}
+
+
+template <typename T>
+__global__ void g_rotate(T* d_data, T* d_result, int width, int height, double angle)
+{
+    int x = blockIdx.x * blockDim.x + threadIdx.x;
+    int y = blockIdx.y * blockDim.y + threadIdx.y;
+
+    int x_rot = ((double)x - (width / 2)) * cos(angle) -
+                ((double)y - (height / 2)) * sin(angle) + (width / 2);
+    int y_rot = ((double)x - (width / 2)) * sin(angle) +
+                ((double)y - (height / 2)) * cos(angle) + (height / 2);
+    
+    if (x < width && y < height && x_rot >= 0 && x_rot < width && y_rot >= 0 && y_rot < height)
+    {
+        int in_idx = y * width + x;
+        int out_idx = y_rot * width + x_rot;
         d_result[out_idx] = d_data[in_idx];
     }
 }
@@ -498,16 +520,16 @@ MPStatus
 mpimg_rotate(MPObjData *obj_data, void *args)
 {
     MP_UNUSED(args);
-    double angle;
+    double angle = 45;
 
     // If we only have x,y dimensions, we are greyscale (one channel)
     int channels = obj_data->ndims == 2 ? 1 : obj_data->dims[2];
     if (channels == 1)
     {
-        return _fliplr<double>(obj_data);
+        return _rotate<double>(obj_data, angle);
     }
     else if (channels == 4) {
-        return _fliplr<uint32_t>(obj_data);
+        return _rotate<uint32_t>(obj_data, angle);
     }
     return MILLIPYDE_SUCCESS;
 }
@@ -743,6 +765,52 @@ _fliplr(MPObjData *obj_data)
             height);
 
     obj_data->device_data = d_flipped;
+
+    HIP_CHECK(hipFree(d_img));
+    
+    return MILLIPYDE_SUCCESS;
+}
+
+
+template <typename T>  MPStatus 
+_rotate(MPObjData *obj_data, double angle)
+{
+    int device_id;
+
+    int height = obj_data->dims[0];
+    int width = obj_data->dims[1];
+
+    T *d_img;
+    T *d_rot;
+
+    device_id = obj_data->mem_loc;
+    HIP_CHECK(hipSetDevice(device_id));
+
+    hipStream_t stream = (hipStream_t)obj_data->stream;
+
+    if (obj_data->device_data != NULL) {
+        d_img = (T *)(obj_data->device_data);
+    }
+    else {
+        //TODO
+        return MILLIPYDE_SUCCESS;
+    }
+
+    HIP_CHECK(hipMalloc(&d_rot, obj_data->nbytes));
+
+    hipLaunchKernelGGL(
+            g_rotate, 
+            dim3(ceil(width / (float)ROTATE_BLOCK_DIM), ceil(height / (float)ROTATE_BLOCK_DIM), 1),
+            dim3(ROTATE_BLOCK_DIM, ROTATE_BLOCK_DIM, 1),
+            0,
+            stream,
+            d_img,
+            d_rot,
+            width,
+            height,
+            angle);
+
+    obj_data->device_data = d_rot;
 
     HIP_CHECK(hipFree(d_img));
     

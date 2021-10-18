@@ -5,6 +5,7 @@
 /* Transposition constants */
 #define TRANSPOSE_TILE_DIM 32
 #define FLIP_TILE_DIM 32
+#define ROTATE_BLOCK_DIM 32
 
 /* Gaussian convolution constants */
 #define KERNEL_RADIUS 8
@@ -29,6 +30,9 @@ mpimg_gaussian(MPObjData* obj_data, void *arg);
 
 MPStatus
 mpimg_fliplr(MPObjData *obj_data, void *args);
+
+MPStatus
+mpimg_rotate(MPObjData *obj_data, void *args);
 
 #ifdef __cplusplus
 }
