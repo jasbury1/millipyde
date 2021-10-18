@@ -71,7 +71,7 @@ __global__ void g_transpose(T *d_data, T *d_result, int width, int height)
 
 
 	if (x < height && y < width) {
-		int out_idx = y * width + (width - x - 1);
+		int out_idx = y * height + x;
 		d_result[out_idx] = shared_tile[hipThreadIdx_x][hipThreadIdx_y];
 	}
 }
