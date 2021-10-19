@@ -206,7 +206,13 @@ def main():
     #greyscale_and_transpose_pipeline()
     #greyscale_and_transpose_pipeline2()
     #gaussian_charlie()
-    with_pipeline()
+    d_charlie = mp.gpuimage(io.imread("examples/images/charlie.png"))
+    d_charlie.rotate()
+    imsave("spoopy.png", np.array(d_charlie))
+    d_charlie = mp.gpuimage(io.imread("examples/images/charlie.png"))
+    d_charlie.rgb2grey()
+    d_charlie.rotate()
+    imsave("spoopy.png", np.array(d_charlie))
 
 
 

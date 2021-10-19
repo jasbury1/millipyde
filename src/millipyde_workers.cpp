@@ -31,6 +31,7 @@ SOFTWARE.
 #include <stdio.h>
 #include <iostream>
 #include <pthread.h>
+
 #include "hip/hip_runtime.h"
 
 // PY_SSIZE_T_CLEAN Should be defined before including Python.h

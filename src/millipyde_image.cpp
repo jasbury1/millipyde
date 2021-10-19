@@ -103,11 +103,19 @@ __global__ void g_rotate(T* d_data, T* d_result, int width, int height, double a
     int y_rot = ((double)x - (width / 2)) * sin(angle) +
                 ((double)y - (height / 2)) * cos(angle) + (height / 2);
     
-    if (x < width && y < height && x_rot >= 0 && x_rot < width && y_rot >= 0 && y_rot < height)
+    if (x < width && y < height)
     {
         int in_idx = y * width + x;
-        int out_idx = y_rot * width + x_rot;
-        d_result[out_idx] = d_data[in_idx];
+        if (x_rot >= 0 && x_rot < width && y_rot >= 0 && y_rot < height)
+        {
+            
+            int out_idx = y_rot * width + x_rot;
+            d_result[in_idx] = d_data[out_idx];
+        }
+        else
+        {
+            d_result[in_idx] = (T)0;
+        }
     }
 }
 
@@ -234,7 +242,7 @@ __global__ void g_gaussian_col_one_channel(
                 data[smemPos + k * COLUMN_TILE_W] *
                 d_kernel[KERNEL_RADIUS - k];
         }
-        d_result[gmemPos] = sum;
+        d_result[gmemPos] = fmax(0.0, sum);
         smemPos += smemStride;
         gmemPos += gmemStride;
     }
@@ -309,18 +317,16 @@ __global__ void g_gaussian_row_four_channel(
                 (int)(((data[smemPos + k] >> 8) & 0xff) * 
                 d_kernel[KERNEL_RADIUS - k]);
             a_sum +=
-                (int)(((data[smemPos + k]) & 0xff) * 
-                d_kernel[KERNEL_RADIUS - k]);
+                (int)(((data[smemPos + k]) & 0xff) *
+                      d_kernel[KERNEL_RADIUS - k]);
         }
-
         d_result[rowStart + writePos] = (0 |
-                             ((r_sum & 0xff) << 24) |
-                             ((g_sum & 0xff) << 16) |
-                             ((b_sum & 0xff) << 8) |
-                             (a_sum & 0xff));
+                                         ((r_sum & 0xff) << 24) |
+                                         ((g_sum & 0xff) << 16) |
+                                         ((b_sum & 0xff) << 8) |
+                                         (a_sum & 0xff));
     }
 }
-
 
 __global__ void g_gaussian_col_four_channel(
     uint32_t *d_result,
@@ -388,14 +394,15 @@ __global__ void g_gaussian_col_four_channel(
                 (int)(((data[smemPos + k * COLUMN_TILE_W] >> 8) & 0xff) * 
                 d_kernel[KERNEL_RADIUS - k]);
             a_sum +=
-                (int)(((data[smemPos + k * COLUMN_TILE_W]) & 0xff) * 
-                d_kernel[KERNEL_RADIUS - k]);
+                (int)(((data[smemPos + k * COLUMN_TILE_W]) & 0xff) *
+                      d_kernel[KERNEL_RADIUS - k]);
         }
         d_result[gmemPos] = (0 |
                              ((r_sum & 0xff) << 24) |
                              ((g_sum & 0xff) << 16) |
                              ((b_sum & 0xff) << 8) |
                              (a_sum & 0xff));
+
         smemPos += smemStride;
         gmemPos += gmemStride;
     }
@@ -501,7 +508,6 @@ MPStatus
 mpimg_fliplr(MPObjData *obj_data, void *args)
 {
     MP_UNUSED(args);
-    int sigma = 2;
 
     // If we only have x,y dimensions, we are greyscale (one channel)
     int channels = obj_data->ndims == 2 ? 1 : obj_data->dims[2];
@@ -579,7 +585,7 @@ _gaussian_greyscale(MPObjData *obj_data, int sigma)
 
         hipLaunchKernelGGL(
             g_gaussian_row_one_channel,
-            dim3(ceil(width / ROW_TILE_W), height, 1),
+            dim3(ceil(width / (double)ROW_TILE_W), height, 1),
             dim3(ceil(KERNEL_RADIUS_ALIGNED + ROW_TILE_W + KERNEL_RADIUS)),
             (KERNEL_RADIUS + ROW_TILE_W + KERNEL_RADIUS) * sizeof(double),
             stream,
@@ -592,7 +598,7 @@ _gaussian_greyscale(MPObjData *obj_data, int sigma)
 
         hipLaunchKernelGGL(
             g_gaussian_col_one_channel,
-            dim3(ceil(width / COLUMN_TILE_W), ceil(height / COLUMN_TILE_H), 1),
+            dim3(ceil(width / (double)COLUMN_TILE_W), ceil(height / (double)COLUMN_TILE_H), 1),
             dim3(COLUMN_TILE_W, 8),
             (COLUMN_TILE_W * (KERNEL_RADIUS + COLUMN_TILE_H + KERNEL_RADIUS)) * sizeof(double),
             stream,
@@ -645,7 +651,7 @@ _gaussian_rgba(MPObjData *obj_data, int sigma)
 
         hipLaunchKernelGGL(
             g_gaussian_row_four_channel,
-            dim3(ceil(width / ROW_TILE_W), height, 1),
+            dim3(ceil(width / (double)ROW_TILE_W), height, 1),
             dim3(ceil(KERNEL_RADIUS_ALIGNED + ROW_TILE_W + KERNEL_RADIUS)),
             (KERNEL_RADIUS + ROW_TILE_W + KERNEL_RADIUS) * sizeof(uint32_t),
             stream,
@@ -658,7 +664,7 @@ _gaussian_rgba(MPObjData *obj_data, int sigma)
 
         hipLaunchKernelGGL(
             g_gaussian_col_four_channel,
-            dim3(ceil(width / COLUMN_TILE_W), ceil(height / COLUMN_TILE_H), 1),
+            dim3(ceil(width / (double)COLUMN_TILE_W), ceil(height / (double)COLUMN_TILE_H), 1),
             dim3(COLUMN_TILE_W, 8),
             (COLUMN_TILE_W * (KERNEL_RADIUS + COLUMN_TILE_H + KERNEL_RADIUS)) * sizeof(uint32_t),
             stream,

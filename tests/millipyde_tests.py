@@ -323,7 +323,56 @@ class TestMillipydeImages(unittest.TestCase):
         npt.assert_almost_equal(d_charlie, h_charlie, decimal=DECIMAL_ERROR)
         npt.assert_almost_equal(d_charlie2, h_charlie2, decimal=DECIMAL_ERROR)
     
+
+    def test_long_pipeline(self):
+        d_charlie_control = mp.gpuimage(io.imread("examples/images/charlie.png"))
+        d_charlie_control.gaussian()
+        d_charlie_control.rgb2grey()
+        d_charlie_control.transpose()
+        d_charlie_control.transpose()
+        d_charlie_control.rotate()
+        d_charlie_control = np.array(d_charlie_control)
         
+        d_charlie = mp.gpuimage(io.imread("examples/images/charlie.png"))
+        d_charlie2 = mp.gpuimage(io.imread("examples/images/charlie.png"))
+        d_charlie3 = mp.gpuimage(io.imread("examples/images/charlie.png"))
+        d_charlie4 = mp.gpuimage(io.imread("examples/images/charlie.png"))
+        d_charlie5 = mp.gpuimage(io.imread("examples/images/charlie.png"))
+        d_charlie6 = mp.gpuimage(io.imread("examples/images/charlie.png"))
+        d_charlie7 = mp.gpuimage(io.imread("examples/images/charlie.png"))
+        d_charlie8 = mp.gpuimage(io.imread("examples/images/charlie.png"))
+
+        charlies = [d_charlie, d_charlie2, d_charlie3, d_charlie4,
+                    d_charlie5, d_charlie6, d_charlie7, d_charlie8]
+        operations = [
+            mp.Operation("gaussian"),
+            mp.Operation("rgb2grey"),
+            mp.Operation("transpose"),
+            mp.Operation("transpose"),
+            mp.Operation("rotate")
+        ]
+
+        p = mp.Pipeline(charlies, operations)
+        p.run()
+
+        npt.assert_almost_equal(d_charlie_control, np.array(
+            d_charlie), decimal=DECIMAL_ERROR)
+        npt.assert_almost_equal(d_charlie_control, np.array(
+            d_charlie2), decimal=DECIMAL_ERROR)
+        npt.assert_almost_equal(d_charlie_control, np.array(
+            d_charlie3), decimal=DECIMAL_ERROR)
+        npt.assert_almost_equal(d_charlie_control, np.array(
+            d_charlie4), decimal=DECIMAL_ERROR)
+        npt.assert_almost_equal(d_charlie_control, np.array(
+            d_charlie5), decimal=DECIMAL_ERROR)
+        npt.assert_almost_equal(d_charlie_control, np.array(
+            d_charlie6), decimal=DECIMAL_ERROR)
+        npt.assert_almost_equal(d_charlie_control, np.array(
+            d_charlie7), decimal=DECIMAL_ERROR)
+        npt.assert_almost_equal(d_charlie_control, np.array(
+            d_charlie8), decimal=DECIMAL_ERROR)
+
+
 
 
 
