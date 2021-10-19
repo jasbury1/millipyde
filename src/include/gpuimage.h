@@ -70,6 +70,7 @@ typedef struct {
     int height;
 } PyGPUImageObject;
 
+
 /*******************************************************************************
 * FUNCTION HEADERS
 *******************************************************************************/
@@ -84,13 +85,19 @@ PyObject *
 PyGPUImage_transpose(PyGPUImageObject *self, void *closure);
 
 PyObject *
-PyGPUImage_gaussian(PyGPUImageObject *self, void *closure);
+PyGPUImage_gaussian(PyGPUImageObject *self, PyObject *args, PyObject *kwds);
 
 PyObject *
 PyGPUImage_fliplr(PyGPUImageObject *self, void *closure);
 
 PyObject *
-PyGPUImage_rotate(PyGPUImageObject *self, void *closure);
+PyGPUImage_rotate(PyGPUImageObject *self, PyObject *args, PyObject *kwds);
+
+void *
+gpuimage_rotate_args(PyObject *args);
+
+void *
+gpuimage_gaussian_args(PyObject *args);
 
 /*******************************************************************************
 * TYPE DATA
@@ -116,13 +123,13 @@ static PyMethodDef PyGPUImage_methods[] = {
     {"transpose", (PyCFunction) PyGPUImage_transpose, METH_NOARGS,
      __GPUIMAGE_TRANSPOSE_DOC
     },
-    {"gaussian", (PyCFunction) PyGPUImage_gaussian, METH_NOARGS,
+    {"gaussian", (PyCFunction) PyGPUImage_gaussian, METH_VARARGS,
      __GPUIMAGE_GAUSSIAN_DOC
     },
     {"fliplr", (PyCFunction) PyGPUImage_fliplr, METH_NOARGS,
      __GPUIMAGE_FLIPLR_DOC
     },
-    {"rotate", (PyCFunction) PyGPUImage_rotate, METH_NOARGS,
+    {"rotate", (PyCFunction) PyGPUImage_rotate, METH_VARARGS,
      __GPUIMAGE_FLIPLR_DOC
     },
     {NULL}

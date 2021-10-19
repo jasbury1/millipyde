@@ -5,6 +5,7 @@
 #include <Python.h>
 
 #include "use_numpy.h"
+#include "gpuimage.h"
 #include "gpuoperation.h"
 #include "millipyde_image.h"
 
@@ -244,6 +245,28 @@ gpuoperation_func_from_name(PyObject *uname)
     else if (strcmp(name, "rotate") == 0)
     {
         return mpimg_rotate;
+    }
+
+    return NULL;
+}
+
+
+void *
+gpuoperation_args_from_name(PyObject *uname, PyObject *arg_tuple)    
+{
+    const char *name = PyUnicode_AsUTF8(uname);
+    
+    if(name == NULL)
+    {
+        return NULL;
+    }
+    else if (strcmp(name, "rotate") == 0)
+    {
+        return gpuimage_rotate_args(arg_tuple);
+    }
+    else if (strcmp(name, "gaussian") == 0)
+    {
+        return gpuimage_gaussian_args(arg_tuple);
     }
 
     return NULL;

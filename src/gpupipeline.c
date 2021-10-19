@@ -27,6 +27,14 @@ PyGPUPipeline_dealloc(PyGPUPipelineObject *self)
     }
     if (self->runnables)
     {
+        int operation_size = PyList_Size(self->operations);
+        for (int i = 0; i < operation_size; ++i)
+        {
+            if(self->runnables[i].args != NULL)
+            {
+                free(self->runnables[i].args);
+            }
+        }
         free(self->runnables);
     }
 }
@@ -144,6 +152,7 @@ PyGPUPipeline_init(PyGPUPipelineObject *self, PyObject *args, PyObject *kwds)
         if (operation->requires_instance)
         {
             self->runnables[iter].func = gpuoperation_func_from_name(operation->callable);
+            self->runnables[iter].args = gpuoperation_args_from_name(operation->callable, operation->arg_tuple);
             self->runnables[iter].probability = operation->probability;
         }
     }

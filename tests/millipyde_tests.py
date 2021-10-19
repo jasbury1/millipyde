@@ -326,11 +326,11 @@ class TestMillipydeImages(unittest.TestCase):
 
     def test_long_pipeline(self):
         d_charlie_control = mp.gpuimage(io.imread("examples/images/charlie.png"))
-        d_charlie_control.gaussian()
+        d_charlie_control.gaussian(2)
         d_charlie_control.rgb2grey()
         d_charlie_control.transpose()
         d_charlie_control.transpose()
-        d_charlie_control.rotate()
+        d_charlie_control.rotate(45)
         d_charlie_control = np.array(d_charlie_control)
         
         d_charlie = mp.gpuimage(io.imread("examples/images/charlie.png"))
@@ -345,11 +345,11 @@ class TestMillipydeImages(unittest.TestCase):
         charlies = [d_charlie, d_charlie2, d_charlie3, d_charlie4,
                     d_charlie5, d_charlie6, d_charlie7, d_charlie8]
         operations = [
-            mp.Operation("gaussian"),
+            mp.Operation("gaussian", 2),
             mp.Operation("rgb2grey"),
             mp.Operation("transpose"),
             mp.Operation("transpose"),
-            mp.Operation("rotate")
+            mp.Operation("rotate", 45)
         ]
 
         p = mp.Pipeline(charlies, operations)

@@ -80,6 +80,14 @@ typedef struct {
     double probability;
 } MPRunnable;
 
+typedef struct {
+    double angle;
+} RotateArgs;
+
+typedef struct {
+    double sigma;
+} GaussianArgs;
+
 
 
 const char* mperr_str(MPStatus status);

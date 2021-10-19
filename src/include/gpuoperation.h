@@ -74,6 +74,9 @@ PyGPUOperation_run_on(PyGPUOperationObject *self, PyObject *instance);
 MPFunc
 gpuoperation_func_from_name(PyObject *uname);
 
+void *
+gpuoperation_args_from_name(PyObject *uname, PyObject *arg_tuple);
+
 MPStatus
 gpuoperation_evaluate_probability(MPBool *result, double probability);
 

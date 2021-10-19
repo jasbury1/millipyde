@@ -9,10 +9,10 @@ __device__ __constant__ double d_kernel[KERNEL_W];
 
 
 static MPStatus 
-_gaussian_greyscale(MPObjData *obj_data, int sigma);
+_gaussian_greyscale(MPObjData *obj_data, double sigma);
 
 static MPStatus 
-_gaussian_rgba(MPObjData *obj_data, int sigma);
+_gaussian_rgba(MPObjData *obj_data, double sigma);
 
 template <typename T>  MPStatus 
 _transpose(MPObjData *obj_data);
@@ -95,13 +95,13 @@ __global__ void g_flip_horizontal(T *d_data, T *d_result, int width, int height)
 template <typename T>
 __global__ void g_rotate(T* d_data, T* d_result, int width, int height, double angle)
 {
-    int x = blockIdx.x * blockDim.x + threadIdx.x;
-    int y = blockIdx.y * blockDim.y + threadIdx.y;
+    int x = hipThreadIdx_x + hipBlockIdx_x * hipBlockDim_x;
+    int y = hipThreadIdx_y + hipBlockIdx_y * hipBlockDim_y;
 
-    int x_rot = ((double)x - (width / 2)) * cos(angle) -
-                ((double)y - (height / 2)) * sin(angle) + (width / 2);
-    int y_rot = ((double)x - (width / 2)) * sin(angle) +
-                ((double)y - (height / 2)) * cos(angle) + (height / 2);
+    int x_rot = ((double)x - ((double)width / 2)) * cos(angle) -
+                ((double)y - ((double)height / 2)) * sin(angle) + ((double)width / 2);
+    int y_rot = ((double)x - ((double)width / 2)) * sin(angle) +
+                ((double)y - ((double)height / 2)) * cos(angle) + ((double)height / 2);
     
     if (x < width && y < height)
     {
@@ -118,6 +118,7 @@ __global__ void g_rotate(T* d_data, T* d_result, int width, int height, double a
         }
     }
 }
+
 
 /*
  * Separable Gaussian Kernel using this technique:
@@ -489,7 +490,7 @@ MPStatus
 mpimg_gaussian(MPObjData *obj_data, void *args)
 {
     MP_UNUSED(args);
-    int sigma = 2;
+    double sigma = ((GaussianArgs *)args)->sigma;
 
     // If we only have x,y dimensions, we are greyscale (one channel)
     int channels = obj_data->ndims == 2 ? 1 : obj_data->dims[2];
@@ -526,7 +527,7 @@ MPStatus
 mpimg_rotate(MPObjData *obj_data, void *args)
 {
     MP_UNUSED(args);
-    double angle = 45;
+    double angle = ((RotateArgs *)args)->angle;
 
     // If we only have x,y dimensions, we are greyscale (one channel)
     int channels = obj_data->ndims == 2 ? 1 : obj_data->dims[2];
@@ -550,7 +551,7 @@ mpimg_rotate(MPObjData *obj_data, void *args)
 
 
 static MPStatus 
-_gaussian_greyscale(MPObjData *obj_data, int sigma)
+_gaussian_greyscale(MPObjData *obj_data, double sigma)
 {
     int device_id = obj_data->mem_loc;
     int height = obj_data->dims[0];
@@ -616,7 +617,7 @@ _gaussian_greyscale(MPObjData *obj_data, int sigma)
 
 
 static MPStatus 
-_gaussian_rgba(MPObjData *obj_data, int sigma)
+_gaussian_rgba(MPObjData *obj_data, double sigma)
 {
     int device_id = obj_data->mem_loc;
     int height = obj_data->dims[0];

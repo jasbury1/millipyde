@@ -171,10 +171,16 @@ PyGPUImage_fliplr(PyGPUImageObject *self, void *closure)
  * 
  ******************************************************************************/
 PyObject *
-PyGPUImage_rotate(PyGPUImageObject *self, void *closure)
+PyGPUImage_rotate(PyGPUImageObject *self, PyObject *args, PyObject *kwds)
 {
     MPObjData *obj_data = self->array.obj_data;
     int target_device = mpdev_get_target_device();
+
+    void *rotate_args = gpuimage_rotate_args(args);
+    if (rotate_args == NULL)
+    {
+        return NULL;
+    }
 
     if (!obj_data->pinned)
     {
@@ -187,7 +193,9 @@ PyGPUImage_rotate(PyGPUImageObject *self, void *closure)
     }
 
     // TODO: Type checking, etc
-    mpimg_rotate(obj_data, NULL);
+    mpimg_rotate(obj_data, rotate_args);
+
+    free(rotate_args);
     return Py_None;
 }
 
@@ -205,10 +213,16 @@ PyGPUImage_rotate(PyGPUImageObject *self, void *closure)
  * 
  ******************************************************************************/
 PyObject *
-PyGPUImage_gaussian(PyGPUImageObject *self, void *closure)
+PyGPUImage_gaussian(PyGPUImageObject *self, PyObject *args, PyObject *kwds)
 {
     MPObjData *obj_data = self->array.obj_data;
     int target_device = mpdev_get_target_device();
+
+    void *gaussian_args = gpuimage_gaussian_args(args);
+    if (gaussian_args == NULL)
+    {
+        return NULL;
+    }
 
     if (!obj_data->pinned)
     {
@@ -221,6 +235,36 @@ PyGPUImage_gaussian(PyGPUImageObject *self, void *closure)
     }
 
     // TODO: Type checking, etc
-    mpimg_gaussian(obj_data, NULL);
+    mpimg_gaussian(obj_data, gaussian_args);
+
+    free(gaussian_args);
     return Py_None;
+}
+
+
+void *
+gpuimage_rotate_args(PyObject *args)
+{
+    double angle;
+    RotateArgs *rotate_args = malloc(sizeof(RotateArgs));
+    if (!PyArg_ParseTuple(args, "d", &angle))
+    {
+        return NULL;
+    }
+    rotate_args->angle = angle;
+    return (void *)rotate_args;
+}
+
+
+void *
+gpuimage_gaussian_args(PyObject *args)
+{
+    double sigma;
+    GaussianArgs *gaussian_args = malloc(sizeof(GaussianArgs));
+    if (!PyArg_ParseTuple(args, "d", &sigma))
+    {
+        return NULL;
+    }
+    gaussian_args->sigma = sigma;
+    return (void *)gaussian_args;
 }

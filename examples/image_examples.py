@@ -135,67 +135,6 @@ def gaussian_charlie():
     imsave("gaussian.png", np.array(d_charlie))
 
 
-def without_pipeline():
-    d_charlie = mp.gpuimage(io.imread("examples/images/charlie.png"))
-    d_charlie2 = mp.gpuimage(io.imread("examples/images/charlie.png"))
-    d_charlie3 = mp.gpuimage(io.imread("examples/images/charlie.png"))
-    d_charlie4 = mp.gpuimage(io.imread("examples/images/charlie.png"))
-    d_charlie5 = mp.gpuimage(io.imread("examples/images/charlie.png"))
-    d_charlie6 = mp.gpuimage(io.imread("examples/images/charlie.png"))
-    d_charlie7 = mp.gpuimage(io.imread("examples/images/charlie.png"))
-    d_charlie8 = mp.gpuimage(io.imread("examples/images/charlie.png"))
-
-    charlies = [d_charlie, d_charlie2, d_charlie3, d_charlie4,
-                d_charlie5, d_charlie6, d_charlie7, d_charlie8]
-    operations = [
-        mp.Operation("gaussian"),
-        mp.Operation("rgb2grey"),
-        mp.Operation("transpose"),
-        mp.Operation("transpose"),
-        mp.Operation("rotate")]
-    start = time.perf_counter()
-    
-    for c in charlies:
-        for op in operations:
-            op.run_on(c)
-    stop = time.perf_counter()
-
-    print("\nTime to run pipeline: {}\n".format(stop - start))
-
-    imsave("spoopy3.png", np.array(d_charlie))
-    imsave("spoopy4.png", np.array(d_charlie3))
-    imsave("spoopy5.png", np.array(d_charlie8))
-
-def with_pipeline():
-    d_charlie = mp.gpuimage(io.imread("examples/images/charlie.png"))
-    d_charlie2 = mp.gpuimage(io.imread("examples/images/charlie.png"))
-    d_charlie3 = mp.gpuimage(io.imread("examples/images/charlie.png"))
-    d_charlie4 = mp.gpuimage(io.imread("examples/images/charlie.png"))
-    d_charlie5 = mp.gpuimage(io.imread("examples/images/charlie.png"))
-    d_charlie6 = mp.gpuimage(io.imread("examples/images/charlie.png"))
-    d_charlie7 = mp.gpuimage(io.imread("examples/images/charlie.png"))
-    d_charlie8 = mp.gpuimage(io.imread("examples/images/charlie.png"))
-
-    charlies = [d_charlie, d_charlie2, d_charlie3, d_charlie4,
-                d_charlie5, d_charlie6, d_charlie7, d_charlie8]
-    operations = [
-        mp.Operation("gaussian"),
-        mp.Operation("rgb2grey"),
-        mp.Operation("transpose"),
-        mp.Operation("transpose"),
-        mp.Operation("rotate")]
-
-    p = mp.Pipeline(charlies, operations)
-    start = time.perf_counter()
-    p.run()
-    stop = time.perf_counter()
-
-    print("\nTime to run pipeline: {}\n".format(stop - start))
-
-    imsave("spoopy3.png", np.array(d_charlie))
-    imsave("spoopy4.png", np.array(d_charlie3))
-    imsave("spoopy5.png", np.array(d_charlie8))
-
 
 
 
@@ -208,11 +147,6 @@ def main():
     #gaussian_charlie()
     d_charlie = mp.gpuimage(io.imread("examples/images/charlie.png"))
     d_charlie.rotate()
-    imsave("spoopy.png", np.array(d_charlie))
-    d_charlie = mp.gpuimage(io.imread("examples/images/charlie.png"))
-    d_charlie.rgb2grey()
-    d_charlie.rotate()
-    imsave("spoopy.png", np.array(d_charlie))
 
 
 
