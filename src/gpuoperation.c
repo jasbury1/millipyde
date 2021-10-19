@@ -233,6 +233,18 @@ gpuoperation_func_from_name(PyObject *uname)
     {
         return mpimg_transpose;
     }
+    else if (strcmp(name, "gaussian") == 0)
+    {
+        return mpimg_gaussian;
+    }
+    else if (strcmp(name, "fliplr") == 0)
+    {
+        return mpimg_fliplr;
+    }
+    else if (strcmp(name, "rotate") == 0)
+    {
+        return mpimg_rotate;
+    }
 
     return NULL;
 }

@@ -127,8 +127,9 @@ mpdev_teardown()
                 hipStreamDestroy(device.streams[j]);
             }
 
-            // Set up the pool of workers for this device
+            // Destroy the pool of workers for this device
             mpwrk_destroy_work_pool(device.work_pool);
+            device.work_pool = NULL;
         }
         delete[] device_array;
     }
@@ -254,6 +255,33 @@ mpdev_get_alternative_device(int device_id)
     return alt_id;
 }
 
+
+/*******************************************************************************
+ * Uses a fixed ordering of devices, and returns the next device in our ordering
+ * that comes after device_id. Our ordering is circular, so if device_id is the
+ * highest id, it will return the lowest device_id. The returned id is known to
+ * be valid and usable for GPU computation
+ * 
+ * @param device_id The device that we want to use to find the next one
+ * 
+ * @return A device id that is valid and usable. If we have only one usable
+ *         device, it will return the same device_id
+ ******************************************************************************/
+int 
+mpdev_get_next_device(int device_id)
+{
+    for(int i = 0; i < device_count; ++i)
+    {
+        int new_id = (i + 1 + device_id) % device_count;
+        if (device_array[new_id].valid)
+        {
+            return new_id;
+        }
+    }
+    return device_id;
+}
+
+
 void *
 mpdev_get_stream(int device_id, int stream)
 {
@@ -271,17 +299,43 @@ mpdev_submit_work(int device_id, MPWorkItem work, void *arg)
 void
 mpdev_hard_synchronize(int device_id)
 {
-    //sleep(5);
     mpwrk_work_wait(device_array[device_id].work_pool);
     HIP_CHECK(hipSetDevice(device_id));
     HIP_CHECK(hipDeviceSynchronize());
-} 
+}
+
+
+void
+mpdev_hard_synchronize_all()
+{
+    for (int i = 0; i < device_count; ++i)
+    {
+        if (device_array[i].valid)
+        {
+            mpdev_hard_synchronize(i);
+        }
+    }
+}
 
 
 void
 mpdev_synchronize()
 {
     HIP_CHECK(hipDeviceSynchronize());
+}
+
+
+void
+mpdev_synchronize_all()
+{
+    for (int i = 0; i < device_count; ++i)
+    {
+        if (device_array[i].valid)
+        {
+            HIP_CHECK(hipSetDevice(i));
+            HIP_CHECK(hipDeviceSynchronize()); 
+        }
+    }
 }
 
 

@@ -117,7 +117,9 @@ PyGPUPipeline_init(PyGPUPipelineObject *self, PyObject *args, PyObject *kwds)
             return -1;
         }
     }
-    
+
+    // No device was specified. Default to target device
+    self->device_id = mpdev_get_target_device();
 
     Py_INCREF(inputs);
     Py_INCREF(operations);
@@ -159,6 +161,8 @@ PyGPUPipeline_init(PyGPUPipelineObject *self, PyObject *args, PyObject *kwds)
  * pipelines will automatically try to schedule them on separate devices for
  * enhanced parallel efficiency. If a device was specified while creating either
  * pipeline, however, the device specified will not be overwritten on either one.
+ * The same is true for if either pipeline was created with a target device
+ * specified globally. @see mpdev_get_target_device @see mpdev_set_target_device
  * 
  * @param self The pipeline that will run first
  * @param other The pipeline that receivers input from self
@@ -173,7 +177,7 @@ PyGPUPipeline_connect_to(PyGPUPipelineObject *self, PyObject *other)
     int recommended_device = mpdev_get_recommended_device();
     int alternative_device = mpdev_get_alternative_device(recommended_device);
 
-    // If we have no other devices available, schedule both on the same device
+    // If we only one device available, schedule both on the same device
     if (alternative_device == DEVICE_LOC_NO_AFFINITY)
     {
         self->device_id = recommended_device;
@@ -214,6 +218,7 @@ PyGPUPipeline_connect_to(PyGPUPipelineObject *self, PyObject *other)
  * @return Py_None
  * 
  ******************************************************************************/
+/*
 PyObject *
 PyGPUPipeline_run(PyGPUPipelineObject *self, PyObject *Py_UNUSED(ignored))
 {
@@ -226,9 +231,20 @@ PyGPUPipeline_run(PyGPUPipelineObject *self, PyObject *Py_UNUSED(ignored))
 
     if (self->device_id == DEVICE_LOC_NO_AFFINITY)
     {
-        self->device_id = mpdev_get_recommended_device();
+        int target_device = mpdev_get_target_device();
+        if (target_device != DEVICE_LOC_NO_AFFINITY)
+        {   
+            device_id = target_device;
+        }
+        else
+        {
+            device_id = mpdev_get_recommended_device();
+        }
     }
-    device_id = self->device_id;
+    else
+    {
+        device_id = self->device_id;
+    }
 
     Py_BEGIN_ALLOW_THREADS
     for(iter = 0; iter < num_inputs; ++iter)
@@ -255,6 +271,88 @@ PyGPUPipeline_run(PyGPUPipelineObject *self, PyObject *Py_UNUSED(ignored))
     {
         mpdev_hard_synchronize(cur_receiver->device_id);
         cur_receiver = cur_receiver->receiver;
+    }
+
+    // All threads should be idle. Safe to rejoin with GIL
+    Py_END_ALLOW_THREADS
+    
+    return Py_None;
+}
+*/
+
+
+
+PyObject *
+PyGPUPipeline_run(PyGPUPipelineObject *self, PyObject *Py_UNUSED(ignored))
+{
+    MPObjData *obj_data;
+    Py_ssize_t num_inputs = PyList_Size(self->inputs);
+    Py_ssize_t num_stages = PyList_Size(self->operations);
+    Py_ssize_t iter;
+    int device_id;
+    PyGPUPipelineObject *receiver = self->receiver;
+
+    MPBool cycle_devices = MP_FALSE;
+
+    if (self->device_id == DEVICE_LOC_NO_AFFINITY)
+    {
+        int target_device = mpdev_get_target_device();
+
+        // See if we globally speficied a device to use
+        if (target_device != DEVICE_LOC_NO_AFFINITY)
+        {   
+            device_id = target_device;
+        }
+        // No limits on what devices we can use. So use them all
+        else
+        {
+            cycle_devices = MP_TRUE;
+            device_id = mpdev_get_recommended_device();
+        }
+    }
+    else
+    {
+        device_id = self->device_id;
+    }
+
+    Py_BEGIN_ALLOW_THREADS
+    for(iter = 0; iter < num_inputs; ++iter)
+    {
+        obj_data = MP_OBJ_DATA(PyList_GetItem(self->inputs, iter));
+
+        ExecutionArgs *args = gpupipeline_create_args(obj_data, self->runnables, num_stages,
+                                                      device_id, 
+                                                      (iter % THREADS_PER_DEVICE) + 1,
+                                                      receiver);
+        
+        mpdev_submit_work(device_id, gpupipeline_thread_run_sequence, args);
+        if(cycle_devices && ((iter + 1) % THREADS_PER_DEVICE == 0))
+        {
+            device_id = mpdev_get_next_device(device_id);
+        }
+    }
+
+    // Wait for all threads to finish and for our GPU tasks to complete everywhere
+    if (cycle_devices)
+    {
+        mpdev_hard_synchronize_all();
+    }
+    // Wait only for our own device and any connected devices
+    else
+    {
+        // Wait for all threads to finish and for our GPU tasks to complete
+        mpdev_hard_synchronize(device_id);
+
+        // If we are piping the data elsewhere, we must wait for both ends of the pipe to finish
+        // By the time our threads have ended, they should have already sent their data before our own synchronize
+        // call, so its safe to now start waiting on the next receiver to synchronize
+        PyGPUPipelineObject *cur_receiver = self->receiver;
+        // Iterate through the chain to sync with all connected pipelines
+        while (cur_receiver != NULL)
+        {
+            mpdev_hard_synchronize(cur_receiver->device_id);
+            cur_receiver = cur_receiver->receiver;
+        }
     }
 
     // All threads should be idle. Safe to rejoin with GIL

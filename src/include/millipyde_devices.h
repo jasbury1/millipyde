@@ -46,7 +46,13 @@ void
 mpdev_hard_synchronize(int device_id);
 
 void
+mpdev_hard_synchronize_all();
+
+void
 mpdev_synchronize();
+
+void
+mpdev_synchronize_all();
 
 void
 mpdev_reset();
@@ -62,6 +68,9 @@ mpdev_get_target_device();
 
 int
 mpdev_get_alternative_device(int device_id);
+
+int 
+mpdev_get_next_device(int device_id);
 
 void
 mpdev_set_target_device(int device_id);

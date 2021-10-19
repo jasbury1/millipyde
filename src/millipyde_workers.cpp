@@ -105,6 +105,10 @@ void
 mpwrk_work_queue_push(MPDeviceWorkPool *work_pool, MPWorkItem work, void *arg)
 {
     MPWorkNode *node;
+    if (!work_pool)
+    {
+        return;
+    }
 
     node = mpwrk_create_work_node(work, arg);
     if (!node)
