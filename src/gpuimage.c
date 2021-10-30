@@ -256,7 +256,7 @@ PyGPUImage_gaussian(PyGPUImageObject *self, PyObject *args, PyObject *kwds)
  * @param self The image that will be transposed
  * @param closure An unused closure argument
  * 
- * @return A copy of self
+ * @return A new reference that is a copy of self
  * 
  ******************************************************************************/
 PyObject *
@@ -273,55 +273,106 @@ PyGPUImage_clone(PyGPUImageObject *self, void *closure)
 }
 
 
+/*******************************************************************************
+ * 
+ * @return A new refrerence that is a copy of self
+ * 
+ ******************************************************************************/
 PyObject *
 gpuimage_clone(PyGPUImageObject *self, int device_id, int stream_id)
 {
     PyObject *mp_module = PyImport_ImportModule("millipyde");
     PyTypeObject *gpuimage_type =
         (PyTypeObject *)PyObject_GetAttrString(mp_module, "gpuimage");
+
+    // New returns a new reference to an image we now own. Don't increment ref count 
     PyObject *gpuimage = _PyObject_New(gpuimage_type);
 
     ((PyGPUImageObject *)gpuimage)->array.obj_data =
         mpobj_clone_data(self->array.obj_data, device_id, stream_id);
 
-    Py_INCREF(gpuimage);
+    Py_DECREF(mp_module);
+    Py_DECREF(gpuimage_type);
     return gpuimage;
 }
 
 
+/*******************************************************************************
+ * 
+ * @return A new refrerence to a gpuimage
+ * 
+ ******************************************************************************/
 PyObject *
 gpuimage_single_from_path(PyObject *path)
 {
+    PyObject *args;
+
     PyObject *skimage_module = PyImport_ImportModule("skimage.io");
-    PyObject *mp_module = PyImport_ImportModule("millipyde");
     if (skimage_module == NULL)
     {
+        return NULL;
+    }
+
+    PyObject *mp_module = PyImport_ImportModule("millipyde");
+    if (mp_module == NULL)
+    {
+        Py_DECREF(skimage_module);
         return NULL;
     }
 
     PyObject *conversion_func = PyObject_GetAttrString(skimage_module, (char *)"imread");
     if (conversion_func == NULL)
     {
+        Py_DECREF(skimage_module);
+        Py_DECREF(mp_module);
         return NULL;
     }
 
-    PyObject *args = PyTuple_Pack(1, path);
+    // Use scikit image to generate an ndimage from the image path
+    args = PyTuple_Pack(1, path);
     PyObject *image = PyObject_CallObject(conversion_func, args);
-    Py_INCREF(image);
+    Py_DECREF(args);
 
-    PyTypeObject *gpuarray_type = (PyTypeObject *)PyObject_GetAttrString(mp_module, "gpuimage");
+    // We are done using the conversion function
+    Py_DECREF(conversion_func);
 
+    PyTypeObject *gpuarray_type =
+        (PyTypeObject *)PyObject_GetAttrString(mp_module, "gpuimage");
+    if (gpuarray_type == NULL)
+    {
+        Py_DECREF(skimage_module);
+        Py_DECREF(mp_module);
+        Py_DECREF(image);
+        return NULL;
+    }
+
+    // New returns a new reference to the array we now own. Don't increment ref count 
     PyObject *gpuarray = _PyObject_New(gpuarray_type);
+    
+    args = PyTuple_Pack(1, image);
     PyGPUImage_init((PyGPUImageObject *)gpuarray, PyTuple_Pack(1, image), NULL);
-
+    
+    Py_DECREF(args);
+    Py_DECREF(image);
+    Py_DECREF(skimage_module);
+    Py_DECREF(mp_module);
+    Py_DECREF(gpuarray_type);
+    
     return gpuarray;
 }
 
 
+/*******************************************************************************
+ * 
+ * @return A new refrerence to a list containing gpuimages
+ * 
+ ******************************************************************************/
 PyObject *
 gpuimage_all_from_path(PyObject *path)
 {
+    // Returns a new reference that we now own. Size must start as 0.
     PyObject *result_list = PyList_New(0);
+
     const char *path_name = PyUnicode_AsUTF8(path);
     int path_len = PyUnicode_GET_LENGTH(path);
 
@@ -356,6 +407,10 @@ gpuimage_all_from_path(PyObject *path)
                 PyObject *image = gpuimage_single_from_path(PyUnicode_FromString(full_path));
 
                 PyList_Append(result_list, image);
+
+                // Adding to the list increments the ref count. We don't need our reference
+                Py_DECREF(image);
+
             }
         }
         closedir(dir);
@@ -389,6 +444,25 @@ gpuimage_gaussian_args(PyObject *args)
     }
     gaussian_args->sigma = sigma;
     return (void *)gaussian_args;
+}
+
+
+MPBool
+gpuimage_check(PyObject *object)
+{
+    MPBool ret_val = MP_FALSE;
+    PyObject *mp_module = PyImport_ImportModule("millipyde");
+    PyTypeObject *gpuimage_type =
+        (PyTypeObject *)PyObject_GetAttrString(mp_module, "gpuimage");
+
+    if (object->ob_type == gpuimage_type)
+    {
+        ret_val = MP_TRUE;
+    }
+
+    Py_DECREF(mp_module);
+    Py_DECREF(gpuimage_type);
+    return ret_val;
 }
 
 

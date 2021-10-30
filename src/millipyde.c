@@ -47,6 +47,9 @@ const char *mperr_str(MPStatus status)
     case DEV_WARN_NO_PEER_ACCESS:
         return "Multiple devices were detected, but peer2peer is not supported on this system";
 
+    case TYPE_ERROR_NON_GPUOBJ:
+        return "Cannot perform GPU operations on non-GPU-compatible type";
+
     case GPUARRAY_ERROR_CONSTRUCTION_WITHOUT_ARRAY_TYPE:
         return "Constructing gpuarray requires an ndarray or array compatible argument";
     case GPUARRAY_ERROR_CONSTRUCTION_WITHOUT_NUMERIC_ARRAY:
@@ -97,6 +100,8 @@ const char *mperr_str(MPStatus status)
         return "Constructing Generator requires an integer device";
     case GPUGENERATOR_ERROR_INVALID_MAX:
         return "Constructing Generator requires an integer number of outputs greater than 0";
+    case GPUGENERATOR_ERROR_INVALID_RETURN_TO:
+        return "Constructing Generator requries boolean value for whether to return_to_host";
     case GPUGENERATOR_ERROR_UNUSABLE_DEVICE:
         return "Constructing Generator requires a device that is useable for GPU operations";
     case GPUGENERATOR_ERROR_CONSTRUCTION_NAMED_ARGS:

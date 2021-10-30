@@ -206,7 +206,280 @@ class TestMillypdeMultiGPU(unittest.TestCase):
                                 decimal=DECIMAL_ERROR)
 
 
- 
+    def test_generator(self):
+        o = mp.Operation("rgb2grey")
+        
+        with mp.Device(1):
+            g = mp.Generator("examples/images", [o])
+
+        aspen = rgb2gray(io.imread("examples/images/aspen.jpg"))
+        aspen2 = rgb2gray(io.imread("examples/images/aspen2.jpg"))
+        charlie_small = rgb2gray(rgba2rgb(io.imread("examples/images/charlie_small.png")))
+        charlie = rgb2gray(rgba2rgb(io.imread("examples/images/charlie.png")))
+        charlie2 = rgb2gray(io.imread("examples/images/charlie2.jpg"))
+        double_trouble = rgb2gray(io.imread("examples/images/double_trouble.jpg"))
+
+        for i in range(14):
+            out = np.array(next(g))
+            if i % 6 == 0:
+                npt.assert_almost_equal(out, double_trouble,
+                                        decimal=DECIMAL_ERROR)
+            if i % 6 == 1:
+                npt.assert_almost_equal(out, aspen2,
+                                        decimal=DECIMAL_ERROR)
+            if i % 6 == 2:
+                npt.assert_almost_equal(out, charlie2,
+                                        decimal=DECIMAL_ERROR)
+            if i % 6 == 3:
+                npt.assert_almost_equal(out, charlie,
+                                        decimal=DECIMAL_ERROR)
+            if i % 6 == 4:
+                npt.assert_almost_equal(out, charlie_small,
+                                        decimal=DECIMAL_ERROR)
+            if i % 6 == 5:
+                npt.assert_almost_equal(out, aspen,
+                                        decimal=DECIMAL_ERROR)
+        
+    def test_generator2(self):
+        o = mp.Operation("rgb2grey")
+    
+        g = mp.Generator("examples/images", [o])
+
+        aspen = rgb2gray(io.imread("examples/images/aspen.jpg"))
+        aspen2 = rgb2gray(io.imread("examples/images/aspen2.jpg"))
+        charlie_small = rgb2gray(rgba2rgb(io.imread("examples/images/charlie_small.png")))
+        charlie = rgb2gray(rgba2rgb(io.imread("examples/images/charlie.png")))
+        charlie2 = rgb2gray(io.imread("examples/images/charlie2.jpg"))
+        double_trouble = rgb2gray(io.imread("examples/images/double_trouble.jpg"))
+
+        with mp.Device(1):
+            for i in range(14):
+                out = np.array(next(g))
+                if i % 6 == 0:
+                    npt.assert_almost_equal(out, double_trouble,
+                                            decimal=DECIMAL_ERROR)
+                if i % 6 == 1:
+                    npt.assert_almost_equal(out, aspen2,
+                                            decimal=DECIMAL_ERROR)
+                if i % 6 == 2:
+                    npt.assert_almost_equal(out, charlie2,
+                                            decimal=DECIMAL_ERROR)
+                if i % 6 == 3:
+                    npt.assert_almost_equal(out, charlie,
+                                            decimal=DECIMAL_ERROR)
+                if i % 6 == 4:
+                    npt.assert_almost_equal(out, charlie_small,
+                                            decimal=DECIMAL_ERROR)
+                if i % 6 == 5:
+                    npt.assert_almost_equal(out, aspen,
+                                            decimal=DECIMAL_ERROR)
+
+
+    def test_generator3(self):
+        o = mp.Operation("rgb2grey")
+        
+        with mp.Device(1):
+            g = mp.Generator("examples/images", [o], device=1)
+
+        aspen = rgb2gray(io.imread("examples/images/aspen.jpg"))
+        aspen2 = rgb2gray(io.imread("examples/images/aspen2.jpg"))
+        charlie_small = rgb2gray(rgba2rgb(io.imread("examples/images/charlie_small.png")))
+        charlie = rgb2gray(rgba2rgb(io.imread("examples/images/charlie.png")))
+        charlie2 = rgb2gray(io.imread("examples/images/charlie2.jpg"))
+        double_trouble = rgb2gray(io.imread("examples/images/double_trouble.jpg"))
+
+        for i in range(14):
+            out = np.array(next(g))
+            if i % 6 == 0:
+                npt.assert_almost_equal(out, double_trouble,
+                                        decimal=DECIMAL_ERROR)
+            if i % 6 == 1:
+                npt.assert_almost_equal(out, aspen2,
+                                        decimal=DECIMAL_ERROR)
+            if i % 6 == 2:
+                npt.assert_almost_equal(out, charlie2,
+                                        decimal=DECIMAL_ERROR)
+            if i % 6 == 3:
+                npt.assert_almost_equal(out, charlie,
+                                        decimal=DECIMAL_ERROR)
+            if i % 6 == 4:
+                npt.assert_almost_equal(out, charlie_small,
+                                        decimal=DECIMAL_ERROR)
+            if i % 6 == 5:
+                npt.assert_almost_equal(out, aspen,
+                                        decimal=DECIMAL_ERROR) 
+
+
+    def test_generator_return_to_host(self):
+        o = mp.Operation("rgb2grey")
+        g = mp.Generator("examples/images", [o], return_to_host=True)
+
+        aspen = rgb2gray(io.imread("examples/images/aspen.jpg"))
+        aspen2 = rgb2gray(io.imread("examples/images/aspen2.jpg"))
+        charlie_small = rgb2gray(rgba2rgb(io.imread("examples/images/charlie_small.png")))
+        charlie = rgb2gray(rgba2rgb(io.imread("examples/images/charlie.png")))
+        charlie2 = rgb2gray(io.imread("examples/images/charlie2.jpg"))
+        double_trouble = rgb2gray(io.imread("examples/images/double_trouble.jpg"))
+
+        for i in range(7):
+            out = next(g)
+            if i % 6 == 0:
+                npt.assert_almost_equal(out, double_trouble,
+                                        decimal=DECIMAL_ERROR)
+            if i % 6 == 1:
+                npt.assert_almost_equal(out, aspen2,
+                                        decimal=DECIMAL_ERROR)
+            if i % 6 == 2:
+                npt.assert_almost_equal(out, charlie2,
+                                        decimal=DECIMAL_ERROR)
+            if i % 6 == 3:
+                npt.assert_almost_equal(out, charlie,
+                                        decimal=DECIMAL_ERROR)
+            if i % 6 == 4:
+                npt.assert_almost_equal(out, charlie_small,
+                                        decimal=DECIMAL_ERROR)
+            if i % 6 == 5:
+                npt.assert_almost_equal(out, aspen,
+                                        decimal=DECIMAL_ERROR)
+
+
+    def test_generator_return_to_host2(self):
+        o = mp.Operation("rgb2grey")
+        with mp.Device(1):
+            g = mp.Generator("examples/images", [o], return_to_host=True)
+
+        aspen = rgb2gray(io.imread("examples/images/aspen.jpg"))
+        aspen2 = rgb2gray(io.imread("examples/images/aspen2.jpg"))
+        charlie_small = rgb2gray(rgba2rgb(io.imread("examples/images/charlie_small.png")))
+        charlie = rgb2gray(rgba2rgb(io.imread("examples/images/charlie.png")))
+        charlie2 = rgb2gray(io.imread("examples/images/charlie2.jpg"))
+        double_trouble = rgb2gray(io.imread("examples/images/double_trouble.jpg"))
+
+        for i in range(7):
+            out = next(g)
+            if i % 6 == 0:
+                npt.assert_almost_equal(out, double_trouble,
+                                        decimal=DECIMAL_ERROR)
+            if i % 6 == 1:
+                npt.assert_almost_equal(out, aspen2,
+                                        decimal=DECIMAL_ERROR)
+            if i % 6 == 2:
+                npt.assert_almost_equal(out, charlie2,
+                                        decimal=DECIMAL_ERROR)
+            if i % 6 == 3:
+                npt.assert_almost_equal(out, charlie,
+                                        decimal=DECIMAL_ERROR)
+            if i % 6 == 4:
+                npt.assert_almost_equal(out, charlie_small,
+                                        decimal=DECIMAL_ERROR)
+            if i % 6 == 5:
+                npt.assert_almost_equal(out, aspen,
+                                        decimal=DECIMAL_ERROR)
+
+    def test_generator_return_to_host2(self):
+        o = mp.Operation("rgb2grey")
+        g = mp.Generator("examples/images", [o], return_to_host=True, device=1)
+
+        aspen = rgb2gray(io.imread("examples/images/aspen.jpg"))
+        aspen2 = rgb2gray(io.imread("examples/images/aspen2.jpg"))
+        charlie_small = rgb2gray(rgba2rgb(io.imread("examples/images/charlie_small.png")))
+        charlie = rgb2gray(rgba2rgb(io.imread("examples/images/charlie.png")))
+        charlie2 = rgb2gray(io.imread("examples/images/charlie2.jpg"))
+        double_trouble = rgb2gray(io.imread("examples/images/double_trouble.jpg"))
+
+        for i in range(7):
+            out = next(g)
+            if i % 6 == 0:
+                npt.assert_almost_equal(out, double_trouble,
+                                        decimal=DECIMAL_ERROR)
+            if i % 6 == 1:
+                npt.assert_almost_equal(out, aspen2,
+                                        decimal=DECIMAL_ERROR)
+            if i % 6 == 2:
+                npt.assert_almost_equal(out, charlie2,
+                                        decimal=DECIMAL_ERROR)
+            if i % 6 == 3:
+                npt.assert_almost_equal(out, charlie,
+                                        decimal=DECIMAL_ERROR)
+            if i % 6 == 4:
+                npt.assert_almost_equal(out, charlie_small,
+                                        decimal=DECIMAL_ERROR)
+            if i % 6 == 5:
+                npt.assert_almost_equal(out, aspen,
+                                        decimal=DECIMAL_ERROR)
+
+
+    def test_generator_fixed_outputs(self):
+        o = mp.Operation("rgb2grey")
+        g = mp.Generator("examples/images", [o], return_to_host=True, outputs=3)
+
+        aspen = rgb2gray(io.imread("examples/images/aspen.jpg"))
+        aspen2 = rgb2gray(io.imread("examples/images/aspen2.jpg"))
+        charlie_small = rgb2gray(rgba2rgb(io.imread("examples/images/charlie_small.png")))
+        charlie = rgb2gray(rgba2rgb(io.imread("examples/images/charlie.png")))
+        charlie2 = rgb2gray(io.imread("examples/images/charlie2.jpg"))
+        double_trouble = rgb2gray(io.imread("examples/images/double_trouble.jpg"))
+
+        i = 0
+        for out in g:
+            if i % 6 == 0:
+                npt.assert_almost_equal(out, double_trouble,
+                                        decimal=DECIMAL_ERROR)
+            if i % 6 == 1:
+                npt.assert_almost_equal(out, aspen2,
+                                        decimal=DECIMAL_ERROR)
+            if i % 6 == 2:
+                npt.assert_almost_equal(out, charlie2,
+                                        decimal=DECIMAL_ERROR)
+            if i % 6 == 3:
+                npt.assert_almost_equal(out, charlie,
+                                        decimal=DECIMAL_ERROR)
+            if i % 6 == 4:
+                npt.assert_almost_equal(out, charlie_small,
+                                        decimal=DECIMAL_ERROR)
+            if i % 6 == 5:
+                npt.assert_almost_equal(out, aspen,
+                                        decimal=DECIMAL_ERROR)
+            i += 1
+        
+        self.assertEqual(i, 3)
+
+    
+    def test_generator_fixed_outputs2(self):
+        o = mp.Operation("rgb2grey")
+        g = mp.Generator("examples/images", [o], return_to_host=True, outputs=3, device=1)
+
+        aspen = rgb2gray(io.imread("examples/images/aspen.jpg"))
+        aspen2 = rgb2gray(io.imread("examples/images/aspen2.jpg"))
+        charlie_small = rgb2gray(rgba2rgb(io.imread("examples/images/charlie_small.png")))
+        charlie = rgb2gray(rgba2rgb(io.imread("examples/images/charlie.png")))
+        charlie2 = rgb2gray(io.imread("examples/images/charlie2.jpg"))
+        double_trouble = rgb2gray(io.imread("examples/images/double_trouble.jpg"))
+
+        i = 0
+        for out in g:
+            if i % 6 == 0:
+                npt.assert_almost_equal(out, double_trouble,
+                                        decimal=DECIMAL_ERROR)
+            if i % 6 == 1:
+                npt.assert_almost_equal(out, aspen2,
+                                        decimal=DECIMAL_ERROR)
+            if i % 6 == 2:
+                npt.assert_almost_equal(out, charlie2,
+                                        decimal=DECIMAL_ERROR)
+            if i % 6 == 3:
+                npt.assert_almost_equal(out, charlie,
+                                        decimal=DECIMAL_ERROR)
+            if i % 6 == 4:
+                npt.assert_almost_equal(out, charlie_small,
+                                        decimal=DECIMAL_ERROR)
+            if i % 6 == 5:
+                npt.assert_almost_equal(out, aspen,
+                                        decimal=DECIMAL_ERROR)
+            i += 1
+        
+        self.assertEqual(i, 3)
+
 
 
 if __name__ == '__main__':

@@ -10,12 +10,9 @@
 #include "millipyde_devices.h"
 #include "millipyde_objects.h"
 
-
-void
-PyGPUArray_dealloc(PyGPUArrayObject *self)
+void PyGPUArray_dealloc(PyGPUArrayObject *self)
 {
     mpobj_dealloc_device_data(self->obj_data);
-    PyMem_Free(self->array_data);
 
     if (self->obj_data != NULL)
     {
@@ -25,8 +22,7 @@ PyGPUArray_dealloc(PyGPUArrayObject *self)
         }
         free(self->obj_data);
     }
-
-    Py_TYPE(self)->tp_free((PyObject *) self);
+    Py_TYPE(self)->tp_free((PyObject *)self);
 }
 
 PyObject *
@@ -133,14 +129,15 @@ PyGPUArray_to_array(PyGPUArrayObject *self, void *closure)
         array_dims[i] = obj_data->dims[i];
     }
 
-    PyObject *array = PyArray_SimpleNewFromData(obj_data->ndims, array_dims, obj_data->type, data);
+    PyObject *array = PyArray_SimpleNewFromData(obj_data->ndims,
+                                                array_dims, obj_data->type, data);
     if (array == NULL)
     {
         //TODO: set an error
         return NULL;
     }
     PyArray_ENABLEFLAGS((PyArrayObject *)array, NPY_ARRAY_OWNDATA);
-    Py_INCREF(array);
+    //Py_INCREF(array);
 
     free(array_dims);
 
@@ -197,11 +194,34 @@ gpuarray_clone(PyGPUArrayObject *self, int device_id, int stream_id)
     PyObject *mp_module = PyImport_ImportModule("millipyde");
     PyTypeObject *gpuarray_type =
         (PyTypeObject *)PyObject_GetAttrString(mp_module, "gpuarray");
+
+    // New returns a new reference to an array we now own. Don't increment ref count 
     PyObject *gpuarray = _PyObject_New(gpuarray_type);
     
     ((PyGPUArrayObject *)gpuarray)->obj_data =
         mpobj_clone_data(self->obj_data, device_id, stream_id);
 
-    Py_INCREF(gpuarray);
+    ((PyGPUArrayObject *)gpuarray)->array_data = NULL;
+    
+    Py_DECREF(mp_module);
+    Py_DECREF(gpuarray_type);
     return gpuarray;
+}
+
+MPBool
+gpuarray_check(PyObject *object)
+{
+    MPBool ret_val = MP_FALSE;
+    PyObject *mp_module = PyImport_ImportModule("millipyde");
+    PyTypeObject *gpuarray_type =
+        (PyTypeObject *)PyObject_GetAttrString(mp_module, "gpuarray");
+
+    if (object->ob_type == gpuarray_type)
+    {
+        ret_val = MP_TRUE;
+    }
+
+    Py_DECREF(mp_module);
+    Py_DECREF(gpuarray_type);
+    return ret_val;
 }

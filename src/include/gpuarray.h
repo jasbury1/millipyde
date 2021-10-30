@@ -92,6 +92,9 @@ PyGPUArray_clone(PyGPUArrayObject *self, void *closure);
 PyObject *
 gpuarray_clone(PyGPUArrayObject *self, int device_id, int stream_id);
 
+MPBool
+gpuarray_check(PyObject *object);
+
 /*******************************************************************************
 * TYPE DATA
 *******************************************************************************/

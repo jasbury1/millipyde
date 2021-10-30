@@ -35,6 +35,7 @@ typedef struct PyGPUGeneratorObject {
     PyObject *operations;
     Py_ssize_t max;
     Py_ssize_t i;
+    MPBool return_to_host;
 } PyGPUGeneratorObject;
 
 
@@ -55,9 +56,11 @@ PyGPUGenerator_init(PyGPUGeneratorObject *self, PyObject *args, PyObject *kwds);
 PyObject *
 PyGPUGenerator_iter(PyObject *self);
 
-
 PyObject *
 PyGPUGenerator_next(PyObject *self);
+
+PyObject *
+gpugenerator_produce_next(PyGPUGeneratorObject *generator, int i);
 
 
 /*******************************************************************************

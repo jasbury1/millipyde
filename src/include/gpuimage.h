@@ -112,6 +112,9 @@ PyObject *
 gpuimage_clone(PyGPUImageObject *self, int device_id, int stream_id);
 
 MPBool
+gpuimage_check(PyObject *object);
+
+MPBool
 valid_image_filename(const char *filename);
 
 /*******************************************************************************

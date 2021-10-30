@@ -153,13 +153,38 @@ def main():
     #    print(i)
 
     #d_charlie = mp.gpuimage(io.imread("examples/images/happyboy.png"))
+    # o = mp.Operation("rgb2grey")
+    # g = mp.Generator("examples/images", [o], return_to_host=True)
 
-    h_array = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
-    d_array = mp.gpuarray(h_array)
-    d_array.clone()
-    print("Here!!")
+    # for i in range(7):
+    #     out = next(g)
+    #     print(out)
+    # images = mp.images_from_path("examples/images")
+    # print(sys.getrefcount(images[0]))
+
+    # temp = images[1]
+    # print(sys.getrefcount(images[1]))
+
+    # test = [io.imread("examples/images/charlie.png"), io.imread("examples/images/charlie.png")]
+    # print(sys.getrefcount(test[0]))
+
+    # temp2 = test[1]
+    # print(sys.getrefcount(test[1]))
+
+
+    o = mp.Operation("rgb2grey")
+    g = mp.Generator("examples/images", [o], return_to_host=True)
+
+    for i in range(20):
+        out = next(g)
+        print(sys.getrefcount(out))
+
 
     
+
+
+
+
 
 
 
