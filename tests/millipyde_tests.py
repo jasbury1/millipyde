@@ -372,6 +372,21 @@ class TestMillipydeImages(unittest.TestCase):
         npt.assert_almost_equal(d_charlie_control, np.array(
             d_charlie8), decimal=DECIMAL_ERROR)
 
+    
+    def test_clone(self):
+        h_charlie = io.imread("examples/images/charlie.png")
+        h_charlie2 = io.imread("examples/images/charlie.png")
+        h_charlie2 = rgb2gray(rgba2rgb(h_charlie2))
+
+        d_charlie = mp.gpuimage(io.imread("examples/images/charlie.png"))
+        d_charlie2 = d_charlie.clone()
+        d_charlie2.rgb2grey()
+
+        npt.assert_almost_equal(h_charlie, np.array(d_charlie),
+                                decimal=DECIMAL_ERROR)
+        npt.assert_almost_equal(h_charlie2, np.array(d_charlie2),
+                                decimal=DECIMAL_ERROR)
+
 
 
 

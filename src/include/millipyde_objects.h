@@ -23,6 +23,8 @@ extern "C"
     void 
     mpobj_dealloc_device_data(MPObjData *obj_data);
 
+    MPObjData *
+    mpobj_clone_data(MPObjData *obj_data, int device_id, int stream_id);
 
 #ifdef __cplusplus
 }

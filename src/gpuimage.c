@@ -3,7 +3,9 @@
 
 // PY_SSIZE_T_CLEAN Should be defined before including Python.h
 #include <Python.h>
-#include <unistd.h>
+#include <dirent.h>
+#include <string.h>
+// #include <strings.h> ??
 
 #include "gpuarray.h"
 #include "gpuimage.h"
@@ -243,11 +245,54 @@ PyGPUImage_gaussian(PyGPUImageObject *self, PyObject *args, PyObject *kwds)
 }
 
 
+/*******************************************************************************
+ * Create a clone of the given device. All memory will be identical -- a deep
+ * copy is performed.
+ * 
+ * Note that cloning won't necessarily place the new copy on the same device.
+ * Specify target device before calling clone to ensure the copy is on a
+ * specific device.
+ * 
+ * @param self The image that will be transposed
+ * @param closure An unused closure argument
+ * 
+ * @return A copy of self
+ * 
+ ******************************************************************************/
+PyObject *
+PyGPUImage_clone(PyGPUImageObject *self, void *closure)
+{
+    int device_id;
+    device_id = mpdev_get_target_device();
+    if (device_id == DEVICE_LOC_NO_AFFINITY)
+    {
+        device_id = mpdev_get_recommended_device();
+    }
+
+    return gpuimage_clone(self, device_id, 0);
+}
+
 
 PyObject *
-gpuimage_single_from_path(PyObject *path, PyObject *module)
+gpuimage_clone(PyGPUImageObject *self, int device_id, int stream_id)
+{
+    PyObject *mp_module = PyImport_ImportModule("millipyde");
+    PyTypeObject *gpuarray_type =
+        (PyTypeObject *)PyObject_GetAttrString(mp_module, "gpuimage");
+    PyObject *gpuarray = _PyObject_New(gpuarray_type);
+
+    ((PyGPUImageObject *)gpuarray)->array.obj_data =
+        mpobj_clone_data(self->array.obj_data, device_id, stream_id);
+
+    return gpuarray;
+}
+
+
+PyObject *
+gpuimage_single_from_path(PyObject *path)
 {
     PyObject *skimage_module = PyImport_ImportModule("skimage.io");
+    PyObject *mp_module = PyImport_ImportModule("millipyde");
     if (skimage_module == NULL)
     {
         return NULL;
@@ -263,12 +308,58 @@ gpuimage_single_from_path(PyObject *path, PyObject *module)
     PyObject *image = PyObject_CallObject(conversion_func, args);
     Py_INCREF(image);
 
-    PyTypeObject *gpuarray_type = (PyTypeObject *)PyObject_GetAttrString(module, "gpuimage");
+    PyTypeObject *gpuarray_type = (PyTypeObject *)PyObject_GetAttrString(mp_module, "gpuimage");
 
     PyObject *gpuarray = _PyObject_New(gpuarray_type);
     PyGPUImage_init((PyGPUImageObject *)gpuarray, PyTuple_Pack(1, image), NULL);
 
     return gpuarray;
+}
+
+
+PyObject *
+gpuimage_all_from_path(PyObject *path)
+{
+    PyObject *result_list = PyList_New(0);
+    const char *path_name = PyUnicode_AsUTF8(path);
+    int path_len = PyUnicode_GET_LENGTH(path);
+
+    int file_name_len;
+
+    char full_path[256];
+
+    memcpy(full_path, path_name, path_len);
+    if (full_path[path_len - 1] != '/')
+    {
+        full_path[path_len] = '/';
+        ++path_len;
+    }
+
+
+    DIR *dir;
+    struct dirent *entry;
+    dir = opendir(path_name);
+
+    if (dir)
+    {   
+        // Read all directories in the path location
+        while ((entry = readdir(dir)) != NULL)
+        {
+            // Make sure the entry is a file
+            if (entry->d_type == DT_REG && valid_image_filename(entry->d_name))
+            {
+                file_name_len = _D_EXACT_NAMLEN(entry);
+                memcpy(full_path + path_len, entry->d_name, file_name_len);
+                full_path[path_len + file_name_len] = '\0';
+
+                PyObject *image = gpuimage_single_from_path(PyUnicode_FromString(full_path));
+
+                PyList_Append(result_list, image);
+            }
+        }
+        closedir(dir);
+    }
+    return result_list;
 }
 
 
@@ -300,3 +391,24 @@ gpuimage_gaussian_args(PyObject *args)
 }
 
 
+MPBool
+valid_image_filename(const char *filename)
+{
+    const char *ext = strrchr(filename, '.');
+    if(!ext || ext == filename)
+    {
+        // dot at beginning of a filename has special meaning. Not related to extension
+        return MP_FALSE;
+    }
+
+    if ((0 == strcasecmp(ext + 1, "png")) ||
+        (0 == strcasecmp(ext + 1, "jpg")) ||
+        (0 == strcasecmp(ext + 1, "jpeg")) ||
+        (0 == strcasecmp(ext + 1, "tiff")) ||
+        (0 == strcasecmp(ext + 1, "bmp")))
+    {
+        return MP_TRUE;
+    }
+
+    return MP_FALSE;
+}

@@ -94,13 +94,25 @@ PyObject *
 PyGPUImage_rotate(PyGPUImageObject *self, PyObject *args, PyObject *kwds);
 
 PyObject *
-gpuimage_single_from_path(PyObject *path, PyObject *module);
+PyGPUImage_clone(PyGPUImageObject *self, void *closure);
+
+PyObject *
+gpuimage_single_from_path(PyObject *path);
+
+PyObject *
+gpuimage_all_from_path(PyObject *path);
 
 void *
 gpuimage_rotate_args(PyObject *args);
 
 void *
 gpuimage_gaussian_args(PyObject *args);
+
+PyObject *
+gpuimage_clone(PyGPUImageObject *self, int device_id, int stream_id);
+
+MPBool
+valid_image_filename(const char *filename);
 
 /*******************************************************************************
 * TYPE DATA
@@ -133,6 +145,9 @@ static PyMethodDef PyGPUImage_methods[] = {
      __GPUIMAGE_FLIPLR_DOC
     },
     {"rotate", (PyCFunction) PyGPUImage_rotate, METH_VARARGS,
+     __GPUIMAGE_FLIPLR_DOC
+    },
+    {"clone", (PyCFunction) PyGPUImage_clone, METH_NOARGS,
      __GPUIMAGE_FLIPLR_DOC
     },
     {NULL}

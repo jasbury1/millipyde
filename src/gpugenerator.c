@@ -142,10 +142,12 @@ PyGPUGenerator_init(PyGPUGeneratorObject *self, PyObject *args, PyObject *kwds)
     // Turn the path into a list of inputs
     if (PyUnicode_Check(inputs))
     {
-        // TODO:
+        // We own the inputs. No need to increment reference count
+        self->inputs = gpuimage_all_from_path(inputs);
     }
     else
     {
+        // Borrowing inputs. Increment reference count
         Py_INCREF(inputs);
         self->inputs = inputs;
     }

@@ -97,4 +97,30 @@ mpobj_dealloc_device_data(MPObjData *obj_data) {
 }
 
 
+MPObjData *
+mpobj_clone_data(MPObjData *obj_data, int device_id, int stream_id)
+{
+    MPObjData *cloned_data = (MPObjData *)malloc(sizeof(MPObjData));
+    cloned_data->ndims = obj_data->ndims;
+    cloned_data->type = obj_data->type;
+    cloned_data->mem_loc = obj_data->mem_loc;
+    cloned_data->nbytes = obj_data->nbytes;
+    cloned_data->pinned = MP_FALSE;
+    cloned_data->stream = mpdev_get_stream(device_id, 0);
+
+    cloned_data->dims = (int *)malloc(cloned_data->ndims * 2 * sizeof(int));
+    memcpy(cloned_data->dims, obj_data->dims, cloned_data->ndims * 2 * sizeof(int));
+
+    void *new_device_data;
+    HIP_CHECK(hipSetDevice(device_id));
+    HIP_CHECK(hipMalloc((void **)&new_device_data, cloned_data->nbytes));
+    HIP_CHECK(hipMemcpyDtoD((void *)new_device_data,
+                            (void *)obj_data->device_data, 
+                            cloned_data->nbytes));
+    cloned_data->device_data = new_device_data;
+
+    return cloned_data;
+}
+
+
 } // extern "C"

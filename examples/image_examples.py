@@ -156,7 +156,11 @@ def main():
 
 
     img = mp.image_from_path("examples/images/happyboy.png")
-    imsave("newtest.png", np.array(img)) 
+    img2 = img.clone()
+    img2.rgb2grey()
+    imsave("newtest1.png", np.array(img))
+    imsave("newtest2.png", np.array(img2)) 
+
     
 
 

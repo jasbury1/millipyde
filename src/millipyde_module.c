@@ -53,6 +53,15 @@ Duis aute irure dolor in reprehenderit in voluptate velit \n \
 esse cillum dolore eu fugiat nulla pariatur. \n \
 Excepteur sint occaecat cupidatat non proident");
 
+PyDoc_STRVAR(images_from_path_doc,
+             "Lorem ipsum dolor sit amet, consectetur adipiscing elit, \n \
+sed do eiusmod tempor incididunt ut labore et dolore magna \n \
+aliqua. Ut enim ad minim veniam, quis nostrud exercitation \n \
+ullamco laboris nisi ut aliquip ex ea commodo consequat. \n \
+Duis aute irure dolor in reprehenderit in voluptate velit \n \
+esse cillum dolore eu fugiat nulla pariatur. \n \
+Excepteur sint occaecat cupidatat non proident");
+
 
 
 static PyObject *
@@ -89,7 +98,13 @@ mpmod_get_best_device(PyObject *self, PyObject *args)
 static PyObject *
 mpmod_image_from_path(PyObject *self, PyObject *path)
 {
-    return gpuimage_single_from_path(path, self);
+    return gpuimage_single_from_path(path);
+}
+
+static PyObject *
+mpmod_images_from_path(PyObject *self, PyObject *path)
+{
+    return gpuimage_all_from_path(path);
 }
 
 
@@ -100,6 +115,7 @@ static PyMethodDef MillipydeMethods[] =
      {"get_current_device", mpmod_get_current_device, METH_NOARGS, current_device_doc},
      {"best_device", mpmod_get_best_device, METH_NOARGS, best_device_doc},
      {"image_from_path", mpmod_image_from_path, METH_O, image_from_path_doc},
+     {"images_from_path", mpmod_images_from_path, METH_O, images_from_path_doc},
      {NULL, NULL, 0, NULL}
 };
 
