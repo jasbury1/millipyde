@@ -11,31 +11,6 @@
 #include "millipyde_objects.h"
 
 
-PyObject *
-PyGPUArray_add_one(PyGPUArrayObject *self, void *closure)
-{
-    /*
-    printf("Adding one...\n");
-    PyArrayObject *array = self->base_array;
-    int dim = PyArray_NDIM(array);
-    printf("Dimensions: %d\n", dim);
-    int type = PyArray_TYPE(array);
-    printf("Type: %d\n", type);
-    printf("Type check returned: %d\n", PyArray_ISSIGNED(array));
-    printf("Type check returned: %d\n", PyArray_ISINTEGER(array));
-    printf("Type check returned: %d\n", PyArray_ISSTRING(array));
-    
-    int elements = (int)(PyArray_DIM(array, 0));
-    printf("elements: %d\n", elements);
-    void *data = PyArray_DATA(array);
-    printf("Data: %p\n", data);
-
-    int result = add_one(data, elements);
-    printf("Result was: %d\n", result);
-    */
-    return Py_None;
-}
-
 void
 PyGPUArray_dealloc(PyGPUArrayObject *self)
 {
@@ -185,4 +160,48 @@ PyGPUArray_array_function(PyGPUArrayObject *self, void *closure)
 {
     printf("Called __array_function__()\n");
     return NULL;
+}
+
+
+/*******************************************************************************
+ * Create a clone of the given array. All memory will be identical -- a deep
+ * copy is performed.
+ * 
+ * Note that cloning won't necessarily place the new copy on the same device.
+ * Specify target device before calling clone to ensure the copy is on a
+ * specific device.
+ * 
+ * @param self The image that will be transposed
+ * @param closure An unused closure argument
+ * 
+ * @return A copy of self
+ * 
+ ******************************************************************************/
+PyObject *
+PyGPUArray_clone(PyGPUArrayObject *self, void *closure)
+{
+    int device_id;
+    device_id = mpdev_get_target_device();
+    if (device_id == DEVICE_LOC_NO_AFFINITY)
+    {
+        device_id = mpdev_get_recommended_device();
+    }
+
+    return gpuarray_clone(self, device_id, 0);
+}
+
+
+PyObject *
+gpuarray_clone(PyGPUArrayObject *self, int device_id, int stream_id)
+{
+    PyObject *mp_module = PyImport_ImportModule("millipyde");
+    PyTypeObject *gpuarray_type =
+        (PyTypeObject *)PyObject_GetAttrString(mp_module, "gpuarray");
+    PyObject *gpuarray = _PyObject_New(gpuarray_type);
+    
+    ((PyGPUArrayObject *)gpuarray)->obj_data =
+        mpobj_clone_data(self->obj_data, device_id, stream_id);
+
+    Py_INCREF(gpuarray);
+    return gpuarray;
 }

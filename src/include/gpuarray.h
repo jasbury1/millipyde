@@ -41,6 +41,15 @@ Duis aute irure dolor in reprehenderit in voluptate velit \n \
 esse cillum dolore eu fugiat nulla pariatur. \n \
 Excepteur sint occaecat cupidatat non proident")
 
+#define __GPUARRAY_CLONE_DOC PyDoc_STR( \
+    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, \n \
+sed do eiusmod tempor incididunt ut labore et dolore magna \n \
+aliqua. Ut enim ad minim veniam, quis nostrud exercitation \n \
+ullamco laboris nisi ut aliquip ex ea commodo consequat. \n \
+Duis aute irure dolor in reprehenderit in voluptate velit \n \
+esse cillum dolore eu fugiat nulla pariatur. \n \
+Excepteur sint occaecat cupidatat non proident")
+
 
 /*******************************************************************************
 * STRUCTS
@@ -78,7 +87,10 @@ PyObject *
 PyGPUArray_array_function(PyGPUArrayObject *self, void *closure);
 
 PyObject *
-PyGPUArray_add_one(PyGPUArrayObject *self, void *closure);
+PyGPUArray_clone(PyGPUArrayObject *self, void *closure);
+
+PyObject *
+gpuarray_clone(PyGPUArrayObject *self, int device_id, int stream_id);
 
 /*******************************************************************************
 * TYPE DATA
@@ -96,8 +108,8 @@ static PyMethodDef PyGPUArray_methods[] = {
     // },
     {"__array_function__", (PyCFunction)PyGPUArray_array_function, METH_VARARGS,
      __GPUARRAY_ARRAY_FUNCTION_DOC},
-    {"add_one", (PyCFunction)PyGPUArray_add_one, METH_NOARGS,
-     "TODO"},
+    {"clone", (PyCFunction)PyGPUArray_clone, METH_NOARGS,
+     __GPUARRAY_CLONE_DOC},
     {NULL}};
 
 static PyTypeObject PyGPUArray_Type = {

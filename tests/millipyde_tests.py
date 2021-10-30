@@ -388,7 +388,38 @@ class TestMillipydeImages(unittest.TestCase):
                                 decimal=DECIMAL_ERROR)
 
 
+    def test_clone2(self):
+        h_array = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+        h_array2 = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+        
+        d_array = mp.gpuarray(h_array)
+        d_array2 = d_array.clone()
+        
+        npt.assert_almost_equal(h_array, np.array(d_array),
+                                decimal=DECIMAL_ERROR)
+        npt.assert_almost_equal(h_array2, np.array(d_array2),
+                                decimal=DECIMAL_ERROR)
 
+
+
+    def test_image_from_path(self):
+        h_charlie = io.imread("examples/images/charlie.png")
+
+        d_charlie = mp.image_from_path("examples/images/charlie.png")
+
+        npt.assert_almost_equal(h_charlie, np.array(d_charlie),
+                                decimal=DECIMAL_ERROR)
+
+    
+    def test_image_from_path2(self):
+        h_charlie = io.imread("examples/images/charlie.png")
+        h_charlie = rgb2gray(rgba2rgb(h_charlie))
+
+        d_charlie = mp.image_from_path("examples/images/charlie.png")
+        d_charlie.rgb2grey()
+
+        npt.assert_almost_equal(h_charlie, np.array(d_charlie),
+                                decimal=DECIMAL_ERROR)
 
 
 

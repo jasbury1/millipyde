@@ -191,6 +191,21 @@ class TestMillypdeMultiGPU(unittest.TestCase):
                                 decimal=DECIMAL_ERROR)
 
 
+    def test_clone2(self):
+        h_array = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+        h_array2 = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+
+        with mp.Device(0): 
+            d_array = mp.gpuarray(h_array)
+        with mp.Device(1):
+            d_array2 = d_array.clone()
+        
+        npt.assert_almost_equal(h_array, np.array(d_array),
+                                decimal=DECIMAL_ERROR)
+        npt.assert_almost_equal(h_array2, np.array(d_array2),
+                                decimal=DECIMAL_ERROR)
+
+
  
 
 

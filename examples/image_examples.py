@@ -154,12 +154,10 @@ def main():
 
     #d_charlie = mp.gpuimage(io.imread("examples/images/happyboy.png"))
 
-
-    img = mp.image_from_path("examples/images/happyboy.png")
-    img2 = img.clone()
-    img2.rgb2grey()
-    imsave("newtest1.png", np.array(img))
-    imsave("newtest2.png", np.array(img2)) 
+    h_array = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+    d_array = mp.gpuarray(h_array)
+    d_array.clone()
+    print("Here!!")
 
     
 

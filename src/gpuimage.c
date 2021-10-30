@@ -246,7 +246,7 @@ PyGPUImage_gaussian(PyGPUImageObject *self, PyObject *args, PyObject *kwds)
 
 
 /*******************************************************************************
- * Create a clone of the given device. All memory will be identical -- a deep
+ * Create a clone of the given image. All memory will be identical -- a deep
  * copy is performed.
  * 
  * Note that cloning won't necessarily place the new copy on the same device.
@@ -277,14 +277,15 @@ PyObject *
 gpuimage_clone(PyGPUImageObject *self, int device_id, int stream_id)
 {
     PyObject *mp_module = PyImport_ImportModule("millipyde");
-    PyTypeObject *gpuarray_type =
+    PyTypeObject *gpuimage_type =
         (PyTypeObject *)PyObject_GetAttrString(mp_module, "gpuimage");
-    PyObject *gpuarray = _PyObject_New(gpuarray_type);
+    PyObject *gpuimage = _PyObject_New(gpuimage_type);
 
-    ((PyGPUImageObject *)gpuarray)->array.obj_data =
+    ((PyGPUImageObject *)gpuimage)->array.obj_data =
         mpobj_clone_data(self->array.obj_data, device_id, stream_id);
 
-    return gpuarray;
+    Py_INCREF(gpuimage);
+    return gpuimage;
 }
 
 
