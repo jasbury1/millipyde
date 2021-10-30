@@ -11,6 +11,7 @@
 #include "gpuimage.h"
 #include "gpuoperation.h"
 #include "gpupipeline.h"
+#include "gpugenerator.h"
 
 #define INIT_NUMPY_ARRAY_CPP
 #include "use_numpy.h"
@@ -35,6 +36,15 @@ esse cillum dolore eu fugiat nulla pariatur. \n \
 Excepteur sint occaecat cupidatat non proident");
 
 PyDoc_STRVAR(best_device_doc,
+             "Lorem ipsum dolor sit amet, consectetur adipiscing elit, \n \
+sed do eiusmod tempor incididunt ut labore et dolore magna \n \
+aliqua. Ut enim ad minim veniam, quis nostrud exercitation \n \
+ullamco laboris nisi ut aliquip ex ea commodo consequat. \n \
+Duis aute irure dolor in reprehenderit in voluptate velit \n \
+esse cillum dolore eu fugiat nulla pariatur. \n \
+Excepteur sint occaecat cupidatat non proident");
+
+PyDoc_STRVAR(image_from_path_doc,
              "Lorem ipsum dolor sit amet, consectetur adipiscing elit, \n \
 sed do eiusmod tempor incididunt ut labore et dolore magna \n \
 aliqua. Ut enim ad minim veniam, quis nostrud exercitation \n \
@@ -76,6 +86,12 @@ mpmod_get_best_device(PyObject *self, PyObject *args)
     return result;
 }
 
+static PyObject *
+mpmod_image_from_path(PyObject *self, PyObject *path)
+{
+    return gpuimage_single_from_path(path, self);
+}
+
 
 /*  define functions in module */
 static PyMethodDef MillipydeMethods[] =
@@ -83,6 +99,7 @@ static PyMethodDef MillipydeMethods[] =
      {"device_count", mpmod_get_device_count, METH_NOARGS, device_count_doc},
      {"get_current_device", mpmod_get_current_device, METH_NOARGS, current_device_doc},
      {"best_device", mpmod_get_best_device, METH_NOARGS, best_device_doc},
+     {"image_from_path", mpmod_image_from_path, METH_O, image_from_path_doc},
      {NULL, NULL, 0, NULL}
 };
 
@@ -159,6 +176,13 @@ PyInit_millipyde(void)
     {
         PyErr_SetString(PyExc_ImportError,
                         mperr_str(MOD_ERROR_CREATE_PIPELINE_TYPE));
+        return NULL;
+    }
+
+    if (PyType_Ready(&PyGPUGenerator_Type) < 0)
+    {
+        PyErr_SetString(PyExc_ImportError,
+                        mperr_str(MOD_ERROR_CREATE_GENERATOR_TYPE));
         return NULL;
     }
 
@@ -239,6 +263,20 @@ PyInit_millipyde(void)
         Py_DECREF(&PyGPUArray_Type);
         Py_DECREF(&PyGPUOperation_Type);
         Py_DECREF(&PyGPUPipeline_Type);
+        Py_DECREF(m);
+        PyErr_Print();
+        return NULL;
+    }
+
+    Py_INCREF(&PyGPUGenerator_Type);
+    if (PyModule_AddObject(m, "Generator", (PyObject *) &PyGPUGenerator_Type) < 0) {
+        fprintf(stderr, mperr_str(MOD_ERROR_ADD_GENERATOR));
+        Py_DECREF(&PyGPUOperation_Type);
+        Py_DECREF(&PyGPUImage_Type);
+        Py_DECREF(&PyGPUArray_Type);
+        Py_DECREF(&PyGPUOperation_Type);
+        Py_DECREF(&PyGPUPipeline_Type);
+        Py_DECREF(&PyDevice_Type);
         Py_DECREF(m);
         PyErr_Print();
         return NULL;

@@ -20,7 +20,6 @@ PyGPUPipeline_dealloc(PyGPUPipelineObject *self)
 {
     Py_XDECREF(self->inputs);
     Py_XDECREF(self->operations);
-    Py_TYPE(self)->tp_free((PyObject *)self);
     if (self->obj_data)
     {
         free(self->obj_data);
@@ -37,6 +36,7 @@ PyGPUPipeline_dealloc(PyGPUPipelineObject *self)
         }
         free(self->runnables);
     }
+    Py_TYPE(self)->tp_free((PyObject *)self);
 }
 
 PyObject *
@@ -127,7 +127,10 @@ PyGPUPipeline_init(PyGPUPipelineObject *self, PyObject *args, PyObject *kwds)
     }
 
     // No device was specified. Default to target device
-    self->device_id = mpdev_get_target_device();
+    else
+    {
+        self->device_id = mpdev_get_target_device();    
+    }
 
     Py_INCREF(inputs);
     Py_INCREF(operations);
@@ -227,70 +230,6 @@ PyGPUPipeline_connect_to(PyGPUPipelineObject *self, PyObject *other)
  * @return Py_None
  * 
  ******************************************************************************/
-/*
-PyObject *
-PyGPUPipeline_run(PyGPUPipelineObject *self, PyObject *Py_UNUSED(ignored))
-{
-    MPObjData *obj_data;
-    Py_ssize_t num_inputs = PyList_Size(self->inputs);
-    Py_ssize_t num_stages = PyList_Size(self->operations);
-    Py_ssize_t iter;
-    int device_id;
-    PyGPUPipelineObject *receiver = self->receiver;
-
-    if (self->device_id == DEVICE_LOC_NO_AFFINITY)
-    {
-        int target_device = mpdev_get_target_device();
-        if (target_device != DEVICE_LOC_NO_AFFINITY)
-        {   
-            device_id = target_device;
-        }
-        else
-        {
-            device_id = mpdev_get_recommended_device();
-        }
-    }
-    else
-    {
-        device_id = self->device_id;
-    }
-
-    Py_BEGIN_ALLOW_THREADS
-    for(iter = 0; iter < num_inputs; ++iter)
-    {
-        obj_data = MP_OBJ_DATA(PyList_GetItem(self->inputs, iter));
-
-        ExecutionArgs *args = gpupipeline_create_args(obj_data, self->runnables, num_stages,
-                                                      device_id, 
-                                                      (iter % THREADS_PER_DEVICE) + 1,
-                                                      receiver);
-        
-        mpdev_submit_work(device_id, gpupipeline_thread_run_sequence, args);
-    }
-
-    // Wait for all threads to finish and for our GPU tasks to complete
-    mpdev_hard_synchronize(device_id);
-
-    // If we are piping the data elsewhere, we must wait for both ends of the pipe to finish
-    // By the time our threads have ended, they should have already sent their data before our own synchronize
-    // call, so its safe to now start waiting on the next receiver to synchronize
-    PyGPUPipelineObject *cur_receiver = self->receiver;
-    // Iterate through the chain to sync with all connected pipelines
-    while (cur_receiver != NULL)
-    {
-        mpdev_hard_synchronize(cur_receiver->device_id);
-        cur_receiver = cur_receiver->receiver;
-    }
-
-    // All threads should be idle. Safe to rejoin with GIL
-    Py_END_ALLOW_THREADS
-    
-    return Py_None;
-}
-*/
-
-
-
 PyObject *
 PyGPUPipeline_run(PyGPUPipelineObject *self, PyObject *Py_UNUSED(ignored))
 {

@@ -127,7 +127,7 @@ def greyscale_and_transpose_pipeline2():
 
 
 def gaussian_charlie():
-    d_charlie = mp.gpuimage(io.imread("examples/images/charlie.png"))
+    d_charlie = mp.gpuimage(io.imread("examples/images/happyboy.png"))
     d_charlie.rgb2grey()
     d_charlie.transpose()
     #d_charlie.gaussian()
@@ -145,8 +145,19 @@ def main():
     #greyscale_and_transpose_pipeline()
     #greyscale_and_transpose_pipeline2()
     #gaussian_charlie()
-    d_charlie = mp.gpuimage(io.imread("examples/images/charlie.png"))
-    d_charlie.rotate()
+    #charlie = io.imread("examples/images/charlie.png")
+    #d_charlie = mp.gpuimage(io.imread("examples/images/charlie.png"))
+
+    #generator = mp.Generator([], [], outputs=5)
+    #for i in generator:
+    #    print(i)
+
+    #d_charlie = mp.gpuimage(io.imread("examples/images/happyboy.png"))
+
+
+    img = mp.image_from_path("examples/images/happyboy.png")
+    imsave("newtest.png", np.array(img)) 
+    
 
 
 

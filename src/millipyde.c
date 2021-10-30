@@ -19,6 +19,8 @@ const char *mperr_str(MPStatus status)
         return "Could not import module 'millipyde' while creating internal type 'Pipeline'";
     case MOD_ERROR_CREATE_DEVICE_TYPE:
         return "Could not import module 'millipyde' while creating internal type 'Device'";
+    case MOD_ERROR_CREATE_GENERATOR_TYPE:
+        return "Could not import module 'millipyde' while creating internal type 'Generator'";
     case MOD_ERROR_ADD_GPUARRAY:
         return "Could not import module 'millipyde' while loading internal type 'gpuarray'";
     case MOD_ERROR_ADD_GPUIMAGE:
@@ -29,6 +31,8 @@ const char *mperr_str(MPStatus status)
         return "Could not import module 'millipyde' while loading internal type 'Pipeline'";
     case MOD_ERROR_ADD_DEVICE:
         return "Could not import module 'millipyde' while loading internal type 'Device'";
+    case MOD_ERROR_ADD_GENERATOR:
+        return "Could not import module 'millipyde' while loading internal type 'Generator'"; 
 
     case DEV_ERROR_CURRENT_DEVICE:
         return "GPU runtime failed while querying the current device";
@@ -88,6 +92,20 @@ const char *mperr_str(MPStatus status)
         return "Constructing Pipeline requires a List of operations";
     case GPUPIPELINE_ERROR_NONGPU_INPUT:
         return "Constructing Pipeline requires all inputs to be GPU compatible";
+
+    case GPUGENERATOR_ERROR_INVALID_DEVICE:
+        return "Constructing Generator requires an integer device";
+    case GPUGENERATOR_ERROR_INVALID_MAX:
+        return "Constructing Generator requires an integer number of outputs greater than 0";
+    case GPUGENERATOR_ERROR_UNUSABLE_DEVICE:
+        return "Constructing Generator requires a device that is useable for GPU operations";
+    case GPUGENERATOR_ERROR_CONSTRUCTION_NAMED_ARGS:
+        return "Constructing Generator can only include the named arguments 'device' and/or 'outputs'";
+    case GPUGENERATOR_ERROR_INVALID_INPUT:
+        return "Constructing Generator requires an list of inputs or a path to files";
+    case GPUGENERATOR_ERROR_NONLIST_OPERATIONS:
+        return "Constructing Generator requires a list of Operations";
+
 
     default:
         return "Unknown failure occurred";

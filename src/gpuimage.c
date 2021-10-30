@@ -3,6 +3,7 @@
 
 // PY_SSIZE_T_CLEAN Should be defined before including Python.h
 #include <Python.h>
+#include <unistd.h>
 
 #include "gpuarray.h"
 #include "gpuimage.h"
@@ -242,6 +243,35 @@ PyGPUImage_gaussian(PyGPUImageObject *self, PyObject *args, PyObject *kwds)
 }
 
 
+
+PyObject *
+gpuimage_single_from_path(PyObject *path, PyObject *module)
+{
+    PyObject *skimage_module = PyImport_ImportModule("skimage.io");
+    if (skimage_module == NULL)
+    {
+        return NULL;
+    }
+
+    PyObject *conversion_func = PyObject_GetAttrString(skimage_module, (char *)"imread");
+    if (conversion_func == NULL)
+    {
+        return NULL;
+    }
+
+    PyObject *args = PyTuple_Pack(1, path);
+    PyObject *image = PyObject_CallObject(conversion_func, args);
+    Py_INCREF(image);
+
+    PyTypeObject *gpuarray_type = (PyTypeObject *)PyObject_GetAttrString(module, "gpuimage");
+
+    PyObject *gpuarray = _PyObject_New(gpuarray_type);
+    PyGPUImage_init((PyGPUImageObject *)gpuarray, PyTuple_Pack(1, image), NULL);
+
+    return gpuarray;
+}
+
+
 void *
 gpuimage_rotate_args(PyObject *args)
 {
@@ -268,3 +298,5 @@ gpuimage_gaussian_args(PyObject *args)
     gaussian_args->sigma = sigma;
     return (void *)gaussian_args;
 }
+
+

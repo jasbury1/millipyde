@@ -93,6 +93,9 @@ PyGPUImage_fliplr(PyGPUImageObject *self, void *closure);
 PyObject *
 PyGPUImage_rotate(PyGPUImageObject *self, PyObject *args, PyObject *kwds);
 
+PyObject *
+gpuimage_single_from_path(PyObject *path, PyObject *module);
+
 void *
 gpuimage_rotate_args(PyObject *args);
 
