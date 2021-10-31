@@ -29,10 +29,10 @@ class TestMillypdeMultiGPU(unittest.TestCase):
 
 
     def test_device_handoff(self):
-        charlie = io.imread("examples/images/charlie.png")
+        charlie = io.imread("tests/images/charlie.png")
         charlie = rgb2gray(rgba2rgb(charlie))
         with mp.Device(0):
-            d_charlie = mp.gpuimage(io.imread("examples/images/charlie.png"))
+            d_charlie = mp.gpuimage(io.imread("tests/images/charlie.png"))
             self.assertEqual(0, mp.get_current_device())
             with mp.Device(1):
                 d_charlie.rgb2grey()
@@ -42,10 +42,10 @@ class TestMillypdeMultiGPU(unittest.TestCase):
 
 
     def test_device_handoff2(self):
-        charlie = io.imread("examples/images/charlie.png")
+        charlie = io.imread("tests/images/charlie.png")
         charlie = rgb2gray(rgba2rgb(charlie))
         with mp.Device(0):
-            d_charlie = mp.gpuimage(io.imread("examples/images/charlie.png"))
+            d_charlie = mp.gpuimage(io.imread("tests/images/charlie.png"))
             self.assertEqual(0, mp.get_current_device())
             with mp.Device(1):
                 d_charlie.rgb2grey()
@@ -55,10 +55,10 @@ class TestMillypdeMultiGPU(unittest.TestCase):
 
 
     def test_device_handoff3(self):
-        charlie = io.imread("examples/images/charlie.png")
+        charlie = io.imread("tests/images/charlie.png")
         charlie = rgb2gray(rgba2rgb(charlie))
         with mp.Device(0):
-            d_charlie = mp.gpuimage(io.imread("examples/images/charlie.png"))
+            d_charlie = mp.gpuimage(io.imread("tests/images/charlie.png"))
             self.assertEqual(0, mp.get_current_device())
             with mp.Device(1):
                 d_charlie.rgb2grey()
@@ -67,10 +67,10 @@ class TestMillypdeMultiGPU(unittest.TestCase):
 
     
     def test_dual_pipelines(self):
-        charlie = io.imread("examples/images/charlie.png")
+        charlie = io.imread("tests/images/charlie.png")
         charlie = np.transpose(rgb2gray(rgba2rgb(charlie)))
 
-        d_charlie = mp.gpuimage(io.imread("examples/images/charlie.png"))
+        d_charlie = mp.gpuimage(io.imread("tests/images/charlie.png"))
 
         inputs = [d_charlie]
         operations = [mp.Operation("rgb2grey")]
@@ -85,10 +85,10 @@ class TestMillypdeMultiGPU(unittest.TestCase):
 
 
     def test_dual_pipelines_unspecified_devices(self):
-        charlie = io.imread("examples/images/charlie.png")
+        charlie = io.imread("tests/images/charlie.png")
         charlie = np.transpose(rgb2gray(rgba2rgb(charlie)))
 
-        d_charlie = mp.gpuimage(io.imread("examples/images/charlie.png"))
+        d_charlie = mp.gpuimage(io.imread("tests/images/charlie.png"))
 
         inputs = [d_charlie]
         operations = [mp.Operation("rgb2grey")]
@@ -103,10 +103,10 @@ class TestMillypdeMultiGPU(unittest.TestCase):
 
     
     def test_dual_pipelines_unspecified_devices2(self):
-        charlie = io.imread("examples/images/charlie.png")
+        charlie = io.imread("tests/images/charlie.png")
         charlie = np.transpose(np.transpose(rgb2gray(rgba2rgb(charlie))))
 
-        d_charlie = mp.gpuimage(io.imread("examples/images/charlie.png"))
+        d_charlie = mp.gpuimage(io.imread("tests/images/charlie.png"))
 
         inputs = [d_charlie]
         operations = [mp.Operation("rgb2grey")]
@@ -124,7 +124,7 @@ class TestMillypdeMultiGPU(unittest.TestCase):
 
     
     def test_long_pipeline(self):
-        d_charlie_control = mp.gpuimage(io.imread("examples/images/charlie.png"))
+        d_charlie_control = mp.gpuimage(io.imread("tests/images/charlie.png"))
         d_charlie_control.gaussian(2)
         d_charlie_control.rgb2grey()
         d_charlie_control.transpose()
@@ -132,14 +132,14 @@ class TestMillypdeMultiGPU(unittest.TestCase):
         d_charlie_control.rotate(45)
         d_charlie_control = np.array(d_charlie_control)
         
-        d_charlie = mp.gpuimage(io.imread("examples/images/charlie.png"))
-        d_charlie2 = mp.gpuimage(io.imread("examples/images/charlie.png"))
-        d_charlie3 = mp.gpuimage(io.imread("examples/images/charlie.png"))
-        d_charlie4 = mp.gpuimage(io.imread("examples/images/charlie.png"))
-        d_charlie5 = mp.gpuimage(io.imread("examples/images/charlie.png"))
-        d_charlie6 = mp.gpuimage(io.imread("examples/images/charlie.png"))
-        d_charlie7 = mp.gpuimage(io.imread("examples/images/charlie.png"))
-        d_charlie8 = mp.gpuimage(io.imread("examples/images/charlie.png"))
+        d_charlie = mp.gpuimage(io.imread("tests/images/charlie.png"))
+        d_charlie2 = mp.gpuimage(io.imread("tests/images/charlie.png"))
+        d_charlie3 = mp.gpuimage(io.imread("tests/images/charlie.png"))
+        d_charlie4 = mp.gpuimage(io.imread("tests/images/charlie.png"))
+        d_charlie5 = mp.gpuimage(io.imread("tests/images/charlie.png"))
+        d_charlie6 = mp.gpuimage(io.imread("tests/images/charlie.png"))
+        d_charlie7 = mp.gpuimage(io.imread("tests/images/charlie.png"))
+        d_charlie8 = mp.gpuimage(io.imread("tests/images/charlie.png"))
 
         charlies = [d_charlie, d_charlie2, d_charlie3, d_charlie4,
                     d_charlie5, d_charlie6, d_charlie7, d_charlie8]
@@ -173,12 +173,12 @@ class TestMillypdeMultiGPU(unittest.TestCase):
 
 
     def test_clone(self):
-        h_charlie = io.imread("examples/images/charlie.png")
-        h_charlie2 = io.imread("examples/images/charlie.png")
+        h_charlie = io.imread("tests/images/charlie.png")
+        h_charlie2 = io.imread("tests/images/charlie.png")
         h_charlie2 = rgb2gray(rgba2rgb(h_charlie2))
 
         with mp.Device(0):
-            d_charlie = mp.gpuimage(io.imread("examples/images/charlie.png"))
+            d_charlie = mp.gpuimage(io.imread("tests/images/charlie.png"))
 
         with mp.Device(1):
             d_charlie2 = d_charlie.clone()
@@ -212,12 +212,12 @@ class TestMillypdeMultiGPU(unittest.TestCase):
         with mp.Device(1):
             g = mp.Generator("examples/images", [o])
 
-        aspen = rgb2gray(rgba2rgb(io.imread("examples/images/aspen.png")))
-        aspen2 = rgb2gray(rgba2rgb(io.imread("examples/images/aspen2.png")))
-        charlie_small = rgb2gray(rgba2rgb(io.imread("examples/images/charlie_small.png")))
-        charlie = rgb2gray(rgba2rgb(io.imread("examples/images/charlie.png")))
-        charlie2 = rgb2gray(rgba2rgb(io.imread("examples/images/charlie2.png")))
-        double_trouble = rgb2gray(rgba2rgb(io.imread("examples/images/double_trouble.png")))
+        aspen = rgb2gray(rgba2rgb(io.imread("tests/images/aspen.png")))
+        aspen2 = rgb2gray(rgba2rgb(io.imread("tests/images/aspen2.png")))
+        charlie_small = rgb2gray(rgba2rgb(io.imread("tests/images/charlie_small.png")))
+        charlie = rgb2gray(rgba2rgb(io.imread("tests/images/charlie.png")))
+        charlie2 = rgb2gray(rgba2rgb(io.imread("tests/images/charlie2.png")))
+        double_trouble = rgb2gray(rgba2rgb(io.imread("tests/images/double_trouble.png")))
 
         for i in range(14):
             out = np.array(next(g))
@@ -245,12 +245,12 @@ class TestMillypdeMultiGPU(unittest.TestCase):
     
         g = mp.Generator("examples/images", [o])
 
-        aspen = rgb2gray(rgba2rgb(io.imread("examples/images/aspen.png")))
-        aspen2 = rgb2gray(rgba2rgb(io.imread("examples/images/aspen2.png")))
-        charlie_small = rgb2gray(rgba2rgb(io.imread("examples/images/charlie_small.png")))
-        charlie = rgb2gray(rgba2rgb(io.imread("examples/images/charlie.png")))
-        charlie2 = rgb2gray(rgba2rgb(io.imread("examples/images/charlie2.png")))
-        double_trouble = rgb2gray(rgba2rgb(io.imread("examples/images/double_trouble.png")))
+        aspen = rgb2gray(rgba2rgb(io.imread("tests/images/aspen.png")))
+        aspen2 = rgb2gray(rgba2rgb(io.imread("tests/images/aspen2.png")))
+        charlie_small = rgb2gray(rgba2rgb(io.imread("tests/images/charlie_small.png")))
+        charlie = rgb2gray(rgba2rgb(io.imread("tests/images/charlie.png")))
+        charlie2 = rgb2gray(rgba2rgb(io.imread("tests/images/charlie2.png")))
+        double_trouble = rgb2gray(rgba2rgb(io.imread("tests/images/double_trouble.png")))
 
         with mp.Device(1):
             for i in range(14):
@@ -281,12 +281,12 @@ class TestMillypdeMultiGPU(unittest.TestCase):
         with mp.Device(1):
             g = mp.Generator("examples/images", [o], device=1)
 
-        aspen = rgb2gray(rgba2rgb(io.imread("examples/images/aspen.png")))
-        aspen2 = rgb2gray(rgba2rgb(io.imread("examples/images/aspen2.png")))
-        charlie_small = rgb2gray(rgba2rgb(io.imread("examples/images/charlie_small.png")))
-        charlie = rgb2gray(rgba2rgb(io.imread("examples/images/charlie.png")))
-        charlie2 = rgb2gray(rgba2rgb(io.imread("examples/images/charlie2.png")))
-        double_trouble = rgb2gray(rgba2rgb(io.imread("examples/images/double_trouble.png")))
+        aspen = rgb2gray(rgba2rgb(io.imread("tests/images/aspen.png")))
+        aspen2 = rgb2gray(rgba2rgb(io.imread("tests/images/aspen2.png")))
+        charlie_small = rgb2gray(rgba2rgb(io.imread("tests/images/charlie_small.png")))
+        charlie = rgb2gray(rgba2rgb(io.imread("tests/images/charlie.png")))
+        charlie2 = rgb2gray(rgba2rgb(io.imread("tests/images/charlie2.png")))
+        double_trouble = rgb2gray(rgba2rgb(io.imread("tests/images/double_trouble.png")))
 
         for i in range(14):
             out = np.array(next(g))
@@ -314,12 +314,12 @@ class TestMillypdeMultiGPU(unittest.TestCase):
         o = mp.Operation("rgb2grey")
         g = mp.Generator("examples/images", [o], return_to_host=True)
 
-        aspen = rgb2gray(rgba2rgb(io.imread("examples/images/aspen.png")))
-        aspen2 = rgb2gray(rgba2rgb(io.imread("examples/images/aspen2.png")))
-        charlie_small = rgb2gray(rgba2rgb(io.imread("examples/images/charlie_small.png")))
-        charlie = rgb2gray(rgba2rgb(io.imread("examples/images/charlie.png")))
-        charlie2 = rgb2gray(rgba2rgb(io.imread("examples/images/charlie2.png")))
-        double_trouble = rgb2gray(rgba2rgb(io.imread("examples/images/double_trouble.png")))
+        aspen = rgb2gray(rgba2rgb(io.imread("tests/images/aspen.png")))
+        aspen2 = rgb2gray(rgba2rgb(io.imread("tests/images/aspen2.png")))
+        charlie_small = rgb2gray(rgba2rgb(io.imread("tests/images/charlie_small.png")))
+        charlie = rgb2gray(rgba2rgb(io.imread("tests/images/charlie.png")))
+        charlie2 = rgb2gray(rgba2rgb(io.imread("tests/images/charlie2.png")))
+        double_trouble = rgb2gray(rgba2rgb(io.imread("tests/images/double_trouble.png")))
 
         for i in range(7):
             out = next(g)
@@ -348,12 +348,12 @@ class TestMillypdeMultiGPU(unittest.TestCase):
         with mp.Device(1):
             g = mp.Generator("examples/images", [o], return_to_host=True)
 
-        aspen = rgb2gray(rgba2rgb(io.imread("examples/images/aspen.png")))
-        aspen2 = rgb2gray(rgba2rgb(io.imread("examples/images/aspen2.png")))
-        charlie_small = rgb2gray(rgba2rgb(io.imread("examples/images/charlie_small.png")))
-        charlie = rgb2gray(rgba2rgb(io.imread("examples/images/charlie.png")))
-        charlie2 = rgb2gray(rgba2rgb(io.imread("examples/images/charlie2.png")))
-        double_trouble = rgb2gray(rgba2rgb(io.imread("examples/images/double_trouble.png")))
+        aspen = rgb2gray(rgba2rgb(io.imread("tests/images/aspen.png")))
+        aspen2 = rgb2gray(rgba2rgb(io.imread("tests/images/aspen2.png")))
+        charlie_small = rgb2gray(rgba2rgb(io.imread("tests/images/charlie_small.png")))
+        charlie = rgb2gray(rgba2rgb(io.imread("tests/images/charlie.png")))
+        charlie2 = rgb2gray(rgba2rgb(io.imread("tests/images/charlie2.png")))
+        double_trouble = rgb2gray(rgba2rgb(io.imread("tests/images/double_trouble.png")))
 
         for i in range(7):
             out = next(g)
@@ -380,12 +380,12 @@ class TestMillypdeMultiGPU(unittest.TestCase):
         o = mp.Operation("rgb2grey")
         g = mp.Generator("examples/images", [o], return_to_host=True, device=1)
 
-        aspen = rgb2gray(rgba2rgb(io.imread("examples/images/aspen.png")))
-        aspen2 = rgb2gray(rgba2rgb(io.imread("examples/images/aspen2.png")))
-        charlie_small = rgb2gray(rgba2rgb(io.imread("examples/images/charlie_small.png")))
-        charlie = rgb2gray(rgba2rgb(io.imread("examples/images/charlie.png")))
-        charlie2 = rgb2gray(rgba2rgb(io.imread("examples/images/charlie2.png")))
-        double_trouble = rgb2gray(rgba2rgb(io.imread("examples/images/double_trouble.png")))
+        aspen = rgb2gray(rgba2rgb(io.imread("tests/images/aspen.png")))
+        aspen2 = rgb2gray(rgba2rgb(io.imread("tests/images/aspen2.png")))
+        charlie_small = rgb2gray(rgba2rgb(io.imread("tests/images/charlie_small.png")))
+        charlie = rgb2gray(rgba2rgb(io.imread("tests/images/charlie.png")))
+        charlie2 = rgb2gray(rgba2rgb(io.imread("tests/images/charlie2.png")))
+        double_trouble = rgb2gray(rgba2rgb(io.imread("tests/images/double_trouble.png")))
 
         for i in range(7):
             out = next(g)
@@ -413,12 +413,12 @@ class TestMillypdeMultiGPU(unittest.TestCase):
         o = mp.Operation("rgb2grey")
         g = mp.Generator("examples/images", [o], return_to_host=True, outputs=3)
 
-        aspen = rgb2gray(rgba2rgb(io.imread("examples/images/aspen.png")))
-        aspen2 = rgb2gray(rgba2rgb(io.imread("examples/images/aspen2.png")))
-        charlie_small = rgb2gray(rgba2rgb(io.imread("examples/images/charlie_small.png")))
-        charlie = rgb2gray(rgba2rgb(io.imread("examples/images/charlie.png")))
-        charlie2 = rgb2gray(rgba2rgb(io.imread("examples/images/charlie2.png")))
-        double_trouble = rgb2gray(rgba2rgb(io.imread("examples/images/double_trouble.png")))
+        aspen = rgb2gray(rgba2rgb(io.imread("tests/images/aspen.png")))
+        aspen2 = rgb2gray(rgba2rgb(io.imread("tests/images/aspen2.png")))
+        charlie_small = rgb2gray(rgba2rgb(io.imread("tests/images/charlie_small.png")))
+        charlie = rgb2gray(rgba2rgb(io.imread("tests/images/charlie.png")))
+        charlie2 = rgb2gray(rgba2rgb(io.imread("tests/images/charlie2.png")))
+        double_trouble = rgb2gray(rgba2rgb(io.imread("tests/images/double_trouble.png")))
 
         i = 0
         for out in g:
@@ -449,12 +449,12 @@ class TestMillypdeMultiGPU(unittest.TestCase):
         o = mp.Operation("rgb2grey")
         g = mp.Generator("examples/images", [o], return_to_host=True, outputs=3, device=1)
 
-        aspen = rgb2gray(rgba2rgb(io.imread("examples/images/aspen.png")))
-        aspen2 = rgb2gray(rgba2rgb(io.imread("examples/images/aspen2.png")))
-        charlie_small = rgb2gray(rgba2rgb(io.imread("examples/images/charlie_small.png")))
-        charlie = rgb2gray(rgba2rgb(io.imread("examples/images/charlie.png")))
-        charlie2 = rgb2gray(rgba2rgb(io.imread("examples/images/charlie2.png")))
-        double_trouble = rgb2gray(rgba2rgb(io.imread("examples/images/double_trouble.png")))
+        aspen = rgb2gray(rgba2rgb(io.imread("tests/images/aspen.png")))
+        aspen2 = rgb2gray(rgba2rgb(io.imread("tests/images/aspen2.png")))
+        charlie_small = rgb2gray(rgba2rgb(io.imread("tests/images/charlie_small.png")))
+        charlie = rgb2gray(rgba2rgb(io.imread("tests/images/charlie.png")))
+        charlie2 = rgb2gray(rgba2rgb(io.imread("tests/images/charlie2.png")))
+        double_trouble = rgb2gray(rgba2rgb(io.imread("tests/images/double_trouble.png")))
 
         i = 0
         for out in g:

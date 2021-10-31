@@ -86,17 +86,17 @@ class TestMillipydeImages(unittest.TestCase):
 
 
     def test_open_image(self):
-        charlie = io.imread("examples/images/charlie.png")
-        charlie_on_gpu = mp.gpuimage(io.imread("examples/images/charlie.png"))
+        charlie = io.imread("tests/images/charlie.png")
+        charlie_on_gpu = mp.gpuimage(io.imread("tests/images/charlie.png"))
         charlie2 = np.array(charlie_on_gpu)
         npt.assert_almost_equal(charlie, charlie2, decimal=DECIMAL_ERROR)
 
 
     def test_rgb2grey(self):
-        charlie = io.imread("examples/images/charlie.png")
+        charlie = io.imread("tests/images/charlie.png")
         grey_charlie = rgb2gray(rgba2rgb(charlie))
 
-        charlie_on_gpu = mp.gpuimage(io.imread("examples/images/charlie.png"))
+        charlie_on_gpu = mp.gpuimage(io.imread("tests/images/charlie.png"))
         charlie_on_gpu.rgb2grey()
         grey_charlie2 = np.array(charlie_on_gpu)
 
@@ -104,10 +104,10 @@ class TestMillipydeImages(unittest.TestCase):
  
 
     def test_grey_and_transpose(self):
-        charlie = io.imread("examples/images/charlie.png")
+        charlie = io.imread("tests/images/charlie.png")
         charlie = np.transpose(rgb2gray(rgba2rgb(charlie)))
 
-        charlie2 = mp.gpuimage(io.imread("examples/images/charlie.png"))
+        charlie2 = mp.gpuimage(io.imread("tests/images/charlie.png"))
         charlie2.rgb2grey()
         charlie2.transpose()
         charlie2 = np.array(charlie2)
@@ -181,10 +181,10 @@ class TestMillipydeImages(unittest.TestCase):
 
 
     def test_operation_grey(self):
-        charlie = io.imread("examples/images/charlie.png")
+        charlie = io.imread("tests/images/charlie.png")
         grey_charlie = rgb2gray(rgba2rgb(charlie))
 
-        charlie_on_gpu = mp.gpuimage(io.imread("examples/images/charlie.png"))
+        charlie_on_gpu = mp.gpuimage(io.imread("tests/images/charlie.png"))
 
         greyoperation = mp.Operation("rgb2grey")
         greyoperation.run_on(charlie_on_gpu)
@@ -194,10 +194,10 @@ class TestMillipydeImages(unittest.TestCase):
 
 
     def test_operation_grey_and_transpose(self):
-        charlie = io.imread("examples/images/charlie.png")
+        charlie = io.imread("tests/images/charlie.png")
         charlie = np.transpose(rgb2gray(rgba2rgb(charlie)))
 
-        charlie2 = mp.gpuimage(io.imread("examples/images/charlie.png"))
+        charlie2 = mp.gpuimage(io.imread("tests/images/charlie.png"))
 
         operations = [mp.Operation("rgb2grey"), mp.Operation("transpose")]
         for op in operations:
@@ -213,8 +213,8 @@ class TestMillipydeImages(unittest.TestCase):
 
 
     def test_create_pipeline2(self):
-        d_charlie = mp.gpuimage(io.imread("examples/images/charlie.png"))
-        d_charlie2 = mp.gpuimage(io.imread("examples/images/charlie.png"))
+        d_charlie = mp.gpuimage(io.imread("tests/images/charlie.png"))
+        d_charlie2 = mp.gpuimage(io.imread("tests/images/charlie.png"))
 
         inputs = [d_charlie, d_charlie2]
         operations = [mp.Operation("rgb2grey"), mp.Operation("transpose")]
@@ -224,8 +224,8 @@ class TestMillipydeImages(unittest.TestCase):
 
     
     def test_create_pipeline3(self):
-        d_charlie = mp.gpuimage(io.imread("examples/images/charlie.png"))
-        d_charlie2 = mp.gpuimage(io.imread("examples/images/charlie.png"))
+        d_charlie = mp.gpuimage(io.imread("tests/images/charlie.png"))
+        d_charlie2 = mp.gpuimage(io.imread("tests/images/charlie.png"))
 
         inputs = [d_charlie, d_charlie2]
         operations = [mp.Operation("rgb2grey"), mp.Operation("transpose")]
@@ -255,8 +255,8 @@ class TestMillipydeImages(unittest.TestCase):
 
     
     def test_create_invalid_pipeline5(self):
-        d_charlie = mp.gpuimage(io.imread("examples/images/charlie.png"))
-        d_charlie2 = mp.gpuimage(io.imread("examples/images/charlie.png"))
+        d_charlie = mp.gpuimage(io.imread("tests/images/charlie.png"))
+        d_charlie2 = mp.gpuimage(io.imread("tests/images/charlie.png"))
 
         inputs = [d_charlie, d_charlie2]
         operations = [mp.Operation("rgb2grey"), mp.Operation("transpose")]
@@ -266,8 +266,8 @@ class TestMillipydeImages(unittest.TestCase):
 
 
     def test_create_invalid_pipeline6(self):
-        d_charlie = mp.gpuimage(io.imread("examples/images/charlie.png"))
-        d_charlie2 = mp.gpuimage(io.imread("examples/images/charlie.png"))
+        d_charlie = mp.gpuimage(io.imread("tests/images/charlie.png"))
+        d_charlie2 = mp.gpuimage(io.imread("tests/images/charlie.png"))
 
         inputs = [d_charlie, d_charlie2]
         operations = [mp.Operation("rgb2grey"), mp.Operation("transpose")]
@@ -277,8 +277,8 @@ class TestMillipydeImages(unittest.TestCase):
 
 
     def test_create_invalid_pipeline7(self):
-        d_charlie = mp.gpuimage(io.imread("examples/images/charlie.png"))
-        d_charlie2 = mp.gpuimage(io.imread("examples/images/charlie.png"))
+        d_charlie = mp.gpuimage(io.imread("tests/images/charlie.png"))
+        d_charlie2 = mp.gpuimage(io.imread("tests/images/charlie.png"))
 
         inputs = [d_charlie, d_charlie2]
         operations = [mp.Operation("rgb2grey"), mp.Operation("transpose")]
@@ -288,10 +288,10 @@ class TestMillipydeImages(unittest.TestCase):
     
 
     def test_pipeline_run(self):
-        charlie = io.imread("examples/images/charlie.png")
+        charlie = io.imread("tests/images/charlie.png")
         charlie = np.transpose(rgb2gray(rgba2rgb(charlie)))
 
-        charlie_on_gpu = mp.gpuimage(io.imread("examples/images/charlie.png"))
+        charlie_on_gpu = mp.gpuimage(io.imread("tests/images/charlie.png"))
         inputs = [charlie_on_gpu]
         operations = [mp.Operation("rgb2grey"), mp.Operation("transpose")]
 
@@ -303,13 +303,13 @@ class TestMillipydeImages(unittest.TestCase):
 
 
     def test_pipeline_run2(self):
-        h_charlie = io.imread("examples/images/charlie.png")
-        h_charlie2 = io.imread("examples/images/charlie.png")
+        h_charlie = io.imread("tests/images/charlie.png")
+        h_charlie2 = io.imread("tests/images/charlie.png")
         h_charlie = np.transpose(rgb2gray(rgba2rgb(h_charlie)))
         h_charlie2 = np.transpose(rgb2gray(rgba2rgb(h_charlie2)))
 
-        d_charlie = mp.gpuimage(io.imread("examples/images/charlie.png"))
-        d_charlie2 = mp.gpuimage(io.imread("examples/images/charlie.png"))
+        d_charlie = mp.gpuimage(io.imread("tests/images/charlie.png"))
+        d_charlie2 = mp.gpuimage(io.imread("tests/images/charlie.png"))
 
         inputs = [d_charlie, d_charlie2]
         operations = [mp.Operation("rgb2grey"), mp.Operation("transpose")]
@@ -325,7 +325,7 @@ class TestMillipydeImages(unittest.TestCase):
     
 
     def test_long_pipeline(self):
-        d_charlie_control = mp.gpuimage(io.imread("examples/images/charlie.png"))
+        d_charlie_control = mp.gpuimage(io.imread("tests/images/charlie.png"))
         d_charlie_control.gaussian(2)
         d_charlie_control.rgb2grey()
         d_charlie_control.transpose()
@@ -333,14 +333,14 @@ class TestMillipydeImages(unittest.TestCase):
         d_charlie_control.rotate(45)
         d_charlie_control = np.array(d_charlie_control)
         
-        d_charlie = mp.gpuimage(io.imread("examples/images/charlie.png"))
-        d_charlie2 = mp.gpuimage(io.imread("examples/images/charlie.png"))
-        d_charlie3 = mp.gpuimage(io.imread("examples/images/charlie.png"))
-        d_charlie4 = mp.gpuimage(io.imread("examples/images/charlie.png"))
-        d_charlie5 = mp.gpuimage(io.imread("examples/images/charlie.png"))
-        d_charlie6 = mp.gpuimage(io.imread("examples/images/charlie.png"))
-        d_charlie7 = mp.gpuimage(io.imread("examples/images/charlie.png"))
-        d_charlie8 = mp.gpuimage(io.imread("examples/images/charlie.png"))
+        d_charlie = mp.gpuimage(io.imread("tests/images/charlie.png"))
+        d_charlie2 = mp.gpuimage(io.imread("tests/images/charlie.png"))
+        d_charlie3 = mp.gpuimage(io.imread("tests/images/charlie.png"))
+        d_charlie4 = mp.gpuimage(io.imread("tests/images/charlie.png"))
+        d_charlie5 = mp.gpuimage(io.imread("tests/images/charlie.png"))
+        d_charlie6 = mp.gpuimage(io.imread("tests/images/charlie.png"))
+        d_charlie7 = mp.gpuimage(io.imread("tests/images/charlie.png"))
+        d_charlie8 = mp.gpuimage(io.imread("tests/images/charlie.png"))
 
         charlies = [d_charlie, d_charlie2, d_charlie3, d_charlie4,
                     d_charlie5, d_charlie6, d_charlie7, d_charlie8]
@@ -374,11 +374,11 @@ class TestMillipydeImages(unittest.TestCase):
 
     
     def test_clone(self):
-        h_charlie = io.imread("examples/images/charlie.png")
-        h_charlie2 = io.imread("examples/images/charlie.png")
+        h_charlie = io.imread("tests/images/charlie.png")
+        h_charlie2 = io.imread("tests/images/charlie.png")
         h_charlie2 = rgb2gray(rgba2rgb(h_charlie2))
 
-        d_charlie = mp.gpuimage(io.imread("examples/images/charlie.png"))
+        d_charlie = mp.gpuimage(io.imread("tests/images/charlie.png"))
         d_charlie2 = d_charlie.clone()
         d_charlie2.rgb2grey()
 
@@ -403,19 +403,19 @@ class TestMillipydeImages(unittest.TestCase):
 
 
     def test_image_from_path(self):
-        h_charlie = io.imread("examples/images/charlie.png")
+        h_charlie = io.imread("tests/images/charlie.png")
 
-        d_charlie = mp.image_from_path("examples/images/charlie.png")
+        d_charlie = mp.image_from_path("tests/images/charlie.png")
 
         npt.assert_almost_equal(h_charlie, np.array(d_charlie),
                                 decimal=DECIMAL_ERROR)
 
     
     def test_image_from_path2(self):
-        h_charlie = io.imread("examples/images/charlie.png")
+        h_charlie = io.imread("tests/images/charlie.png")
         h_charlie = rgb2gray(rgba2rgb(h_charlie))
 
-        d_charlie = mp.image_from_path("examples/images/charlie.png")
+        d_charlie = mp.image_from_path("tests/images/charlie.png")
         d_charlie.rgb2grey()
 
         npt.assert_almost_equal(h_charlie, np.array(d_charlie),
@@ -426,12 +426,12 @@ class TestMillipydeImages(unittest.TestCase):
         o = mp.Operation("rgb2grey")
         g = mp.Generator("examples/images", [o])
 
-        aspen = rgb2gray(rgba2rgb(io.imread("examples/images/aspen.png")))
-        aspen2 = rgb2gray(rgba2rgb(io.imread("examples/images/aspen2.png")))
-        charlie_small = rgb2gray(rgba2rgb(io.imread("examples/images/charlie_small.png")))
-        charlie = rgb2gray(rgba2rgb(io.imread("examples/images/charlie.png")))
-        charlie2 = rgb2gray(rgba2rgb(io.imread("examples/images/charlie2.png")))
-        double_trouble = rgb2gray(rgba2rgb(io.imread("examples/images/double_trouble.png")))
+        aspen = rgb2gray(rgba2rgb(io.imread("tests/images/aspen.png")))
+        aspen2 = rgb2gray(rgba2rgb(io.imread("tests/images/aspen2.png")))
+        charlie_small = rgb2gray(rgba2rgb(io.imread("tests/images/charlie_small.png")))
+        charlie = rgb2gray(rgba2rgb(io.imread("tests/images/charlie.png")))
+        charlie2 = rgb2gray(rgba2rgb(io.imread("tests/images/charlie2.png")))
+        double_trouble = rgb2gray(rgba2rgb(io.imread("tests/images/double_trouble.png")))
 
         for i in range(14):
             out = np.array(next(g))
@@ -458,12 +458,12 @@ class TestMillipydeImages(unittest.TestCase):
         o = mp.Operation("rgb2grey")
         g = mp.Generator("examples/images", [o], return_to_host=True)
 
-        aspen = rgb2gray(rgba2rgb(io.imread("examples/images/aspen.png")))
-        aspen2 = rgb2gray(rgba2rgb(io.imread("examples/images/aspen2.png")))
-        charlie_small = rgb2gray(rgba2rgb(io.imread("examples/images/charlie_small.png")))
-        charlie = rgb2gray(rgba2rgb(io.imread("examples/images/charlie.png")))
-        charlie2 = rgb2gray(rgba2rgb(io.imread("examples/images/charlie2.png")))
-        double_trouble = rgb2gray(rgba2rgb(io.imread("examples/images/double_trouble.png")))
+        aspen = rgb2gray(rgba2rgb(io.imread("tests/images/aspen.png")))
+        aspen2 = rgb2gray(rgba2rgb(io.imread("tests/images/aspen2.png")))
+        charlie_small = rgb2gray(rgba2rgb(io.imread("tests/images/charlie_small.png")))
+        charlie = rgb2gray(rgba2rgb(io.imread("tests/images/charlie.png")))
+        charlie2 = rgb2gray(rgba2rgb(io.imread("tests/images/charlie2.png")))
+        double_trouble = rgb2gray(rgba2rgb(io.imread("tests/images/double_trouble.png")))
 
         for i in range(7):
             out = next(g)
@@ -490,12 +490,12 @@ class TestMillipydeImages(unittest.TestCase):
         o = mp.Operation("rgb2grey")
         g = mp.Generator("examples/images", [o], return_to_host=True, outputs=3)
 
-        aspen = rgb2gray(rgba2rgb(io.imread("examples/images/aspen.png")))
-        aspen2 = rgb2gray(rgba2rgb(io.imread("examples/images/aspen2.png")))
-        charlie_small = rgb2gray(rgba2rgb(io.imread("examples/images/charlie_small.png")))
-        charlie = rgb2gray(rgba2rgb(io.imread("examples/images/charlie.png")))
-        charlie2 = rgb2gray(rgba2rgb(io.imread("examples/images/charlie2.png")))
-        double_trouble = rgb2gray(rgba2rgb(io.imread("examples/images/double_trouble.png")))
+        aspen = rgb2gray(rgba2rgb(io.imread("tests/images/aspen.png")))
+        aspen2 = rgb2gray(rgba2rgb(io.imread("tests/images/aspen2.png")))
+        charlie_small = rgb2gray(rgba2rgb(io.imread("tests/images/charlie_small.png")))
+        charlie = rgb2gray(rgba2rgb(io.imread("tests/images/charlie.png")))
+        charlie2 = rgb2gray(rgba2rgb(io.imread("tests/images/charlie2.png")))
+        double_trouble = rgb2gray(rgba2rgb(io.imread("tests/images/double_trouble.png")))
 
         i = 0
         for out in g:

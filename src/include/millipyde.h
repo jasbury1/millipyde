@@ -104,6 +104,12 @@ typedef struct {
     double delta;
 } BrightnessArgs;
 
+typedef struct {
+    double r_mult;
+    double g_mult;
+    double b_mult;
+} ColorizeArgs;
+
 
 
 const char* mperr_str(MPStatus status);

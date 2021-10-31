@@ -147,23 +147,9 @@ def main():
     # arr2 = np.array(img2)
     # imsave("bright2.png", arr2)
 
-    images = mp.images_from_path("examples/images")
-
-    ops = [
-        mp.Operation("transpose", probability=.2),
-        mp.Operation("fliplr", probability=.2),
-        mp.Operation("random_brightness", -1, 1),
-        mp.Operation("random_gaussian", 0, 4),
-        mp.Operation("rgb2grey", probability=.5),
-        mp.Operation("random_rotate", 0, 120, probability = .5)
-    ]
-
-    g = mp.Generator(images, ops, return_to_host=True)
-
-    
-    for i in range(40):
-        img = next(g)
-        imsave("augment/dog" + str(i) + ".png", img)
+    image = mp.image_from_path("tests/images/charlie_small.png")
+    image.colorize(.8, 1.2, .5)
+    imsave("colorize.png", np.array(image))
 
 
 

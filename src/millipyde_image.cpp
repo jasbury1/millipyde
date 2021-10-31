@@ -29,6 +29,9 @@ _brightness_greyscale(MPObjData *obj_data, double delta);
 static MPStatus 
 _brightness_rgba(MPObjData *obj_data, char delta);
 
+static MPStatus 
+_colorize_rgba(MPObjData *obj_data, double r_mult, double g_mult, double b_mult);
+
 
 /*******************************************************************************
 * GPU KERNELS
@@ -426,6 +429,35 @@ __global__ void g_brightness_four_channel(uint32_t *d_data, uint32_t *d_result,
     }
 }
 
+
+__global__ void g_colorize_four_channel(uint32_t *d_data, uint32_t *d_result,
+                                          double r_mult, double g_mult, double b_mult, 
+                                          int width, int height)
+{
+    int x = hipThreadIdx_x + hipBlockIdx_x * hipBlockDim_x;
+    int y = hipThreadIdx_y + hipBlockIdx_y * hipBlockDim_y;
+
+    if (x < width && y < height) {
+        int idx = y * width + x;
+
+        unsigned char r, g, b, a;
+
+        r = (unsigned char)(min(255, (((double)(d_data[idx] & 0xff)) * r_mult)));
+        g = (unsigned char)(min(255, (((double)((d_data[idx] >> 8) & 0xff)) * g_mult)));
+        b = (unsigned char)(min(255, (((double)((d_data[idx] >> 16) & 0xff)) * b_mult)));
+        a = ((d_data[idx] >> 24) & 0xff);
+
+        uint32_t result = a;
+        result = result << 8;
+        result = result | b;
+        result = result << 8;
+        result = result | g;
+        result = result << 8;
+        result = result | r;
+        d_result[idx] = result;
+    }
+}
+
 /*******************************************************************************
 * API FUNCTIONS WITH C-LINKAGE
 *******************************************************************************/
@@ -515,6 +547,27 @@ mpimg_brightness(MPObjData *obj_data, void *args)
     {
         char delta_n = (char)(delta * 255);
         return _brightness_rgba(obj_data, delta_n);
+    }
+    return MILLIPYDE_SUCCESS;
+}
+
+
+MPStatus
+mpimg_colorize(MPObjData *obj_data, void *args)
+{
+    double r_mult = ((ColorizeArgs *)args)->r_mult;
+    double g_mult = ((ColorizeArgs *)args)->g_mult; 
+    double b_mult = ((ColorizeArgs *)args)->b_mult; 
+
+    int channels = obj_data->ndims == 2 ? 1 : obj_data->dims[2];
+    if (channels == 1)
+    {
+        // No colorization for grey images
+        return MILLIPYDE_SUCCESS;
+    }
+    else if (channels == 4)
+    {
+        return _colorize_rgba(obj_data, r_mult, g_mult, b_mult);
     }
     return MILLIPYDE_SUCCESS;
 }
@@ -917,6 +970,43 @@ _brightness_rgba(MPObjData *obj_data, char delta)
         d_image,
         d_result,
         delta,
+        width,
+        height);
+
+    obj_data->device_data = d_result;
+
+    HIP_CHECK(hipFree(d_image));
+    
+    return MILLIPYDE_SUCCESS;
+}
+
+
+static MPStatus 
+_colorize_rgba(MPObjData *obj_data, double r_mult, double g_mult, double b_mult)
+{
+    int device_id = obj_data->mem_loc;
+    int height = obj_data->dims[0];
+    int width = obj_data->dims[1];
+
+    uint32_t *d_result;
+    uint32_t *d_image = (uint32_t *)(obj_data->device_data);
+
+    HIP_CHECK(hipSetDevice(device_id));
+    hipStream_t stream = (hipStream_t)obj_data->stream;
+
+    HIP_CHECK(hipMalloc(&d_result, obj_data->nbytes));
+
+    hipLaunchKernelGGL(
+        g_colorize_four_channel,
+        dim3(ceil(width / 32.0), ceil(height / 32.0), 1),
+        dim3(32, 32, 1),
+        0,
+        stream,
+        d_image,
+        d_result,
+        r_mult,
+        g_mult,
+        b_mult,
         width,
         height);
 

@@ -37,6 +37,9 @@ mpimg_rotate(MPObjData *obj_data, void *args);
 MPStatus
 mpimg_brightness(MPObjData *obj_data, void *args);
 
+MPStatus
+mpimg_colorize(MPObjData *obj_data, void *args);
+
 #ifdef __cplusplus
 }
 #endif

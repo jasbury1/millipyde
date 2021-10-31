@@ -332,6 +332,7 @@ PyGPUImage_brightness(PyGPUImageObject *self, PyObject *args, PyObject *kwds)
     return Py_None;
 }
 
+
 PyObject *
 PyGPUImage_rand_brightness(PyGPUImageObject *self, PyObject *args, PyObject *kwds)
 {
@@ -350,6 +351,88 @@ PyGPUImage_rand_brightness(PyGPUImageObject *self, PyObject *args, PyObject *kwd
     PyGPUImage_brightness(self, arg, NULL);
 
     Py_DECREF(a);
+    Py_DECREF(arg);
+
+    return Py_None;
+}
+
+
+/*******************************************************************************
+ * 
+ * 
+ * @param self The image that will be transposed
+ * @param closure An unused closure argument
+ * 
+ * @return Py_None
+ * 
+ ******************************************************************************/
+PyObject *
+PyGPUImage_colorize(PyGPUImageObject *self, PyObject *args, PyObject *kwds)
+{
+    MPObjData *obj_data = self->array.obj_data;
+    int target_device = mpdev_get_target_device();
+
+    void *colorize_args = gpuimage_colorize_args(args);
+    if (colorize_args == NULL)
+    {
+        return NULL;
+    }
+
+    if (!obj_data->pinned)
+    {
+        // If a target device is specified and it isn't the current location
+        if (target_device != DEVICE_LOC_NO_AFFINITY && target_device != obj_data->mem_loc)
+        {
+            // We need to move our memory to a different device
+            mpobj_change_device(obj_data, target_device);
+        }
+    }
+
+    // TODO: Type checking, etc
+    mpimg_colorize(obj_data, colorize_args);
+
+    free(colorize_args);
+    return Py_None;
+}
+
+
+PyObject *
+PyGPUImage_rand_colorize(PyGPUImageObject *self, PyObject *args, PyObject *kwds)
+{
+    PyObject *r_range;
+    PyObject *g_range;
+    PyObject *b_range;
+    if (!PyArg_ParseTuple(args, "O!O!O!", &PyList_Type, &r_range, &PyList_Type,
+                          &g_range, &PyList_Type, &b_range))
+    {
+        return NULL;
+    }
+
+    // TODO: Better type checking needed here
+    double r_min, r_max, g_min, g_max, b_min, b_max;
+    r_min = PyFloat_AsDouble(PyList_GetItem(r_range, 0));
+    r_max = PyFloat_AsDouble(PyList_GetItem(r_range, 1));
+    g_min = PyFloat_AsDouble(PyList_GetItem(g_range, 0));
+    g_max = PyFloat_AsDouble(PyList_GetItem(g_range, 1));
+    b_min = PyFloat_AsDouble(PyList_GetItem(b_range, 0));
+    b_max = PyFloat_AsDouble(PyList_GetItem(b_range, 1));
+
+    double r_mult, g_mult, b_mult;
+
+    random_double_in_range(r_min, r_max, &r_mult);
+    random_double_in_range(g_min, g_max, &g_mult);
+    random_double_in_range(b_min, b_max, &b_mult);
+
+    PyObject *a1 = Py_BuildValue("d", r_mult);
+    PyObject *a2 = Py_BuildValue("d", g_mult);
+    PyObject *a3 = Py_BuildValue("d", b_mult);
+    PyObject *arg = PyTuple_Pack(3, a1, a2, a3);
+
+    PyGPUImage_colorize(self, arg, NULL);
+
+    Py_DECREF(a1);
+    Py_DECREF(a2);
+    Py_DECREF(a3);
     Py_DECREF(arg);
 
     return Py_None;
@@ -576,6 +659,31 @@ gpuimage_brightness_args(PyObject *args)
     BrightnessArgs *brightness_args = malloc(sizeof(BrightnessArgs));
     brightness_args->delta = delta;
     return (void *)brightness_args;
+}
+
+
+void *
+gpuimage_colorize_args(PyObject *args)
+{
+    double r_mult;
+    double g_mult;
+    double b_mult;
+    
+    if (!PyArg_ParseTuple(args, "ddd", &r_mult, &g_mult, &b_mult))
+    {
+        return NULL;
+    }
+
+    if (r_mult < 0 || g_mult < 0 || b_mult < 0)
+    {
+        return NULL;
+    }
+
+    ColorizeArgs *colorize_args = malloc(sizeof(ColorizeArgs));
+    colorize_args->r_mult = r_mult;
+    colorize_args->g_mult = g_mult;
+    colorize_args->b_mult = b_mult;
+    return (void *)colorize_args;
 }
 
 
