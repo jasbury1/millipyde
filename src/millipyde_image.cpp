@@ -861,7 +861,6 @@ _rotate(MPObjData *obj_data, double angle)
 static MPStatus 
 _brightness_greyscale(MPObjData *obj_data, double delta)
 {
-    printf("delta: %f\n", delta);
     int device_id = obj_data->mem_loc;
     int height = obj_data->dims[0];
     int width = obj_data->dims[1];

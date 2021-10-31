@@ -137,7 +137,6 @@ PyGPUArray_to_array(PyGPUArrayObject *self, void *closure)
         return NULL;
     }
     PyArray_ENABLEFLAGS((PyArrayObject *)array, NPY_ARRAY_OWNDATA);
-    //Py_INCREF(array);
 
     free(array_dims);
 

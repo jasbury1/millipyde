@@ -3,6 +3,8 @@
 
 // PY_SSIZE_T_CLEAN Should be defined before including Python.h
 #include <Python.h>
+#include <sys/random.h>
+#include <limits.h>
 
 #include "use_numpy.h"
 #include "gpuimage.h"
@@ -81,8 +83,6 @@ PyGPUOperation_init(PyGPUOperationObject *self, PyObject *args, PyObject *kwds)
                 return -1;
             }
 
-            // Remove the probability from the calling arguments
-            num_call_args -= 1;
             self->probability = fprob;
         }
         else
@@ -120,6 +120,7 @@ PyGPUOperation_init(PyGPUOperationObject *self, PyObject *args, PyObject *kwds)
 
     return 0;
 }
+
 
 PyObject *
 PyGPUOperation_run(PyGPUOperationObject *self, PyObject *Py_UNUSED(ignored))
@@ -181,7 +182,7 @@ _gpuoperation_run(PyGPUOperationObject *self, PyObject *callable)
     return result;
 }
 
-
+/*
 MPStatus
 gpuoperation_evaluate_probability(MPBool *result, double probability)
 {
@@ -210,6 +211,37 @@ gpuoperation_evaluate_probability(MPBool *result, double probability)
         if (r > probability) {
             *result = MP_FALSE;
         }
+    }
+    
+    return MILLIPYDE_SUCCESS;
+}
+*/
+
+MPStatus
+gpuoperation_evaluate_probability(MPBool *result, double probability)
+{
+    unsigned int buffer;
+    ssize_t bytes;
+
+    *result = MP_TRUE;
+
+    if (probability < 0)
+    {
+        return MILLIPYDE_SUCCESS;
+    }
+
+    bytes = getrandom(&buffer, sizeof(unsigned int), 0);
+    if (bytes < 0)
+    {
+        // TODO
+        return -1;
+    }
+
+    double r = (double)buffer / UINT_MAX;
+
+    if (r > probability)
+    {
+        *result = MP_FALSE;
     }
     
     return MILLIPYDE_SUCCESS;

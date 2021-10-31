@@ -136,16 +136,34 @@ def gaussian_charlie():
 
 
 def main():
-    img = mp.gpuimage(io.imread("examples/images/charlie_small.png"))
-    img.brightness(.5)
-    arr = np.array(img)
-    imsave("bright.png", arr)
+    # img = mp.gpuimage(io.imread("examples/images/charlie_small.png"))
+    # img.brightness(.5)
+    # arr = np.array(img)
+    # imsave("bright.png", arr)
 
-    img2 = mp.gpuimage(io.imread("examples/images/charlie_small.png"))
-    img2.rgb2grey()
-    img2.brightness(.5)
-    arr2 = np.array(img2)
-    imsave("bright2.png", arr2)
+    # img2 = mp.gpuimage(io.imread("examples/images/charlie_small.png"))
+    # img2.rgb2grey()
+    # img2.brightness(.5)
+    # arr2 = np.array(img2)
+    # imsave("bright2.png", arr2)
+
+    images = mp.images_from_path("examples/images")
+
+    ops = [
+        mp.Operation("transpose", probability=.2),
+        mp.Operation("fliplr", probability=.2),
+        mp.Operation("random_brightness", -1, 1),
+        mp.Operation("random_gaussian", 0, 4),
+        mp.Operation("rgb2grey", probability=.5),
+        mp.Operation("random_rotate", 0, 120, probability = .5)
+    ]
+
+    g = mp.Generator(images, ops, return_to_host=True)
+
+    
+    for i in range(40):
+        img = next(g)
+        imsave("augment/dog" + str(i) + ".png", img)
 
 
 

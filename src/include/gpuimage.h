@@ -51,6 +51,15 @@ Duis aute irure dolor in reprehenderit in voluptate velit \n \
 esse cillum dolore eu fugiat nulla pariatur. \n \
 Excepteur sint occaecat cupidatat non proident")
 
+#define __GPUIMAGE_RANDOM_GAUSSIAN_DOC PyDoc_STR( \
+    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, \n \
+sed do eiusmod tempor incididunt ut labore et dolore magna \n \
+aliqua. Ut enim ad minim veniam, quis nostrud exercitation \n \
+ullamco laboris nisi ut aliquip ex ea commodo consequat. \n \
+Duis aute irure dolor in reprehenderit in voluptate velit \n \
+esse cillum dolore eu fugiat nulla pariatur. \n \
+Excepteur sint occaecat cupidatat non proident")
+
 #define __GPUIMAGE_BRIGHTNESS_DOC PyDoc_STR( \
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit, \n \
 sed do eiusmod tempor incididunt ut labore et dolore magna \n \
@@ -60,7 +69,43 @@ Duis aute irure dolor in reprehenderit in voluptate velit \n \
 esse cillum dolore eu fugiat nulla pariatur. \n \
 Excepteur sint occaecat cupidatat non proident")
 
+#define __GPUIMAGE_RANDOM_BRIGHTNESS_DOC PyDoc_STR( \
+    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, \n \
+sed do eiusmod tempor incididunt ut labore et dolore magna \n \
+aliqua. Ut enim ad minim veniam, quis nostrud exercitation \n \
+ullamco laboris nisi ut aliquip ex ea commodo consequat. \n \
+Duis aute irure dolor in reprehenderit in voluptate velit \n \
+esse cillum dolore eu fugiat nulla pariatur. \n \
+Excepteur sint occaecat cupidatat non proident")
+
+#define __GPUIMAGE_ROTATE_DOC PyDoc_STR( \
+    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, \n \
+sed do eiusmod tempor incididunt ut labore et dolore magna \n \
+aliqua. Ut enim ad minim veniam, quis nostrud exercitation \n \
+ullamco laboris nisi ut aliquip ex ea commodo consequat. \n \
+Duis aute irure dolor in reprehenderit in voluptate velit \n \
+esse cillum dolore eu fugiat nulla pariatur. \n \
+Excepteur sint occaecat cupidatat non proident")
+
+#define __GPUIMAGE_RANDOM_ROTATE_DOC PyDoc_STR( \
+    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, \n \
+sed do eiusmod tempor incididunt ut labore et dolore magna \n \
+aliqua. Ut enim ad minim veniam, quis nostrud exercitation \n \
+ullamco laboris nisi ut aliquip ex ea commodo consequat. \n \
+Duis aute irure dolor in reprehenderit in voluptate velit \n \
+esse cillum dolore eu fugiat nulla pariatur. \n \
+Excepteur sint occaecat cupidatat non proident")
+
 #define __GPUIMAGE_FLIPLR_DOC PyDoc_STR( \
+    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, \n \
+sed do eiusmod tempor incididunt ut labore et dolore magna \n \
+aliqua. Ut enim ad minim veniam, quis nostrud exercitation \n \
+ullamco laboris nisi ut aliquip ex ea commodo consequat. \n \
+Duis aute irure dolor in reprehenderit in voluptate velit \n \
+esse cillum dolore eu fugiat nulla pariatur. \n \
+Excepteur sint occaecat cupidatat non proident")
+
+#define __GPUIMAGE_CLONE_DOC PyDoc_STR( \
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit, \n \
 sed do eiusmod tempor incididunt ut labore et dolore magna \n \
 aliqua. Ut enim ad minim veniam, quis nostrud exercitation \n \
@@ -97,13 +142,22 @@ PyObject *
 PyGPUImage_gaussian(PyGPUImageObject *self, PyObject *args, PyObject *kwds);
 
 PyObject *
+PyGPUImage_rand_gaussian(PyGPUImageObject *self, PyObject *args, PyObject *kwds);
+
+PyObject *
 PyGPUImage_fliplr(PyGPUImageObject *self, void *closure);
 
 PyObject *
 PyGPUImage_rotate(PyGPUImageObject *self, PyObject *args, PyObject *kwds);
 
 PyObject *
+PyGPUImage_rand_rotate(PyGPUImageObject *self, PyObject *args, PyObject *kwds);
+
+PyObject *
 PyGPUImage_brightness(PyGPUImageObject *self, PyObject *args, PyObject *kwds);
+
+PyObject *
+PyGPUImage_rand_brightness(PyGPUImageObject *self, PyObject *args, PyObject *kwds);
 
 PyObject *
 PyGPUImage_clone(PyGPUImageObject *self, void *closure);
@@ -132,6 +186,12 @@ gpuimage_check(PyObject *object);
 MPBool
 valid_image_filename(const char *filename);
 
+MPStatus
+random_int_in_range(int min, int max, int *result);
+
+MPStatus  
+random_double_in_range(double min, double max, double *result);
+
 /*******************************************************************************
 * TYPE DATA
 *******************************************************************************/
@@ -159,17 +219,26 @@ static PyMethodDef PyGPUImage_methods[] = {
     {"gaussian", (PyCFunction) PyGPUImage_gaussian, METH_VARARGS,
      __GPUIMAGE_GAUSSIAN_DOC
     },
+    {"random_gaussian", (PyCFunction) PyGPUImage_rand_gaussian, METH_VARARGS,
+     __GPUIMAGE_RANDOM_GAUSSIAN_DOC
+    },
     {"brightness", (PyCFunction) PyGPUImage_brightness, METH_VARARGS,
      __GPUIMAGE_BRIGHTNESS_DOC
+    },
+    {"random_brightness", (PyCFunction) PyGPUImage_rand_brightness, METH_VARARGS,
+     __GPUIMAGE_RANDOM_BRIGHTNESS_DOC
     },
     {"fliplr", (PyCFunction) PyGPUImage_fliplr, METH_NOARGS,
      __GPUIMAGE_FLIPLR_DOC
     },
     {"rotate", (PyCFunction) PyGPUImage_rotate, METH_VARARGS,
-     __GPUIMAGE_FLIPLR_DOC
+     __GPUIMAGE_ROTATE_DOC
+    },
+    {"random_rotate", (PyCFunction) PyGPUImage_rand_rotate, METH_VARARGS,
+     __GPUIMAGE_RANDOM_ROTATE_DOC
     },
     {"clone", (PyCFunction) PyGPUImage_clone, METH_NOARGS,
-     __GPUIMAGE_FLIPLR_DOC
+     __GPUIMAGE_CLONE_DOC
     },
     {NULL}
 };

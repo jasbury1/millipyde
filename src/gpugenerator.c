@@ -251,6 +251,7 @@ gpugenerator_produce_next(PyGPUGeneratorObject *generator, int i)
     {   
         PyGPUOperationObject *operation =
             (PyGPUOperationObject *)PyList_GetItem(generator->operations, i);
+
         if (operation == NULL)
         {
             // TODO: Real error type

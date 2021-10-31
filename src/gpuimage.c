@@ -5,7 +5,8 @@
 #include <Python.h>
 #include <dirent.h>
 #include <string.h>
-// #include <strings.h> ??
+#include <sys/random.h>
+#include <limits.h>
 
 #include "gpuarray.h"
 #include "gpuimage.h"
@@ -203,6 +204,30 @@ PyGPUImage_rotate(PyGPUImageObject *self, PyObject *args, PyObject *kwds)
 }
 
 
+PyObject *
+PyGPUImage_rand_rotate(PyGPUImageObject *self, PyObject *args, PyObject *kwds)
+{
+    double min, max;
+    if (!PyArg_ParseTuple(args, "dd", &min, &max))
+    {
+        return NULL;
+    }
+
+    double angle;
+    random_double_in_range(min, max, &angle);
+
+    PyObject *a = Py_BuildValue("d", angle);
+    PyObject *arg = PyTuple_Pack(1, a);
+
+    PyGPUImage_rotate(self, arg, NULL);
+
+    Py_DECREF(a);
+    Py_DECREF(arg);
+
+    return Py_None;
+}
+
+
 /*******************************************************************************
  * Calls the gaussian blur kernel on the gpuimage. If the image is not pinned to 
  * a specific device, and if the user specified a 'target device', then this
@@ -245,6 +270,30 @@ PyGPUImage_gaussian(PyGPUImageObject *self, PyObject *args, PyObject *kwds)
 }
 
 
+PyObject *
+PyGPUImage_rand_gaussian(PyGPUImageObject *self, PyObject *args, PyObject *kwds)
+{
+    double min, max;
+    if (!PyArg_ParseTuple(args, "dd", &min, &max))
+    {
+        return NULL;
+    }
+
+    double sigma;
+    random_double_in_range(min, max, &sigma);
+
+    PyObject *a = Py_BuildValue("d", sigma);
+    PyObject *arg = PyTuple_Pack(1, a);
+
+    PyGPUImage_gaussian(self, arg, NULL);
+
+    Py_DECREF(a);
+    Py_DECREF(arg);
+
+    return Py_None;
+}
+
+
 /*******************************************************************************
  * 
  * 
@@ -280,6 +329,29 @@ PyGPUImage_brightness(PyGPUImageObject *self, PyObject *args, PyObject *kwds)
     mpimg_brightness(obj_data, brightness_args);
 
     free(brightness_args);
+    return Py_None;
+}
+
+PyObject *
+PyGPUImage_rand_brightness(PyGPUImageObject *self, PyObject *args, PyObject *kwds)
+{
+    double min, max;
+    if (!PyArg_ParseTuple(args, "dd", &min, &max))
+    {
+        return NULL;
+    }
+
+    double delta;
+    random_double_in_range(min, max, &delta);
+
+    PyObject *a = Py_BuildValue("d", delta);
+    PyObject *arg = PyTuple_Pack(1, a);
+
+    PyGPUImage_brightness(self, arg, NULL);
+
+    Py_DECREF(a);
+    Py_DECREF(arg);
+
     return Py_None;
 }
 
@@ -546,4 +618,39 @@ valid_image_filename(const char *filename)
     }
 
     return MP_FALSE;
+}
+
+
+MPStatus
+random_int_in_range(int min, int max, int *result)
+{
+    unsigned long buffer;
+    ssize_t bytes;
+
+    bytes = getrandom(&buffer, sizeof(unsigned long), 0);
+    if (bytes < 0)
+    {
+        printf(":(\n");
+    }
+    int rand = buffer % (max + 1 - min) + min;
+    *result = rand;
+    
+    return MILLIPYDE_SUCCESS;
+}
+
+MPStatus  
+random_double_in_range(double min, double max, double *result)
+{
+    unsigned long buffer;
+    ssize_t bytes;
+
+    bytes = getrandom(&buffer, sizeof(unsigned long), 0);
+    if (bytes < 0)
+    {
+        printf(":(\n");
+    }
+
+    double rand = ((double)buffer / ((double)ULONG_MAX / (max - min)));
+    *result = rand;
+    return MILLIPYDE_SUCCESS;
 }
