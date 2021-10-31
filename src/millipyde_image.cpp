@@ -399,7 +399,7 @@ __global__ void g_gaussian_col_four_channel(
                       d_kernel[KERNEL_RADIUS - k]);
         }
         d_result[gmemPos] = (0 |
-                             ((r_sum & 0xff) << 24) |
+                             ((0xff) << 24) |
                              ((g_sum & 0xff) << 16) |
                              ((b_sum & 0xff) << 8) |
                              (a_sum & 0xff));

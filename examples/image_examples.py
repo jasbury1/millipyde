@@ -136,12 +136,12 @@ def gaussian_charlie():
 
 
 def main():
-    o = mp.Operation("rgb2grey")
-    g = mp.Generator("examples/images", [o]) 
+    img = mp.image_from_path("examples/images/charlie_small.png")
+    img.gaussian(1)
+    arr = np.array(img)
+    print(arr)
+    imsave("gaussian.png", arr)
 
-    for i in range(14):
-        out = np.array(next(g))
-        imsave("test" + str(i) + ".png", np.array(out))
 
 
 if __name__ == '__main__':
