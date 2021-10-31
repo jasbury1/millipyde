@@ -100,6 +100,10 @@ typedef struct {
     double sigma;
 } GaussianArgs;
 
+typedef struct {
+    double delta;
+} BrightnessArgs;
+
 
 
 const char* mperr_str(MPStatus status);

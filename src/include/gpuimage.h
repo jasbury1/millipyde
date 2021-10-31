@@ -51,6 +51,15 @@ Duis aute irure dolor in reprehenderit in voluptate velit \n \
 esse cillum dolore eu fugiat nulla pariatur. \n \
 Excepteur sint occaecat cupidatat non proident")
 
+#define __GPUIMAGE_BRIGHTNESS_DOC PyDoc_STR( \
+    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, \n \
+sed do eiusmod tempor incididunt ut labore et dolore magna \n \
+aliqua. Ut enim ad minim veniam, quis nostrud exercitation \n \
+ullamco laboris nisi ut aliquip ex ea commodo consequat. \n \
+Duis aute irure dolor in reprehenderit in voluptate velit \n \
+esse cillum dolore eu fugiat nulla pariatur. \n \
+Excepteur sint occaecat cupidatat non proident")
+
 #define __GPUIMAGE_FLIPLR_DOC PyDoc_STR( \
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit, \n \
 sed do eiusmod tempor incididunt ut labore et dolore magna \n \
@@ -94,6 +103,9 @@ PyObject *
 PyGPUImage_rotate(PyGPUImageObject *self, PyObject *args, PyObject *kwds);
 
 PyObject *
+PyGPUImage_brightness(PyGPUImageObject *self, PyObject *args, PyObject *kwds);
+
+PyObject *
 PyGPUImage_clone(PyGPUImageObject *self, void *closure);
 
 PyObject *
@@ -107,6 +119,9 @@ gpuimage_rotate_args(PyObject *args);
 
 void *
 gpuimage_gaussian_args(PyObject *args);
+
+void *
+gpuimage_brightness_args(PyObject *args);
 
 PyObject *
 gpuimage_clone(PyGPUImageObject *self, int device_id, int stream_id);
@@ -143,6 +158,9 @@ static PyMethodDef PyGPUImage_methods[] = {
     },
     {"gaussian", (PyCFunction) PyGPUImage_gaussian, METH_VARARGS,
      __GPUIMAGE_GAUSSIAN_DOC
+    },
+    {"brightness", (PyCFunction) PyGPUImage_brightness, METH_VARARGS,
+     __GPUIMAGE_BRIGHTNESS_DOC
     },
     {"fliplr", (PyCFunction) PyGPUImage_fliplr, METH_NOARGS,
      __GPUIMAGE_FLIPLR_DOC

@@ -246,6 +246,45 @@ PyGPUImage_gaussian(PyGPUImageObject *self, PyObject *args, PyObject *kwds)
 
 
 /*******************************************************************************
+ * 
+ * 
+ * @param self The image that will be transposed
+ * @param closure An unused closure argument
+ * 
+ * @return Py_None
+ * 
+ ******************************************************************************/
+PyObject *
+PyGPUImage_brightness(PyGPUImageObject *self, PyObject *args, PyObject *kwds)
+{
+    MPObjData *obj_data = self->array.obj_data;
+    int target_device = mpdev_get_target_device();
+
+    void *brightness_args = gpuimage_brightness_args(args);
+    if (brightness_args == NULL)
+    {
+        return NULL;
+    }
+
+    if (!obj_data->pinned)
+    {
+        // If a target device is specified and it isn't the current location
+        if (target_device != DEVICE_LOC_NO_AFFINITY && target_device != obj_data->mem_loc)
+        {
+            // We need to move our memory to a different device
+            mpobj_change_device(obj_data, target_device);
+        }
+    }
+
+    // TODO: Type checking, etc
+    mpimg_brightness(obj_data, brightness_args);
+
+    free(brightness_args);
+    return Py_None;
+}
+
+
+/*******************************************************************************
  * Create a clone of the given image. All memory will be identical -- a deep
  * copy is performed.
  * 
@@ -444,6 +483,27 @@ gpuimage_gaussian_args(PyObject *args)
     }
     gaussian_args->sigma = sigma;
     return (void *)gaussian_args;
+}
+
+
+void *
+gpuimage_brightness_args(PyObject *args)
+{
+    double delta;
+    
+    if (!PyArg_ParseTuple(args, "d", &delta))
+    {
+        return NULL;
+    }
+
+    if (delta <= -1 || delta >= 1)
+    {
+        return NULL;
+    }
+
+    BrightnessArgs *brightness_args = malloc(sizeof(BrightnessArgs));
+    brightness_args->delta = delta;
+    return (void *)brightness_args;
 }
 
 

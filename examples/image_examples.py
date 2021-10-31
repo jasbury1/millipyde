@@ -136,11 +136,16 @@ def gaussian_charlie():
 
 
 def main():
-    img = mp.image_from_path("examples/images/charlie_small.png")
-    img.gaussian(1)
+    img = mp.gpuimage(io.imread("examples/images/charlie_small.png"))
+    img.brightness(.5)
     arr = np.array(img)
-    print(arr)
-    imsave("gaussian.png", arr)
+    imsave("bright.png", arr)
+
+    img2 = mp.gpuimage(io.imread("examples/images/charlie_small.png"))
+    img2.rgb2grey()
+    img2.brightness(.5)
+    arr2 = np.array(img2)
+    imsave("bright2.png", arr2)
 
 
 
