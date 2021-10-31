@@ -135,59 +135,13 @@ def gaussian_charlie():
     imsave("gaussian.png", np.array(d_charlie))
 
 
-
-
-
-
 def main():
-    #greyscale_charlie()
-    #greyscale_and_transpose_charlie()
-    #greyscale_and_transpose_pipeline()
-    #greyscale_and_transpose_pipeline2()
-    #gaussian_charlie()
-    #charlie = io.imread("examples/images/charlie.png")
-    #d_charlie = mp.gpuimage(io.imread("examples/images/charlie.png"))
-
-    #generator = mp.Generator([], [], outputs=5)
-    #for i in generator:
-    #    print(i)
-
-    #d_charlie = mp.gpuimage(io.imread("examples/images/happyboy.png"))
-    # o = mp.Operation("rgb2grey")
-    # g = mp.Generator("examples/images", [o], return_to_host=True)
-
-    # for i in range(7):
-    #     out = next(g)
-    #     print(out)
-    # images = mp.images_from_path("examples/images")
-    # print(sys.getrefcount(images[0]))
-
-    # temp = images[1]
-    # print(sys.getrefcount(images[1]))
-
-    # test = [io.imread("examples/images/charlie.png"), io.imread("examples/images/charlie.png")]
-    # print(sys.getrefcount(test[0]))
-
-    # temp2 = test[1]
-    # print(sys.getrefcount(test[1]))
-
-
     o = mp.Operation("rgb2grey")
-    g = mp.Generator("examples/images", [o], return_to_host=True)
+    g = mp.Generator("examples/images", [o]) 
 
-    for i in range(20):
-        out = next(g)
-        print(sys.getrefcount(out))
-
-
-    
-
-
-
-
-
-
-
+    for i in range(14):
+        out = np.array(next(g))
+        imsave("test" + str(i) + ".png", np.array(out))
 
 
 if __name__ == '__main__':
