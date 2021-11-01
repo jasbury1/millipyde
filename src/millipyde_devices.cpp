@@ -45,6 +45,8 @@ extern "C"{
 MPStatus 
 mpdev_initialize()
 {
+    MPStatus ret_val;
+
     if (hipGetDeviceCount(&device_count) != hipSuccess)
     {
         return DEV_ERROR_DEVICE_COUNT;
@@ -96,7 +98,11 @@ mpdev_initialize()
         }
 
         // Set up the pool of workers for this device
-        device.work_pool = mpwrk_create_work_pool(THREADS_PER_DEVICE);
+        ret_val = mpwrk_create_work_pool(&(device.work_pool), THREADS_PER_DEVICE);
+        if (ret_val != MILLIPYDE_SUCCESS)
+        {
+            return ret_val;
+        }
 
         device.valid = MP_TRUE;
     }

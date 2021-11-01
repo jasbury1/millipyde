@@ -1,33 +1,3 @@
-/*
-This code is based on John Schember's Thread pool implementation as
-described in http://nachtimwald.com
-
-The following is the acting license on his work:
-*/
-
-/*
-Copyright John Schember <john@nachtimwald.com>
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of
-this software and associated documentation files (the "Software"), to deal in
-the Software without restriction, including without limitation the rights to
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
-of the Software, and to permit persons to whom the Software is furnished to do
-so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-*/
-
-
 #include <stdio.h>
 #include <iostream>
 #include <pthread.h>
@@ -51,25 +21,33 @@ SOFTWARE.
 extern "C"{
 
 
-MPWorkNode *
-mpwrk_create_work_node(MPWorkItem work, void *arg)
+MPStatus
+mpwrk_create_work_node(MPWorkNode **result, MPWorkItem work, void *arg)
 {
     MPWorkNode *node;
 
     if (!work)
     {
-        return NULL;
+        return WORK_ERROR_NULL_WORK_POOL;
     }
 
     node = (MPWorkNode *)malloc(sizeof(MPWorkNode));
+    if (!node)
+    {
+        return WORK_ERROR_ALLOC_WORK_NODE;
+    }
+
     node->work = work;
     node->arg = arg;
     node->next = NULL;
-    return node;
+
+    *result = node;
+    return MILLIPYDE_SUCCESS;
 }
 
 
-void mpwrk_destroy_work_node(MPWorkNode *node)
+void 
+mpwrk_destroy_work_node(MPWorkNode *node)
 {
     if (node)
     {
@@ -102,20 +80,24 @@ mpwrk_work_queue_pop(MPDeviceWorkPool *work_pool)
 }
 
 
-void
+MPStatus
 mpwrk_work_queue_push(MPDeviceWorkPool *work_pool, MPWorkItem work, void *arg)
 {
+    MPStatus ret_val;
     MPWorkNode *node;
+
     if (!work_pool)
     {
-        return;
+        // Return with no error. The pool might have just been stopped and deleted
+        return MILLIPYDE_SUCCESS;
     }
 
-    node = mpwrk_create_work_node(work, arg);
-    if (!node)
+    ret_val = mpwrk_create_work_node(&node, work, arg);
+    if (ret_val != MILLIPYDE_SUCCESS)
     {
-        return;
+        return ret_val;
     }
+
     pthread_mutex_lock(&(work_pool->mux));
 
     if (work_pool->queue.head == NULL)
@@ -131,6 +113,8 @@ mpwrk_work_queue_push(MPDeviceWorkPool *work_pool, MPWorkItem work, void *arg)
 
     pthread_cond_broadcast(&(work_pool->work_available));
     pthread_mutex_unlock(&(work_pool->mux));
+
+    return MILLIPYDE_SUCCESS;
 }
 
 
@@ -204,20 +188,34 @@ mpwrk_process_work(void *arg)
 }
 
 
-MPDeviceWorkPool * 
-mpwrk_create_work_pool(int num_threads)
+MPStatus
+mpwrk_create_work_pool(MPDeviceWorkPool **result, int num_threads)
 {
     MPDeviceWorkPool *work_pool;
     pthread_t thread;
     int i;
 
     work_pool = (MPDeviceWorkPool *)calloc(1, sizeof(MPDeviceWorkPool));
+    if (!work_pool)
+    {
+        return WORK_ERROR_ALLOC_WORK_POOL;
+    }
+
     work_pool->num_threads = num_threads;
     work_pool->running = MP_TRUE;
     
-    pthread_mutex_init(&(work_pool->mux), NULL);
-    pthread_cond_init(&(work_pool->work_available), NULL);
-    pthread_cond_init(&(work_pool->working), NULL);
+    if (0 != pthread_mutex_init(&(work_pool->mux), NULL))
+    {
+        return WORK_ERROR_INIT_MUX;
+    }
+    if (0 != pthread_cond_init(&(work_pool->work_available), NULL))
+    {
+        return WORK_ERROR_INIT_COND;
+    }
+    if (0 != pthread_cond_init(&(work_pool->working), NULL))
+    {
+        return WORK_ERROR_INIT_COND;
+    }
 
     work_pool->queue.head = NULL;
     work_pool->queue.tail = NULL;
@@ -228,22 +226,25 @@ mpwrk_create_work_pool(int num_threads)
         pthread_detach(thread);
     }
 
-    return work_pool;
+    *result = work_pool;
+    return MILLIPYDE_SUCCESS;
 }
 
 
-void
+MPStatus
 mpwrk_destroy_work_pool(MPDeviceWorkPool *work_pool)
 {
-    MPWorkNode *cur_node;
-    MPWorkNode *next_node;
-
-    if (work_pool == NULL)
+    if (!work_pool)
     {
-        return;
+        // Not considered an error to destroy a pool that is NULL
+        return MILLIPYDE_SUCCESS;
     }
 
     pthread_mutex_lock(&(work_pool->mux));
+
+    MPWorkNode *cur_node;
+    MPWorkNode *next_node;
+    
     cur_node = work_pool->queue.head;
     while(cur_node != NULL)
     {
@@ -263,6 +264,8 @@ mpwrk_destroy_work_pool(MPDeviceWorkPool *work_pool)
     pthread_cond_destroy(&(work_pool->working));
 
     free(work_pool);
+
+    return MILLIPYDE_SUCCESS;
 }
 
 

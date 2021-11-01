@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/random.h>
+#include <limits.h>
 
 #include "millipyde.h"
 
@@ -47,8 +49,24 @@ const char *mperr_str(MPStatus status)
     case DEV_WARN_NO_PEER_ACCESS:
         return "Multiple devices were detected, but peer2peer is not supported on this system";
 
+    case WORK_ERROR_INIT_PTHREAD:
+        return "Unable to initialize work pool thread";
+    case WORK_ERROR_INIT_COND:
+        return "Unable to initialize work pool condition";
+    case WORK_ERROR_INIT_MUX:
+        return "Unable to initialize work pool mutex";
+    case WORK_ERROR_ALLOC_WORK_POOL:
+        return "Unable to allocate memory for work pool";
+    case WORK_ERROR_ALLOC_WORK_NODE:
+        return "Unable to allocate memory for worker node";
+    case WORK_ERROR_NULL_WORK_POOL:
+        return "The specified work pool was NULL";
+
     case TYPE_ERROR_NON_GPUOBJ:
         return "Cannot perform GPU operations on non-GPU-compatible type";
+
+    case RAND_ERROR_INSUFFICIENT_BYTES:
+        return "Random number generation failed to supply requrested bytes";
 
     case GPUARRAY_ERROR_CONSTRUCTION_WITHOUT_ARRAY_TYPE:
         return "Constructing gpuarray requires an ndarray or array compatible argument";
@@ -115,4 +133,39 @@ const char *mperr_str(MPStatus status)
     default:
         return "Unknown failure occurred";
     }
+}
+
+MPStatus
+random_int_in_range(int min, int max, int *result)
+{
+    unsigned long buffer;
+    ssize_t bytes;
+
+    bytes = getrandom(&buffer, sizeof(unsigned long), 0);
+    if (bytes < 0)
+    {
+        return RAND_ERROR_INSUFFICIENT_BYTES;
+    }
+    int rand = buffer % (max + 1 - min) + min;
+    *result = rand;
+    
+    return MILLIPYDE_SUCCESS;
+}
+
+MPStatus  
+random_double_in_range(double min, double max, double *result)
+{
+    unsigned long buffer;
+    ssize_t bytes;
+
+    bytes = getrandom(&buffer, sizeof(unsigned long), 0);
+    if (bytes < 0)
+    {
+        return RAND_ERROR_INSUFFICIENT_BYTES;
+    }
+
+    double rand = (double)buffer / (double)ULONG_MAX;
+    *result = (rand * (max - min)) + min;
+
+    return MILLIPYDE_SUCCESS;
 }

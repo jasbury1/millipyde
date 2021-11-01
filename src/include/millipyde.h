@@ -48,7 +48,16 @@ typedef enum mp_status_codes {
     DEV_ERROR_DEVICE_ARRAY_ALLOC,
     DEV_WARN_NO_PEER_ACCESS,
 
+    WORK_ERROR_INIT_PTHREAD,
+    WORK_ERROR_INIT_COND,
+    WORK_ERROR_INIT_MUX,
+    WORK_ERROR_ALLOC_WORK_POOL,
+    WORK_ERROR_ALLOC_WORK_NODE,
+    WORK_ERROR_NULL_WORK_POOL,
+
     TYPE_ERROR_NON_GPUOBJ,
+
+    RAND_ERROR_INSUFFICIENT_BYTES,
 
     GPUARRAY_ERROR_CONSTRUCTION_WITHOUT_ARRAY_TYPE,
     GPUARRAY_ERROR_CONSTRUCTION_WITHOUT_NUMERIC_ARRAY,
@@ -113,5 +122,11 @@ typedef struct {
 
 
 const char* mperr_str(MPStatus status);
+
+MPStatus
+random_int_in_range(int min, int max, int *result);
+
+MPStatus  
+random_double_in_range(double min, double max, double *result);
 
 #endif // MP_MILLIPYDE_H

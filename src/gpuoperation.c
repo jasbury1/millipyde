@@ -182,47 +182,10 @@ _gpuoperation_run(PyGPUOperationObject *self, PyObject *callable)
     return result;
 }
 
-/*
-MPStatus
-gpuoperation_evaluate_probability(MPBool *result, double probability)
-{
-    double r;
-    unsigned int seed;
-    FILE *f;
-    
-    *result = MP_TRUE;
-
-    if(probability > 0) {
-        f = fopen("/dev/random", "r");
-        if (!f)
-        {
-            return GPUOPERATION_ERROR_RUN_NO_DEV_RANDOM;
-        }
-        if (fread(&seed, sizeof(seed), 1, f) != sizeof(seed))
-        {
-            fclose(f);
-            return GPUOPERATION_ERROR_RUN_CANNOT_READ_DEV_RANDOM;
-        }
-        fclose(f);
-
-        srand(seed);
-        r = (double)rand() / RAND_MAX;
-
-        if (r > probability) {
-            *result = MP_FALSE;
-        }
-    }
-    
-    return MILLIPYDE_SUCCESS;
-}
-*/
 
 MPStatus
 gpuoperation_evaluate_probability(MPBool *result, double probability)
 {
-    unsigned int buffer;
-    ssize_t bytes;
-
     *result = MP_TRUE;
 
     if (probability < 0)
@@ -230,16 +193,15 @@ gpuoperation_evaluate_probability(MPBool *result, double probability)
         return MILLIPYDE_SUCCESS;
     }
 
-    bytes = getrandom(&buffer, sizeof(unsigned int), 0);
-    if (bytes < 0)
+    double rand;
+    MPStatus ret_val = random_double_in_range(0.0, 1.0, &rand);
+
+    if (ret_val != MILLIPYDE_SUCCESS)
     {
-        // TODO
-        return -1;
+        return ret_val;
     }
 
-    double r = (double)buffer / UINT_MAX;
-
-    if (r > probability)
+    if (rand > probability)
     {
         *result = MP_FALSE;
     }
@@ -249,7 +211,7 @@ gpuoperation_evaluate_probability(MPBool *result, double probability)
 
 
 MPFunc
-gpuoperation_func_from_name(PyObject *uname)    
+gpuoperation_func_from_name(PyObject *uname)
 {
     const char *name = PyUnicode_AsUTF8(uname);
     

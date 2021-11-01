@@ -37,8 +37,8 @@ extern "C" {
 #endif
 
 
-MPWorkNode *
-mpwrk_create_work_node(MPWorkItem work, void *arg);
+MPStatus
+mpwrk_create_work_node(MPWorkNode **result, MPWorkItem work, void *arg);
 
 void 
 mpwrk_destroy_work_node(MPWorkNode *node);
@@ -46,7 +46,7 @@ mpwrk_destroy_work_node(MPWorkNode *node);
 MPWorkNode *
 mpwrk_work_queue_pop(MPDeviceWorkPool *work_pool);
 
-void
+MPStatus
 mpwrk_work_queue_push(MPDeviceWorkPool *work_pool, MPWorkItem work, void *arg);
 
 void
@@ -55,10 +55,10 @@ mpwrk_work_wait(MPDeviceWorkPool *work_pool);
 void *
 mpwrk_process_work(void *arg);
 
-MPDeviceWorkPool * 
-mpwrk_create_work_pool(int num_threads);
+MPStatus
+mpwrk_create_work_pool(MPDeviceWorkPool **result, int num_threads);
 
-void
+MPStatus
 mpwrk_destroy_work_pool(MPDeviceWorkPool *work_pool);
 
 

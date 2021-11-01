@@ -5,8 +5,6 @@
 #include <Python.h>
 #include <dirent.h>
 #include <string.h>
-#include <sys/random.h>
-#include <limits.h>
 
 #include "gpuarray.h"
 #include "gpuimage.h"
@@ -728,37 +726,3 @@ valid_image_filename(const char *filename)
     return MP_FALSE;
 }
 
-
-MPStatus
-random_int_in_range(int min, int max, int *result)
-{
-    unsigned long buffer;
-    ssize_t bytes;
-
-    bytes = getrandom(&buffer, sizeof(unsigned long), 0);
-    if (bytes < 0)
-    {
-        printf(":(\n");
-    }
-    int rand = buffer % (max + 1 - min) + min;
-    *result = rand;
-    
-    return MILLIPYDE_SUCCESS;
-}
-
-MPStatus  
-random_double_in_range(double min, double max, double *result)
-{
-    unsigned long buffer;
-    ssize_t bytes;
-
-    bytes = getrandom(&buffer, sizeof(unsigned long), 0);
-    if (bytes < 0)
-    {
-        printf(":(\n");
-    }
-
-    double rand = ((double)buffer / ((double)ULONG_MAX / (max - min)));
-    *result = rand;
-    return MILLIPYDE_SUCCESS;
-}
