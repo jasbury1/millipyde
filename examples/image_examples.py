@@ -4,6 +4,7 @@ cur_lib_path = pathlib.Path().absolute()
 sys.path.append(str(cur_lib_path))
 
 import numpy as np
+import numpy.testing as npt
 from skimage import data, io, filters, transform
 from skimage.io import imsave, imread
 from skimage.color import rgb2gray, rgba2rgb
@@ -135,21 +136,257 @@ def gaussian_charlie():
     imsave("gaussian.png", np.array(d_charlie))
 
 
+def greyscale_performance():
+    print('\033[95m' + "\nGreyscaling Charlie Small with {} iterations\n" + '\033[0m')
+    charlie = io.imread("examples/benchmark_in/charlieSmall.png")
+    d_charlie = mp.gpuimage(charlie)
+
+    start = time.perf_counter()
+    d_charlie.rgb2grey()
+    stop = time.perf_counter()
+    print("\nTime to convert image: {}\n".format(stop - start)) 
+
+    print('\033[95m' + "\nGreyscaling Charlie Small using SciKit-Image\n" + '\033[0m')
+    start = time.perf_counter()
+    charlie = rgb2gray(rgba2rgb(charlie))
+    stop = time.perf_counter()
+    print("\nTime to convert image: {}\n".format(stop - start))
+
+    print('\033[95m' + "\nGreyscaling Charlie Medium with {} iterations\n" + '\033[0m')
+    charlie = io.imread("examples/benchmark_in/charlieMedium.png")
+    d_charlie = mp.gpuimage(charlie)
+
+    start = time.perf_counter()
+    d_charlie.rgb2grey()
+    stop = time.perf_counter()
+    print("\nTime to convert image: {}\n".format(stop - start)) 
+
+    print('\033[95m' + "\nGreyscaling Charlie Medium using SciKit-Image\n" + '\033[0m')
+    start = time.perf_counter()
+    charlie = rgb2gray(rgba2rgb(charlie))
+    stop = time.perf_counter()
+    print("\nTime to convert image: {}\n".format(stop - start))
+
+    print('\033[95m' + "\nGreyscaling Charlie Large with {} iterations\n" + '\033[0m')
+    charlie = io.imread("examples/benchmark_in/charlieLarge.png")
+    d_charlie = mp.gpuimage(charlie)
+
+    start = time.perf_counter()
+    d_charlie.rgb2grey()
+    stop = time.perf_counter()
+    print("\nTime to convert image: {}\n".format(stop - start)) 
+
+    print('\033[95m' + "\nGreyscaling Charlie Large using SciKit-Image\n" + '\033[0m')
+    start = time.perf_counter()
+    charlie = rgb2gray(rgba2rgb(charlie))
+    stop = time.perf_counter()
+    print("\nTime to convert image: {}\n".format(stop - start))
+
+
+    print('\033[95m' + "\nGreyscaling Charlie Extra Large with {} iterations\n" + '\033[0m')
+    charlie = io.imread("examples/benchmark_in/charlieExtraLarge.png")
+    d_charlie = mp.gpuimage(charlie)
+
+    start = time.perf_counter()
+    d_charlie.rgb2grey()
+    stop = time.perf_counter()
+    print("\nTime to convert image: {}\n".format(stop - start)) 
+
+    print('\033[95m' + "\nGreyscaling Charlie Extra Large using SciKit-Image\n" + '\033[0m')
+    start = time.perf_counter()
+    charlie = rgb2gray(rgba2rgb(charlie))
+    stop = time.perf_counter()
+    print("\nTime to convert image: {}\n".format(stop - start))
+
+def transpose_performance():
+    print('\033[95m' + "\Transposing Charlie Small with {} iterations\n" + '\033[0m')
+    charlie = io.imread("examples/benchmark_in/charlieSmall.png")
+    d_charlie = mp.gpuimage(charlie)
+
+    start = time.perf_counter()
+    d_charlie.transpose()
+    stop = time.perf_counter()
+    print("\nTime to convert image: {}\n".format(stop - start)) 
+
+    print('\033[95m' + "\Transposing Charlie Small using SciKit-Image\n" + '\033[0m')
+    start = time.perf_counter()
+    charlie = np.transpose(charlie)
+    stop = time.perf_counter()
+    print("\nTime to convert image: {}\n".format(stop - start))
+
+    print('\033[95m' + "\Transposing Charlie Medium with {} iterations\n" + '\033[0m')
+    charlie = io.imread("examples/benchmark_in/charlieMedium.png")
+    d_charlie = mp.gpuimage(charlie)
+
+    start = time.perf_counter()
+    d_charlie.transpose()
+    stop = time.perf_counter()
+    print("\nTime to convert image: {}\n".format(stop - start)) 
+
+    print('\033[95m' + "\Transposing Charlie Medium using SciKit-Image\n" + '\033[0m')
+    start = time.perf_counter()
+    charlie = np.transpose(charlie)
+    stop = time.perf_counter()
+    print("\nTime to convert image: {}\n".format(stop - start))
+
+    print('\033[95m' + "\Transposing Charlie Large with {} iterations\n" + '\033[0m')
+    charlie = io.imread("examples/benchmark_in/charlieLarge.png")
+    d_charlie = mp.gpuimage(charlie)
+
+    start = time.perf_counter()
+    d_charlie.transpose()
+    stop = time.perf_counter()
+    print("\nTime to convert image: {}\n".format(stop - start)) 
+
+    print('\033[95m' + "\Transposing Charlie Large using SciKit-Image\n" + '\033[0m')
+    start = time.perf_counter()
+    charlie = np.transpose(charlie)
+    stop = time.perf_counter()
+    print("\nTime to convert image: {}\n".format(stop - start))
+
+
+    print('\033[95m' + "\Transposing Charlie Extra Large with {} iterations\n" + '\033[0m')
+    charlie = io.imread("examples/benchmark_in/charlieExtraLarge.png")
+    d_charlie = mp.gpuimage(charlie)
+
+    start = time.perf_counter()
+    d_charlie.transpose()
+    stop = time.perf_counter()
+    print("\nTime to convert image: {}\n".format(stop - start)) 
+
+    print('\033[95m' + "\Transposing Charlie Extra Large using SciKit-Image\n" + '\033[0m')
+    start = time.perf_counter()
+    charlie = np.transpose(charlie)
+    stop = time.perf_counter()
+    print("\nTime to convert image: {}\n".format(stop - start))
+
+
+def gauss_performance():
+    charlie = io.imread("examples/benchmark_in/charlie12.png")
+    charlie = rgb2gray(charlie)
+    start = time.perf_counter()
+    charlie = filters.gaussian(charlie, sigma=2, cval=0, truncate=8, mode="constant")
+    stop = time.perf_counter()
+    print("\nTime to convert image: {}\n".format(stop - start))
+
+    d_charlie = mp.gpuimage(io.imread("examples/benchmark_in/charlie12.png"))
+    d_charlie.rgb2grey()
+    start = time.perf_counter()
+    d_charlie.gaussian(2)
+    stop = time.perf_counter()
+    print("\nTime to convert image: {}\n".format(stop - start))
+
+
+def rot_performance():
+    '''
+    charlie = io.imread("examples/benchmark_in/charlieMedium.png")
+    charlie = rgb2gray(charlie)
+    charlie = filters.gaussian(charlie, sigma=5, truncate=8)
+    d_charlie = mp.gpuimage(io.imread("examples/benchmark_in/charlieMedium.png"))
+    d_charlie.rgb2grey()
+    d_charlie.gaussian(2)
+    imsave("gauss2.png", np.array(d_charlie))
+    '''
+
+
+    print('\033[95m' + "\Transposing Charlie Small with {} iterations\n" + '\033[0m')
+    charlie = io.imread("examples/benchmark_in/charlieSmall.png")
+    d_charlie = mp.gpuimage(charlie)
+
+    start = time.perf_counter()
+    d_charlie.rotate(.785398)
+    stop = time.perf_counter()
+    print("\nTime to convert image: {}\n".format(stop - start)) 
+
+    print('\033[95m' + "\Transposing Charlie Small using SciKit-Image\n" + '\033[0m')
+    start = time.perf_counter()
+    charlie = transform.rotate(charlie, 45)
+    stop = time.perf_counter()
+    print("\nTime to convert image: {}\n".format(stop - start))
+
+    print('\033[95m' + "\Transposing Charlie Medium with {} iterations\n" + '\033[0m')
+    charlie = io.imread("examples/benchmark_in/charlieMedium.png")
+    d_charlie = mp.gpuimage(charlie)
+
+    start = time.perf_counter()
+    d_charlie.rotate(.785398)
+    stop = time.perf_counter()
+    print("\nTime to convert image: {}\n".format(stop - start)) 
+
+    print('\033[95m' + "\Transposing Charlie Medium using SciKit-Image\n" + '\033[0m')
+    start = time.perf_counter()
+    charlie = transform.rotate(charlie, 45)
+    stop = time.perf_counter()
+    print("\nTime to convert image: {}\n".format(stop - start))
+
+    print('\033[95m' + "\Transposing Charlie Large with {} iterations\n" + '\033[0m')
+    charlie = io.imread("examples/benchmark_in/charlieLarge.png")
+    d_charlie = mp.gpuimage(charlie)
+
+    start = time.perf_counter()
+    d_charlie.rotate(.785398)
+    stop = time.perf_counter()
+    print("\nTime to convert image: {}\n".format(stop - start)) 
+
+    print('\033[95m' + "\Transposing Charlie Large using SciKit-Image\n" + '\033[0m')
+    start = time.perf_counter()
+    charlie = transform.rotate(charlie, 45)
+    stop = time.perf_counter()
+    print("\nTime to convert image: {}\n".format(stop - start))
+
+
+    print('\033[95m' + "\Transposing Charlie Extra Large with {} iterations\n" + '\033[0m')
+    charlie = io.imread("examples/benchmark_in/charlieExtraLarge.png")
+    d_charlie = mp.gpuimage(charlie)
+
+    start = time.perf_counter()
+    d_charlie.rotate(.785398)
+    stop = time.perf_counter()
+    print("\nTime to convert image: {}\n".format(stop - start)) 
+
+    print('\033[95m' + "\Transposing Charlie Extra Large using SciKit-Image\n" + '\033[0m')
+    start = time.perf_counter()
+    charlie = transform.rotate(charlie, 45)
+    stop = time.perf_counter()
+    print("\nTime to convert image: {}\n".format(stop - start))
+
+
 def main():
-    # img = mp.gpuimage(io.imread("examples/images/charlie_small.png"))
-    # img.brightness(.5)
-    # arr = np.array(img)
-    # imsave("bright.png", arr)
+    # for i in range(1, 13, 1):
+    #     print("Iteration {}".format(i))
+    #     charlie = io.imread("examples/benchmark_in/charlie" + str(i) + ".png")
+    #     charlie = rgb2gray(charlie)
+    #     d_charlie = mp.gpuimage(charlie)
+    #     d_charlie.rgb2grey()
 
-    # img2 = mp.gpuimage(io.imread("examples/images/charlie_small.png"))
-    # img2.rgb2grey()
-    # img2.brightness(.5)
-    # arr2 = np.array(img2)
-    # imsave("bright2.png", arr2)
+    #     print('\033[95m' + "\Gaussian Charlie SciKit-Image\n" + '\033[0m')
+    #     start = time.perf_counter()
+    #     charlie = filters.gaussian(charlie, sigma=2, cval=0, truncate=8, mode="constant")
+    #     stop = time.perf_counter()
+    #     print("\nTime to convert image: {}\n".format(stop - start))
 
-    image = mp.image_from_path("tests/images/charlie_small.png")
-    image.colorize(.8, 1.2, .5)
-    imsave("colorize.png", np.array(image))
+    #     print('\033[95m' + "\Gaussian Charlie Millipyde\n" + '\033[0m')
+    #     start = time.perf_counter()
+    #     d_charlie.gaussian(2)
+    #     stop = time.perf_counter()
+    #     print("\nTime to convert image: {}\n".format(stop - start))
+    #     print()
+
+
+    charlie = io.imread("examples/benchmark_in/charlie1.png")
+    
+    start = time.perf_counter()
+    charlie = rgb2gray(charlie)
+    stop = time.perf_counter()
+    print("\nTime to convert image: {}\n".format(stop - start))
+
+    d_charlie = mp.gpuimage(io.imread("examples/benchmark_in/charlie1.png"))
+
+    start = time.perf_counter()
+    d_charlie.rgb2grey()
+    stop = time.perf_counter()
+    print("\nTime to convert image: {}\n".format(stop - start))
+    
 
 
 

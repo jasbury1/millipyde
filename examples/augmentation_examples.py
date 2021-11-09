@@ -14,7 +14,7 @@ def augment():
         mp.Operation("transpose", probability=.2),
         mp.Operation("fliplr", probability=.2),
         mp.Operation("random_brightness", -.2, 1),
-        mp.Operation("random_gaussian", 0, .5),
+        mp.Operation("random_gaussian", 2, .5),
         mp.Operation("random_colorize", [.5, 1.5], [.5, 1.5], [.5, 1.5], probability=.3),
         mp.Operation("rgb2grey", probability=.3),
         mp.Operation("random_rotate", 0, 120, probability = .5)

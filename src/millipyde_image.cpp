@@ -615,14 +615,16 @@ mpimg_rotate(MPObjData *obj_data, void *args)
     MP_UNUSED(args);
     double angle = ((RotateArgs *)args)->angle;
 
+    double angle_rad = angle * 0.01745329252;
+
     // If we only have x,y dimensions, we are greyscale (one channel)
     int channels = obj_data->ndims == 2 ? 1 : obj_data->dims[2];
     if (channels == 1)
     {
-        return _rotate<double>(obj_data, angle);
+        return _rotate<double>(obj_data, angle_rad);
     }
     else if (channels == 4) {
-        return _rotate<uint32_t>(obj_data, angle);
+        return _rotate<uint32_t>(obj_data, angle_rad);
     }
     return MILLIPYDE_SUCCESS;
 }
@@ -659,7 +661,7 @@ _gaussian_greyscale(MPObjData *obj_data, double sigma)
     double kernel_sum = 0;
     for (int i = 0; i < KERNEL_W; i++)
     {
-        double dist = (double)(i - KERNEL_RADIUS) / (double)KERNEL_RADIUS;
+        int dist = -1 * (KERNEL_RADIUS - i);
         h_kernel[i] = expf(-1 * ((dist * dist) / (2 * sigma * sigma)));
         kernel_sum += h_kernel[i];
     }
@@ -668,39 +670,39 @@ _gaussian_greyscale(MPObjData *obj_data, double sigma)
     {
         h_kernel[i] /= kernel_sum;
     }
+
     hipMemcpyToSymbol(HIP_SYMBOL(d_kernel), h_kernel, KERNEL_W * sizeof(double));
 
-        hipLaunchKernelGGL(
-            g_gaussian_row_one_channel,
-            dim3(ceil(width / (double)ROW_TILE_W), height, 1),
-            dim3(ceil(KERNEL_RADIUS_ALIGNED + ROW_TILE_W + KERNEL_RADIUS)),
-            (KERNEL_RADIUS + ROW_TILE_W + KERNEL_RADIUS) * sizeof(double),
-            stream,
-            d_gaussian,
-            d_image,
-            width,
-            height);
+    hipLaunchKernelGGL(
+        g_gaussian_row_one_channel,
+        dim3(ceil(width / (double)ROW_TILE_W), height, 1),
+        dim3(ceil(KERNEL_RADIUS_ALIGNED + ROW_TILE_W + KERNEL_RADIUS)),
+        (KERNEL_RADIUS + ROW_TILE_W + KERNEL_RADIUS) * sizeof(double),
+        stream,
+        d_gaussian,
+        d_image,
+        width,
+        height);
 
-        hipStreamSynchronize(stream);
+    hipStreamSynchronize(stream);
 
-        hipLaunchKernelGGL(
-            g_gaussian_col_one_channel,
-            dim3(ceil(width / (double)COLUMN_TILE_W), ceil(height / (double)COLUMN_TILE_H), 1),
-            dim3(COLUMN_TILE_W, 8),
-            (COLUMN_TILE_W * (KERNEL_RADIUS + COLUMN_TILE_H + KERNEL_RADIUS)) * sizeof(double),
-            stream,
-            d_image,
-            d_gaussian,
-            width,
-            height,
-            COLUMN_TILE_W * 8,
-            width * 8);
+    hipLaunchKernelGGL(
+        g_gaussian_col_one_channel,
+        dim3(ceil(width / (double)COLUMN_TILE_W), ceil(height / (double)COLUMN_TILE_H), 1),
+        dim3(COLUMN_TILE_W, 8),
+        (COLUMN_TILE_W * (KERNEL_RADIUS + COLUMN_TILE_H + KERNEL_RADIUS)) * sizeof(double),
+        stream,
+        d_image,
+        d_gaussian,
+        width,
+        height,
+        COLUMN_TILE_W * 8,
+        width * 8);
 
     HIP_CHECK(hipFree(d_gaussian));
-    
+
     return MILLIPYDE_SUCCESS;
 }
-
 
 static MPStatus 
 _gaussian_rgba(MPObjData *obj_data, double sigma)
@@ -725,7 +727,7 @@ _gaussian_rgba(MPObjData *obj_data, double sigma)
     double kernel_sum = 0;
     for (int i = 0; i < KERNEL_W; i++)
     {
-        double dist = (double)(i - KERNEL_RADIUS) / (double)KERNEL_RADIUS;
+        int dist = -1 * (KERNEL_RADIUS - i);
         h_kernel[i] = expf(-1 * ((dist * dist) / (2 * sigma * sigma)));
         kernel_sum += h_kernel[i];
     }
@@ -734,6 +736,7 @@ _gaussian_rgba(MPObjData *obj_data, double sigma)
     {
         h_kernel[i] /= kernel_sum;
     }
+
     hipMemcpyToSymbol(HIP_SYMBOL(d_kernel), h_kernel, KERNEL_W * sizeof(double));
 
         hipLaunchKernelGGL(
@@ -751,7 +754,8 @@ _gaussian_rgba(MPObjData *obj_data, double sigma)
 
         hipLaunchKernelGGL(
             g_gaussian_col_four_channel,
-            dim3(ceil(width / (double)COLUMN_TILE_W), ceil(height / (double)COLUMN_TILE_H), 1),
+            dim3(ceil(width / (double)COLUMN_TILE_W),
+                 ceil(height / (double)COLUMN_TILE_H), 1),
             dim3(COLUMN_TILE_W, 8),
             (COLUMN_TILE_W * (KERNEL_RADIUS + COLUMN_TILE_H + KERNEL_RADIUS)) * sizeof(uint32_t),
             stream,
@@ -762,9 +766,9 @@ _gaussian_rgba(MPObjData *obj_data, double sigma)
             COLUMN_TILE_W * 8,
             width * 8);
 
-    HIP_CHECK(hipFree(d_gaussian));
-    
-    return MILLIPYDE_SUCCESS;
+        HIP_CHECK(hipFree(d_gaussian));
+
+        return MILLIPYDE_SUCCESS;
 }
 
 
@@ -892,16 +896,17 @@ _rotate(MPObjData *obj_data, double angle)
     HIP_CHECK(hipMalloc(&d_rot, obj_data->nbytes));
 
     hipLaunchKernelGGL(
-            g_rotate, 
-            dim3(ceil(width / (float)ROTATE_BLOCK_DIM), ceil(height / (float)ROTATE_BLOCK_DIM), 1),
-            dim3(ROTATE_BLOCK_DIM, ROTATE_BLOCK_DIM, 1),
-            0,
-            stream,
-            d_img,
-            d_rot,
-            width,
-            height,
-            angle);
+        g_rotate,
+        dim3(ceil(width / (float)ROTATE_BLOCK_DIM),
+             ceil(height / (float)ROTATE_BLOCK_DIM), 1),
+        dim3(ROTATE_BLOCK_DIM, ROTATE_BLOCK_DIM, 1),
+        0,
+        stream,
+        d_img,
+        d_rot,
+        width,
+        height,
+        angle);
 
     obj_data->device_data = d_rot;
 

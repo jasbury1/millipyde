@@ -520,7 +520,17 @@ class TestMillipydeImages(unittest.TestCase):
             i += 1
         
         self.assertEqual(i, 3)
-        
+
+    def test_gaussian(self):
+        charlie = io.imread("tests/images/charlie.png")
+        charlie = rgb2gray(charlie)
+        charlie = filters.gaussian(charlie, sigma=2, cval=0, truncate=8, mode="constant")
+        d_charlie = mp.gpuimage(io.imread("tests/images/charlie.png"))
+        d_charlie.rgb2grey()
+        d_charlie.gaussian(2)
+        charlie2 = np.array(d_charlie)
+        npt.assert_almost_equal(charlie, charlie2, decimal=4)
+
 
 if __name__ == '__main__':
     unittest.main()
