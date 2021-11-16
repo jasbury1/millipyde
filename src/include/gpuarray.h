@@ -41,6 +41,15 @@ Duis aute irure dolor in reprehenderit in voluptate velit \n \
 esse cillum dolore eu fugiat nulla pariatur. \n \
 Excepteur sint occaecat cupidatat non proident")
 
+#define __GPUARRAY_ARRAY_UFUNC_DOC PyDoc_STR( \
+    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, \n \
+sed do eiusmod tempor incididunt ut labore et dolore magna \n \
+aliqua. Ut enim ad minim veniam, quis nostrud exercitation \n \
+ullamco laboris nisi ut aliquip ex ea commodo consequat. \n \
+Duis aute irure dolor in reprehenderit in voluptate velit \n \
+esse cillum dolore eu fugiat nulla pariatur. \n \
+Excepteur sint occaecat cupidatat non proident")
+
 #define __GPUARRAY_CLONE_DOC PyDoc_STR( \
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit, \n \
 sed do eiusmod tempor incididunt ut labore et dolore magna \n \
@@ -84,7 +93,7 @@ PyObject *
 PyGPUArray_array_ufunc(PyGPUArrayObject *self, PyObject *arg1, void *closure);
 
 PyObject *
-PyGPUArray_array_function(PyGPUArrayObject *self, void *closure);
+PyGPUArray_array_function(PyGPUArrayObject *self, PyObject *args, PyObject *kwds);
 
 PyObject *
 PyGPUArray_clone(PyGPUArrayObject *self, void *closure);
@@ -94,6 +103,9 @@ gpuarray_clone(PyGPUArrayObject *self, int device_id, int stream_id);
 
 MPBool
 gpuarray_check(PyObject *object);
+
+MPBool
+gpuarray_check_subtype(PyObject *object);
 
 /*******************************************************************************
 * TYPE DATA
@@ -109,6 +121,8 @@ static PyMethodDef PyGPUArray_methods[] = {
     // {"__array_ufunc__", (PyCFunction) PyGPUArray_array_ufunc, METH_VARARGS,
     //  "TODO"
     // },
+    {"__array_ufunc__", (PyCFunction)PyGPUArray_array_ufunc, METH_VARARGS,
+     __GPUARRAY_ARRAY_UFUNC_DOC},
     {"__array_function__", (PyCFunction)PyGPUArray_array_function, METH_VARARGS,
      __GPUARRAY_ARRAY_FUNCTION_DOC},
     {"clone", (PyCFunction)PyGPUArray_clone, METH_NOARGS,

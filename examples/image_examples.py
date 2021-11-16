@@ -351,43 +351,39 @@ def rot_performance():
     print("\nTime to convert image: {}\n".format(stop - start))
 
 
-def main():
-    # for i in range(1, 13, 1):
-    #     print("Iteration {}".format(i))
-    #     charlie = io.imread("examples/benchmark_in/charlie" + str(i) + ".png")
-    #     charlie = rgb2gray(charlie)
-    #     d_charlie = mp.gpuimage(charlie)
-    #     d_charlie.rgb2grey()
-
-    #     print('\033[95m' + "\Gaussian Charlie SciKit-Image\n" + '\033[0m')
-    #     start = time.perf_counter()
-    #     charlie = filters.gaussian(charlie, sigma=2, cval=0, truncate=8, mode="constant")
-    #     stop = time.perf_counter()
-    #     print("\nTime to convert image: {}\n".format(stop - start))
-
-    #     print('\033[95m' + "\Gaussian Charlie Millipyde\n" + '\033[0m')
-    #     start = time.perf_counter()
-    #     d_charlie.gaussian(2)
-    #     stop = time.perf_counter()
-    #     print("\nTime to convert image: {}\n".format(stop - start))
-    #     print()
-
-
-    charlie = io.imread("examples/benchmark_in/charlie7.png")
-    
-    start = time.perf_counter()
+def gamma_performance():
+    charlie = io.imread("examples/benchmark_in/charlie6.png")
     charlie = color.rgb2grey(charlie)
+
+    start = time.perf_counter()
+    charlie = exposure.adjust_gamma(charlie, 2, 1)
     stop = time.perf_counter()
     print("\nSKImage Time: {}\n".format(stop - start))
 
-    d_charlie = mp.gpuimage(io.imread("examples/benchmark_in/charlie7.png"))
-    
-    start = time.perf_counter()
+    d_charlie = mp.gpuimage(io.imread("examples/benchmark_in/charlie6.png"))
     d_charlie.rgb2grey()
+
+    start = time.perf_counter()
+    d_charlie.adjust_gamma(2, 1)
     stop = time.perf_counter()
     print("\nMillipyde Time: {}\n".format(stop - start))
 
-    #imsave("Temp2.png", np.array(d_charlie))
+    npt.assert_almost_equal(charlie, np.array(d_charlie), decimal=4)
+
+
+def main():
+    lst = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+    array = np.array(lst)
+    array = np.transpose(array)
+
+    array2 = mp.gpuimage(lst)
+    array2 = np.transpose(array2)
+    
+    npt.assert_equal(array, array2)
+
+
+    
+
 
 
 if __name__ == '__main__':

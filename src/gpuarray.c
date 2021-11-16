@@ -152,10 +152,39 @@ PyGPUArray_array_ufunc(PyGPUArrayObject *self, PyObject *arg1, void *closure)
 }
 
 PyObject *
-PyGPUArray_array_function(PyGPUArrayObject *self, void *closure)
+PyGPUArray_array_function(PyGPUArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    printf("Called __array_function__()\n");
-    return NULL;
+    PyObject *func;
+    PyObject *types;
+    PyObject *func_args;
+    PyObject *func_kwds;
+    
+    if (!PyArg_ParseTuple(args, "OOOO", &func, &types, &func_args, &func_kwds))
+    {
+        return NULL;
+    }
+
+    int args_len = PyTuple_Size(func_args);
+    int i;
+
+    // Create a new argument tuple
+    PyObject *new_args = PyTuple_New(args_len);    
+    for(i = 0; i < args_len; ++i)
+    {
+        PyObject *arg = PyTuple_GetItem(func_args, i);
+        if (gpuarray_check_subtype(arg))
+        {
+            PyObject *ndarray = PyGPUArray_to_array((PyGPUArrayObject *)arg, NULL);
+            PyTuple_SetItem(new_args, i, ndarray);
+        }
+        else
+        {
+            PyTuple_SetItem(new_args, i, arg);
+        }
+    }
+
+    //return PyObject_Call(func, func_args, func_kwds);
+    return PyObject_Call(func, new_args, func_kwds);
 }
 
 
@@ -222,5 +251,27 @@ gpuarray_check(PyObject *object)
 
     Py_DECREF(mp_module);
     Py_DECREF(gpuarray_type);
+    return ret_val;
+}
+
+
+MPBool
+gpuarray_check_subtype(PyObject *object)
+{
+    MPBool ret_val = MP_FALSE;
+    PyObject *mp_module = PyImport_ImportModule("millipyde");
+    PyTypeObject *gpuarray_type =
+        (PyTypeObject *)PyObject_GetAttrString(mp_module, "gpuarray");
+    PyTypeObject *gpuimage_type =
+        (PyTypeObject *)PyObject_GetAttrString(mp_module, "gpuimage");
+
+    if (object->ob_type == gpuarray_type || object->ob_type == gpuimage_type)
+    {
+        ret_val = MP_TRUE;
+    }
+
+    Py_DECREF(mp_module);
+    Py_DECREF(gpuarray_type);
+    Py_DECREF(gpuimage_type);
     return ret_val;
 }

@@ -17,7 +17,7 @@ from millipyde import Operation
 
 DECIMAL_ERROR = 4
 
-class TestMillipydeImages(unittest.TestCase):
+class TestMillipyde(unittest.TestCase):
     
     def test_create_gpuarray(self):
         numpy_array = np.array([1, 2, 3, 4])
@@ -83,6 +83,28 @@ class TestMillipydeImages(unittest.TestCase):
     def test_create_invalid_gpuimage3(self):
         with self.assertRaises(ValueError):
             gpu_array = mp.gpuarray(None)
+
+
+    def test_gpuarray_np_function_protocol(self):
+        lst = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        array = np.array(lst)
+        array = np.transpose(array)
+
+        array2 = mp.gpuarray(lst)
+        array2 = np.transpose(array2)
+        
+        npt.assert_equal(array, array2)
+
+    
+    def test_gpuimage_np_function_protocol(self):
+        lst = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        array = np.array(lst)
+        array = np.transpose(array)
+
+        array2 = mp.gpuimage(lst)
+        array2 = np.transpose(array2)
+        
+        npt.assert_equal(array, array2)
 
 
     def test_open_image(self):
