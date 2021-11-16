@@ -534,12 +534,22 @@ class TestMillipydeImages(unittest.TestCase):
 
 
     def test_gamma_greyscale(self):
-        charlie = io.imread("examples/benchmark_in/charlie6.png")
+        charlie = io.imread("tests/images/charlie.png")
         charlie = rgb2gray(rgba2rgb(charlie))
         charlie = exposure.adjust_gamma(charlie, 2, 1)
 
-        d_charlie = mp.gpuimage(io.imread("examples/benchmark_in/charlie6.png"))
+        d_charlie = mp.gpuimage(io.imread("tests/images/charlie.png"))
         d_charlie.rgb2grey()
+        d_charlie.adjust_gamma(2, 1)
+
+        npt.assert_almost_equal(charlie, np.array(d_charlie),
+                                decimal=DECIMAL_ERROR)
+
+    def test_gamma_color(self):
+        charlie = io.imread("tests/images/charlie.png")
+        charlie = exposure.adjust_gamma(charlie, 2, 1)
+
+        d_charlie = mp.gpuimage(io.imread("tests/images/charlie.png"))
         d_charlie.adjust_gamma(2, 1)
 
         npt.assert_almost_equal(charlie, np.array(d_charlie),
