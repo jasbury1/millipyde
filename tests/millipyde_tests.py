@@ -7,7 +7,7 @@ import unittest
 
 import numpy as np
 import numpy.testing as npt
-from skimage import data, io, filters, transform
+from skimage import data, io, filters, transform, exposure
 from skimage.io import imsave, imread
 from skimage.color import rgb2gray, rgba2rgb
 from skimage.filters import gaussian
@@ -521,15 +521,29 @@ class TestMillipydeImages(unittest.TestCase):
         
         self.assertEqual(i, 3)
 
+
     def test_gaussian(self):
         charlie = io.imread("tests/images/charlie.png")
-        charlie = rgb2gray(charlie)
+        charlie = rgb2gray(rgba2rgb(charlie))
         charlie = filters.gaussian(charlie, sigma=2, cval=0, truncate=8, mode="constant")
         d_charlie = mp.gpuimage(io.imread("tests/images/charlie.png"))
         d_charlie.rgb2grey()
         d_charlie.gaussian(2)
         charlie2 = np.array(d_charlie)
         npt.assert_almost_equal(charlie, charlie2, decimal=4)
+
+
+    def test_gamma_greyscale(self):
+        charlie = io.imread("examples/benchmark_in/charlie6.png")
+        charlie = rgb2gray(rgba2rgb(charlie))
+        charlie = exposure.adjust_gamma(charlie, 2, 1)
+
+        d_charlie = mp.gpuimage(io.imread("examples/benchmark_in/charlie6.png"))
+        d_charlie.rgb2grey()
+        d_charlie.adjust_gamma(2, 1)
+
+        npt.assert_almost_equal(charlie, np.array(d_charlie),
+                                decimal=DECIMAL_ERROR)
 
 
 if __name__ == '__main__':

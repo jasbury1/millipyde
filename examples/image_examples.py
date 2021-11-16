@@ -373,21 +373,17 @@ def main():
     #     print()
 
 
-    charlie = io.imread("examples/benchmark_in/charlie1.png")
-    charlie = color.rgb2grey(charlie)
-
+    charlie = io.imread("examples/benchmark_in/charlie7.png")
+    
     start = time.perf_counter()
-    charlie = exposure.adjust_gamma(charlie, 2, 1)
+    charlie = color.rgb2grey(charlie)
     stop = time.perf_counter()
     print("\nSKImage Time: {}\n".format(stop - start))
 
-    #imsave("Temp1.png", charlie)
-
-    d_charlie = mp.gpuimage(io.imread("examples/benchmark_in/charlie1.png"))
-    d_charlie.rgb2grey()
-
+    d_charlie = mp.gpuimage(io.imread("examples/benchmark_in/charlie7.png"))
+    
     start = time.perf_counter()
-    d_charlie.adjust_gamma(2, 1)
+    d_charlie.rgb2grey()
     stop = time.perf_counter()
     print("\nMillipyde Time: {}\n".format(stop - start))
 
