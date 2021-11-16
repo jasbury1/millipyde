@@ -123,6 +123,24 @@ Duis aute irure dolor in reprehenderit in voluptate velit \n \
 esse cillum dolore eu fugiat nulla pariatur. \n \
 Excepteur sint occaecat cupidatat non proident")
 
+#define __GPUIMAGE_ADJUST_GAMMA_DOC PyDoc_STR( \
+    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, \n \
+sed do eiusmod tempor incididunt ut labore et dolore magna \n \
+aliqua. Ut enim ad minim veniam, quis nostrud exercitation \n \
+ullamco laboris nisi ut aliquip ex ea commodo consequat. \n \
+Duis aute irure dolor in reprehenderit in voluptate velit \n \
+esse cillum dolore eu fugiat nulla pariatur. \n \
+Excepteur sint occaecat cupidatat non proident")
+
+#define __GPUIMAGE_RANDOM_ADJUST_GAMMA_DOC PyDoc_STR( \
+    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, \n \
+sed do eiusmod tempor incididunt ut labore et dolore magna \n \
+aliqua. Ut enim ad minim veniam, quis nostrud exercitation \n \
+ullamco laboris nisi ut aliquip ex ea commodo consequat. \n \
+Duis aute irure dolor in reprehenderit in voluptate velit \n \
+esse cillum dolore eu fugiat nulla pariatur. \n \
+Excepteur sint occaecat cupidatat non proident")
+
 #define __GPUIMAGE_CLONE_DOC PyDoc_STR( \
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit, \n \
 sed do eiusmod tempor incididunt ut labore et dolore magna \n \
@@ -184,6 +202,12 @@ PyObject *
 PyGPUImage_rand_colorize(PyGPUImageObject *self, PyObject *args, PyObject *kwds);
 
 PyObject *
+PyGPUImage_adjust_gamma(PyGPUImageObject *self, PyObject *args, PyObject *kwds);
+
+PyObject *
+PyGPUImage_rand_adjust_gamma(PyGPUImageObject *self, PyObject *args, PyObject *kwds);
+
+PyObject *
 PyGPUImage_clone(PyGPUImageObject *self, void *closure);
 
 PyObject *
@@ -203,6 +227,9 @@ gpuimage_brightness_args(PyObject *args);
 
 void *
 gpuimage_colorize_args(PyObject *args);
+
+void *
+gpuimage_gamma_args(PyObject *args);
 
 PyObject *
 gpuimage_clone(PyGPUImageObject *self, int device_id, int stream_id);
@@ -252,6 +279,12 @@ static PyMethodDef PyGPUImage_methods[] = {
     {"brightness", (PyCFunction) PyGPUImage_brightness, METH_VARARGS,
      __GPUIMAGE_BRIGHTNESS_DOC
     },
+    {"adjust_gamma", (PyCFunction) PyGPUImage_adjust_gamma, METH_VARARGS,
+     __GPUIMAGE_ADJUST_GAMMA_DOC
+    },
+    {"random_adjust_gamma", (PyCFunction) PyGPUImage_rand_adjust_gamma, METH_VARARGS,
+     __GPUIMAGE_RANDOM_ADJUST_GAMMA_DOC
+    }, 
     {"colorize", (PyCFunction) PyGPUImage_colorize, METH_VARARGS,
      __GPUIMAGE_COLORIZE_DOC
     },

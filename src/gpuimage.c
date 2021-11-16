@@ -365,6 +365,83 @@ PyGPUImage_rand_brightness(PyGPUImageObject *self, PyObject *args, PyObject *kwd
  * 
  ******************************************************************************/
 PyObject *
+PyGPUImage_adjust_gamma(PyGPUImageObject *self, PyObject *args, PyObject *kwds)
+{
+    MPObjData *obj_data = self->array.obj_data;
+    int target_device = mpdev_get_target_device();
+
+    void *gamma_args = gpuimage_gamma_args(args);
+    if (gamma_args == NULL)
+    {
+        return NULL;
+    }
+
+    if (!obj_data->pinned)
+    {
+        // If a target device is specified and it isn't the current location
+        if (target_device != DEVICE_LOC_NO_AFFINITY && target_device != obj_data->mem_loc)
+        {
+            // We need to move our memory to a different device
+            mpobj_change_device(obj_data, target_device);
+        }
+    }
+
+    // TODO: Type checking, etc
+    mpimg_adjust_gamma(obj_data, gamma_args);
+
+    free(gamma_args);
+    return Py_None;
+}
+
+
+PyObject *
+PyGPUImage_rand_adjust_gamma(PyGPUImageObject *self, PyObject *args, PyObject *kwds)
+{
+    PyObject *gamma_range;
+    PyObject *gain_range;
+    if (!PyArg_ParseTuple(args, "O!O!", &PyList_Type, &gamma_range, &PyList_Type,
+                          &gain_range))
+    {
+        return NULL;
+    }
+
+    // TODO: Better type checking needed here
+    double gamma_min, gamma_max, gain_min, gain_max;
+    gamma_min = PyFloat_AsDouble(PyList_GetItem(gamma_range, 0));
+    gamma_max = PyFloat_AsDouble(PyList_GetItem(gamma_range, 1));
+    gain_min = PyFloat_AsDouble(PyList_GetItem(gain_range, 0));
+    gain_max = PyFloat_AsDouble(PyList_GetItem(gain_range, 1));
+    
+
+    double gamma, gain;
+
+    random_double_in_range(gamma_min, gamma_max, &gamma);
+    random_double_in_range(gain_min, gain_max, &gain);
+
+    PyObject *a1 = Py_BuildValue("d", gamma);
+    PyObject *a2 = Py_BuildValue("d", gain);
+    PyObject *arg = PyTuple_Pack(2, a1, a2);
+
+    PyGPUImage_adjust_gamma(self, arg, NULL);
+
+    Py_DECREF(a1);
+    Py_DECREF(a2);
+    Py_DECREF(arg);
+
+    return Py_None;
+}
+
+
+/*******************************************************************************
+ * 
+ * 
+ * @param self The image that will be transposed
+ * @param closure An unused closure argument
+ * 
+ * @return Py_None
+ * 
+ ******************************************************************************/
+PyObject *
 PyGPUImage_colorize(PyGPUImageObject *self, PyObject *args, PyObject *kwds)
 {
     MPObjData *obj_data = self->array.obj_data;
@@ -682,6 +759,25 @@ gpuimage_colorize_args(PyObject *args)
     colorize_args->g_mult = g_mult;
     colorize_args->b_mult = b_mult;
     return (void *)colorize_args;
+}
+
+
+void *
+gpuimage_gamma_args(PyObject *args)
+{
+    double gamma;
+    double gain;
+
+    if (!PyArg_ParseTuple(args, "dd", &gamma, &gain))
+    {
+        return NULL;
+    }
+
+    GammaArgs *gamma_args = malloc(sizeof(GammaArgs));
+    gamma_args->gain = gain;
+    gamma_args->gamma = gamma;
+
+    return (void *)gamma_args;
 }
 
 

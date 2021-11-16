@@ -1,0 +1,2 @@
+"Index","KernelName","gpu-id","queue-id","queue-index","pid","tid","grd","wgr","lds","scr","vgpr","sgpr","fbar","sig","obj","TCC_HIT_sum","TCC_MISS_sum","TA_BUSY_avr","FlatVMemInsts","GPUBusy","LDSInsts","GDSInsts","DispatchNs","BeginNs","EndNs","CompleteNs","DurationNs"
+0,"g_color_to_greyscale",0,3,0,622029,622070,16445440,1024,0,0,12,32,3968,0x0,0x7f2058e0d240,660506,3063532,2219559,3,100,0,0,2756888012435333,2756888017499616,2756888018340754,2756888018435731,841138

@@ -119,6 +119,11 @@ typedef struct {
     double b_mult;
 } ColorizeArgs;
 
+typedef struct {
+    double gamma;
+    double gain;
+} GammaArgs;
+
 
 
 const char* mperr_str(MPStatus status);

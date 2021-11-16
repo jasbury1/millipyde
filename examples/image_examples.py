@@ -5,7 +5,7 @@ sys.path.append(str(cur_lib_path))
 
 import numpy as np
 import numpy.testing as npt
-from skimage import data, io, filters, transform
+from skimage import data, io, filters, transform, color, exposure
 from skimage.io import imsave, imread
 from skimage.color import rgb2gray, rgba2rgb
 
@@ -374,20 +374,24 @@ def main():
 
 
     charlie = io.imread("examples/benchmark_in/charlie1.png")
-    
+    charlie = color.rgb2grey(charlie)
+
     start = time.perf_counter()
-    charlie = rgb2gray(charlie)
+    charlie = exposure.adjust_gamma(charlie, 2, 1)
     stop = time.perf_counter()
-    print("\nTime to convert image: {}\n".format(stop - start))
+    print("\nSKImage Time: {}\n".format(stop - start))
+
+    #imsave("Temp1.png", charlie)
 
     d_charlie = mp.gpuimage(io.imread("examples/benchmark_in/charlie1.png"))
+    d_charlie.rgb2grey()
 
     start = time.perf_counter()
-    d_charlie.rgb2grey()
+    d_charlie.adjust_gamma(2, 1)
     stop = time.perf_counter()
-    print("\nTime to convert image: {}\n".format(stop - start))
-    
+    print("\nMillipyde Time: {}\n".format(stop - start))
 
+    #imsave("Temp2.png", np.array(d_charlie))
 
 
 if __name__ == '__main__':

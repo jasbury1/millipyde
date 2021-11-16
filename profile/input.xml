@@ -1,0 +1,7 @@
+<metric
+gpu_index="0,1"
+></metric>
+
+<metric
+name=TA_BUSY_avr,TCC_HIT_sum,TCC_MISS_sum,FlatVMemInsts,GPUBusy,LDSInsts,GDSInsts
+></metric>

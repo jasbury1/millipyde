@@ -1,7 +1,0 @@
-"Name","Calls","TotalDurationNs","AverageNs","Percentage"
-g_gaussian_row_four_channel(unsigned int*, unsigned int*, int, int),12,125536128,10461344,52.87886134795568
-g_gaussian_col_four_channel(unsigned int*, unsigned int*, int, int, int, int),15,42555920,2837061,17.92558547938243
-void g_rotate<double>(double*, double*, int, int, double),15,38084901,2538993,16.042283854968176
-g_color_to_greyscale(unsigned char*, double*, int, int, int),13,20109911,1546916,8.4707821758588
-void g_transpose<double>(double*, double*, int, int),30,11116376,370545,4.682487141834915
-"<barrier packet>",38,0,0,0.0

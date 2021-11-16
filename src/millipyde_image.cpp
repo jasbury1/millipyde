@@ -32,6 +32,12 @@ _brightness_rgba(MPObjData *obj_data, char delta);
 static MPStatus 
 _colorize_rgba(MPObjData *obj_data, double r_mult, double g_mult, double b_mult);
 
+static MPStatus 
+_adjust_gamma_greyscale(MPObjData *obj_data, double gamma, double gain);
+
+static MPStatus 
+_adjust_gamma_rgba(MPObjData *obj_data, double gamma, double gain);
+
 
 /*******************************************************************************
 * GPU KERNELS
@@ -393,6 +399,7 @@ __global__ void g_brightness_one_channel(double *d_data, double *d_result, doubl
     }
 }
 
+
 __global__ void g_brightness_four_channel(uint32_t *d_data, uint32_t *d_result,
                                           char delta, int width, int height)
 {
@@ -417,6 +424,58 @@ __global__ void g_brightness_four_channel(uint32_t *d_data, uint32_t *d_result,
             b = max(0, ((int)((d_data[idx] >> 16) & 0xff) + delta));
             a = ((d_data[idx] >> 24) & 0xff);
         }
+
+        uint32_t result = a;
+        result = result << 8;
+        result = result | b;
+        result = result << 8;
+        result = result | g;
+        result = result << 8;
+        result = result | r;
+        d_result[idx] = result;
+    }
+}
+
+
+__global__ void g_adjust_gamma_one_channel(double *d_data, double *d_result, double gamma,
+                                         double gain, int width, int height)
+{
+    int x = hipThreadIdx_x + hipBlockIdx_x * hipBlockDim_x;
+    int y = hipThreadIdx_y + hipBlockIdx_y * hipBlockDim_y;
+
+    if (x < width && y < height) {
+        int idx = y * width + x;
+
+        double val = gain * powf(d_data[idx], gamma);
+
+        val = (val < 0 ? 0 : val);
+        val = (val > 1 ? 1 : val);
+
+        d_result[idx] = val;
+    }
+}
+
+
+__global__ void g_adjust_gamma_four_channel(uint32_t *d_data, uint32_t *d_result,
+                                          double gamma, double gain, int width, int height)
+{
+    int x = hipThreadIdx_x + hipBlockIdx_x * hipBlockDim_x;
+    int y = hipThreadIdx_y + hipBlockIdx_y * hipBlockDim_y;
+
+    if (x < width && y < height) {
+        int idx = y * width + x;
+
+        double temp_r, temp_g, temp_b;
+        unsigned char a;
+        temp_r = gain * (255 * powf((double)(d_data[idx] & 0xff) / 255, gamma));
+        temp_g = gain * (255 * powf((double)((d_data[idx] >> 8) & 0xff) / 255, gamma));
+        temp_b = gain * (255 * powf((double)((d_data[idx] >> 16) & 0xff) / 255, gamma));
+        
+        a = ((d_data[idx] >> 24) & 0xff);
+
+        unsigned char r = (unsigned char)(max(min(temp_r, 255), 0));
+        unsigned char g = (unsigned char)(max(min(temp_g, 255), 0));
+        unsigned char b = (unsigned char)(max(min(temp_b, 255), 0));
 
         uint32_t result = a;
         result = result << 8;
@@ -547,6 +606,25 @@ mpimg_brightness(MPObjData *obj_data, void *args)
     {
         char delta_n = (char)(delta * 255);
         return _brightness_rgba(obj_data, delta_n);
+    }
+    return MILLIPYDE_SUCCESS;
+}
+
+
+MPStatus
+mpimg_adjust_gamma(MPObjData *obj_data, void *args)
+{
+    double gamma = ((GammaArgs *)args)->gamma;
+    double gain = ((GammaArgs *)args)->gain; 
+
+    int channels = obj_data->ndims == 2 ? 1 : obj_data->dims[2];
+    if (channels == 1)
+    {
+        return _adjust_gamma_greyscale(obj_data, gamma, gain);
+    }
+    else if (channels == 4)
+    {
+        return _adjust_gamma_rgba(obj_data, gamma, gain);
     }
     return MILLIPYDE_SUCCESS;
 }
@@ -975,6 +1053,78 @@ _brightness_rgba(MPObjData *obj_data, char delta)
         d_image,
         d_result,
         delta,
+        width,
+        height);
+
+    obj_data->device_data = d_result;
+
+    HIP_CHECK(hipFree(d_image));
+    
+    return MILLIPYDE_SUCCESS;
+}
+
+
+static MPStatus 
+_adjust_gamma_greyscale(MPObjData *obj_data, double gamma, double gain)
+{
+    int device_id = obj_data->mem_loc;
+    int height = obj_data->dims[0];
+    int width = obj_data->dims[1];
+
+    double *d_result;
+    double *d_image = (double *)(obj_data->device_data);
+
+    HIP_CHECK(hipSetDevice(device_id));
+    hipStream_t stream = (hipStream_t)obj_data->stream;
+
+    HIP_CHECK(hipMalloc(&d_result, obj_data->nbytes));
+
+    hipLaunchKernelGGL(
+        g_adjust_gamma_one_channel,
+        dim3(ceil(width / 32.0), ceil(height / 32.0), 1),
+        dim3(32, 32, 1),
+        0,
+        stream,
+        d_image,
+        d_result,
+        gamma,
+        gain,
+        width,
+        height);
+
+    obj_data->device_data = d_result;
+
+    HIP_CHECK(hipFree(d_image));
+    
+    return MILLIPYDE_SUCCESS;
+}
+
+
+static MPStatus 
+_adjust_gamma_rgba(MPObjData *obj_data, double gamma, double gain)
+{
+    int device_id = obj_data->mem_loc;
+    int height = obj_data->dims[0];
+    int width = obj_data->dims[1];
+
+    uint32_t *d_result;
+    uint32_t *d_image = (uint32_t *)(obj_data->device_data);
+
+    HIP_CHECK(hipSetDevice(device_id));
+    hipStream_t stream = (hipStream_t)obj_data->stream;
+
+    HIP_CHECK(hipMalloc(&d_result, obj_data->nbytes));
+
+    hipLaunchKernelGGL(
+        g_adjust_gamma_four_channel,
+        dim3(ceil(width / 32.0), ceil(height / 32.0), 1),
+        dim3(32, 32, 1),
+        0,
+        stream,
+        d_image,
+        d_result,
+        gamma,
+        gain,
         width,
         height);
 
