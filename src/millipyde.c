@@ -48,6 +48,8 @@ const char *mperr_str(MPStatus status)
         return "Coult not allocate internal data-structure 'device array'";
     case DEV_WARN_NO_PEER_ACCESS:
         return "Multiple devices were detected, but peer2peer is not supported on this system";
+    case DEV_WARN_BAD_DEVICE:
+        return "A device was detected but found to be unusable";
 
     case WORK_ERROR_INIT_PTHREAD:
         return "Unable to initialize work pool thread";

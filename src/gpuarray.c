@@ -144,11 +144,22 @@ PyGPUArray_to_array(PyGPUArrayObject *self, void *closure)
 }
 
 PyObject *
-PyGPUArray_array_ufunc(PyGPUArrayObject *self, PyObject *arg1, void *closure)
+PyGPUArray_array_ufunc(PyGPUArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    // Should mostly 
-    printf("Called __array_ufunc__()\n");
-    return PyExc_NotImplementedError;
+    PyObject *ufunc;
+    PyObject *method;
+    PyObject *func_args;
+    PyObject *func_kwds;
+
+    PyObject *array_self = PyGPUArray_to_array(self, NULL);
+    
+    if (!PyArg_ParseTuple(args, "OOOO", &ufunc, &method, &func_args, &func_kwds))
+    {
+        return NULL;
+    }
+
+    // TODO
+    return NULL;
 }
 
 PyObject *

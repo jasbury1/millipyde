@@ -60,9 +60,6 @@ mpobj_change_device(MPObjData *obj_data, int new_device_id)
     if (mpdev_can_use_peer(prev_device_id, new_device_id)) {
         // Set ourselves to the old device to enable peer 2 peer
         HIP_CHECK(hipSetDevice(prev_device_id));
-        // TODO: There should be a lock somewhere so that someone else cant
-        // Attempt to enable it, and then disable it before we transfer
-        hipDeviceEnablePeerAccess(new_device_id, 0);
 
         // Set ourselves to the peer GPU and allocate GPU memory and initiate transfer
         HIP_CHECK(hipSetDevice(new_device_id));
@@ -73,7 +70,6 @@ mpobj_change_device(MPObjData *obj_data, int new_device_id)
 
         // Set ourselves back to old GPU to disable peer 2 peer and clean up
         HIP_CHECK(hipSetDevice(prev_device_id));
-        hipDeviceDisablePeerAccess(new_device_id);
         hipFree(obj_data->device_data);
         obj_data->device_data = new_device_data;
         obj_data->mem_loc = new_device_id;

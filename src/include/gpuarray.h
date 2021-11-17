@@ -90,7 +90,7 @@ PyObject *
 PyGPUArray_to_array(PyGPUArrayObject *self, void *closure);
 
 PyObject *
-PyGPUArray_array_ufunc(PyGPUArrayObject *self, PyObject *arg1, void *closure);
+PyGPUArray_array_ufunc(PyGPUArrayObject *self, PyObject *args, PyObject *kwds);
 
 PyObject *
 PyGPUArray_array_function(PyGPUArrayObject *self, PyObject *args, PyObject *kwds);

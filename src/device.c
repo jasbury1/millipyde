@@ -60,7 +60,7 @@ PyDevice_exit(PyDeviceObject *self, PyObject *args, PyObject *kwds)
     if(exc_type != Py_None)
     {
         PyErr_SetObject(exc_type, exc_val);
-        mpdev_reset();
+        mpdev_reset(self->device_id);
         return NULL;
     }
 

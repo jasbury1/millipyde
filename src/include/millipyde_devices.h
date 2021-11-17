@@ -55,7 +55,7 @@ void
 mpdev_synchronize_all();
 
 void
-mpdev_reset();
+mpdev_reset(int device_id);
 
 void 
 mpdev_set_device(int device_id);

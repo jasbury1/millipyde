@@ -35,13 +35,18 @@ static int** peer_access_matrix;
 MPDevice *device_array = NULL;
 
 static int _update_recommended_device();
-static void _setup_peer_to_peer();
+static void _check_peer_to_peer();
 static void _init_peer_access_matrix();
 static void _delete_peer_access_matrix();
+static void _mpdev_initialize_device(int device_id);
 
 extern "C"{
 
 
+
+/*******************************************************************************
+ * 
+ ******************************************************************************/
 MPStatus 
 mpdev_initialize()
 {
@@ -66,7 +71,9 @@ mpdev_initialize()
             return DEV_ERROR_PEER_ACCESS_MATRIX_ALLOC;
         }
         
-        _setup_peer_to_peer();
+        // Check which devices can communicate via peer to peer
+        // This must be done early as it calls HipDeviceReset and will reset GPU state
+        _check_peer_to_peer();
 
         // teardown will assume the matrix only has to be freed if peer to peer is supported.
         // handle the cleanup case where it we determine it cant be supported upon setup
@@ -82,29 +89,26 @@ mpdev_initialize()
         return DEV_ERROR_DEVICE_ARRAY_ALLOC;
     }
 
-    // Initialize each device in the device array
+    // Set up the all devices
     for (int i = 0; i < device_count; ++i)
     {
         MPDevice &device = device_array[i];
-        HIP_CHECK(hipSetDevice(i));
 
-        // Initialize the null stream
-        device.streams[0] = 0;
-
-        // Initialize remaining streams
-        for (int j = 1; j < DEVICE_STREAM_COUNT; ++j)
+        if (hipSuccess != hipSetDevice(i))
         {
-            hipStreamCreate(&(device.streams[j])); 
+            device.valid = MP_FALSE;
         }
-
-        // Set up the pool of workers for this device
-        ret_val = mpwrk_create_work_pool(&(device.work_pool), THREADS_PER_DEVICE);
-        if (ret_val != MILLIPYDE_SUCCESS)
+        else
         {
-            return ret_val;
-        }
+            _mpdev_initialize_device(i);
 
-        device.valid = MP_TRUE;
+            // Set up the work pool for all devices
+            ret_val = mpwrk_create_work_pool(&(device.work_pool), THREADS_PER_DEVICE);
+            if (ret_val != MILLIPYDE_SUCCESS)
+            {
+                return ret_val;
+            }
+        }
     }
 
     HIP_CHECK(hipSetDevice(0));
@@ -113,6 +117,9 @@ mpdev_initialize()
 }
 
 
+/*******************************************************************************
+ * 
+ ******************************************************************************/
 void 
 mpdev_teardown()
 {
@@ -125,23 +132,28 @@ mpdev_teardown()
         for (int i = 0; i < device_count; ++i)
         {
             MPDevice &device = device_array[i];
-            HIP_CHECK(hipSetDevice(i));
 
-            // Destroy the streams we created
-            for (int j = 1; j < DEVICE_STREAM_COUNT; ++j)
+            if (device.valid)
             {
-                hipStreamDestroy(device.streams[j]);
-            }
+                HIP_CHECK(hipSetDevice(i));
 
-            // Destroy the pool of workers for this device
-            mpwrk_destroy_work_pool(device.work_pool);
-            device.work_pool = NULL;
+                // Reset will delete all streams, disable peer to peer, clear memory,
+                // cancel kernels and events, etc
+                hipDeviceReset();
+
+                // Destroy the pool of workers for this device
+                mpwrk_destroy_work_pool(device.work_pool);
+                device.work_pool = NULL;
+            }
         }
         delete[] device_array;
     }
 }
 
 
+/*******************************************************************************
+ * 
+ ******************************************************************************/
 MPBool 
 mpdev_peer_to_peer_supported()
 {
@@ -149,6 +161,9 @@ mpdev_peer_to_peer_supported()
 }
 
 
+/*******************************************************************************
+ * 
+ ******************************************************************************/
 MPBool 
 mpdev_can_use_peer(int device, int peer_devce)
 {
@@ -159,6 +174,9 @@ mpdev_can_use_peer(int device, int peer_devce)
 }
 
 
+/*******************************************************************************
+ * 
+ ******************************************************************************/
 MPBool
 mpdev_is_valid_device(int device_id)
 {
@@ -166,13 +184,17 @@ mpdev_is_valid_device(int device_id)
     {
         return MP_FALSE;
     }
-    if (!device_array[device_id].valid)
+    if (!(device_array[device_id].valid))
     {
         return MP_FALSE;
     }
     return MP_TRUE;
 }
 
+
+/*******************************************************************************
+ * 
+ ******************************************************************************/
 void 
 mpdev_set_device(int device_id)
 {
@@ -180,6 +202,9 @@ mpdev_set_device(int device_id)
 }
 
 
+/*******************************************************************************
+ * 
+ ******************************************************************************/
 void
 mpdev_stream_synchronize(int device_id, int stream_id)
 {
@@ -187,6 +212,9 @@ mpdev_stream_synchronize(int device_id, int stream_id)
 }
 
 
+/*******************************************************************************
+ * 
+ ******************************************************************************/
 int 
 mpdev_get_device_count()
 {
@@ -194,6 +222,9 @@ mpdev_get_device_count()
 }
 
 
+/*******************************************************************************
+ * 
+ ******************************************************************************/
 int
 mpdev_get_target_device()
 {
@@ -201,6 +232,9 @@ mpdev_get_target_device()
 }
 
 
+/*******************************************************************************
+ * 
+ ******************************************************************************/
 void
 mpdev_set_target_device(int device_id)
 {
@@ -216,6 +250,9 @@ mpdev_set_target_device(int device_id)
 }
 
 
+/*******************************************************************************
+ * 
+ ******************************************************************************/
 int 
 mpdev_get_recommended_device()
 {
@@ -288,6 +325,9 @@ mpdev_get_next_device(int device_id)
 }
 
 
+/*******************************************************************************
+ * 
+ ******************************************************************************/
 void *
 mpdev_get_stream(int device_id, int stream)
 {
@@ -295,6 +335,9 @@ mpdev_get_stream(int device_id, int stream)
 }
 
 
+/*******************************************************************************
+ * 
+ ******************************************************************************/
 void
 mpdev_submit_work(int device_id, MPWorkItem work, void *arg)
 {
@@ -302,6 +345,9 @@ mpdev_submit_work(int device_id, MPWorkItem work, void *arg)
 }
 
 
+/*******************************************************************************
+ * 
+ ******************************************************************************/
 void
 mpdev_hard_synchronize(int device_id)
 {
@@ -311,6 +357,9 @@ mpdev_hard_synchronize(int device_id)
 }
 
 
+/*******************************************************************************
+ * 
+ ******************************************************************************/
 void
 mpdev_hard_synchronize_all()
 {
@@ -324,6 +373,9 @@ mpdev_hard_synchronize_all()
 }
 
 
+/*******************************************************************************
+ * 
+ ******************************************************************************/
 void
 mpdev_synchronize()
 {
@@ -331,6 +383,9 @@ mpdev_synchronize()
 }
 
 
+/*******************************************************************************
+ * 
+ ******************************************************************************/
 void
 mpdev_synchronize_all()
 {
@@ -345,10 +400,17 @@ mpdev_synchronize_all()
 }
 
 
+/*******************************************************************************
+ * 
+ ******************************************************************************/
 void
-mpdev_reset()
+mpdev_reset(int device_id)
 {
+    HIP_CHECK(hipSetDevice(device_id));
     HIP_CHECK(hipDeviceReset());
+
+    // Re-initialize the data that was torn down in the reset
+    _mpdev_initialize_device(device_id);
 }
 
 
@@ -358,13 +420,14 @@ mpdev_reset()
  * peer DMA, then the result is updated in the peer access matrix. If at least
  * one pair exists that can communicate, then peer_to_peer_supported is updated
  * to true.
+ * 
+ * Note: This does not actually enable peer 2 peer, it just checks for access
  ******************************************************************************/
-static void _setup_peer_to_peer()
+static void _check_peer_to_peer()
 {
     for (int device = 0; device < device_count; ++device) {
         if (hipSetDevice(device) != hipSuccess)
         {
-            device_array[device].valid = MP_FALSE;
             continue;
         }
         for (int peer_device = 0; peer_device < device_count; ++peer_device) {
@@ -397,6 +460,9 @@ static void _setup_peer_to_peer()
 }
 
 
+/*******************************************************************************
+ * 
+ ******************************************************************************/
 static void _init_peer_access_matrix()
 {
     peer_access_matrix = new int*[device_count];
@@ -406,12 +472,37 @@ static void _init_peer_access_matrix()
 }
 
 
+/*******************************************************************************
+ * 
+ ******************************************************************************/
 static void _delete_peer_access_matrix()
 {
     for (int i = 0; i < device_count; ++i) {
         delete [] peer_access_matrix[i];
     }
     delete [] peer_access_matrix;
+}
+
+
+/*******************************************************************************
+ * The caller is responsible for making sure the device_id is valid
+ ******************************************************************************/
+static void _mpdev_initialize_device(int device_id)
+{
+    HIP_CHECK(hipSetDevice(device_id));
+    MPDevice &device = device_array[device_id];
+    
+    // Initialize the null stream
+    device.streams[0] = 0;
+    
+    // Initialize remaining streams
+    for (int j = 1; j < DEVICE_STREAM_COUNT; ++j)
+    {
+        hipStreamCreate(&(device.streams[j])); 
+    }
+
+    device.valid = MP_TRUE;
+    hipDeviceEnablePeerAccess(device_id, 0);
 }
 
 

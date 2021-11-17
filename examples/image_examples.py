@@ -372,14 +372,11 @@ def gamma_performance():
 
 
 def main():
-    lst = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-    array = np.array(lst)
-    array = np.transpose(array)
+    inputs = []
 
-    array2 = mp.gpuimage(lst)
-    array2 = np.transpose(array2)
-    
-    npt.assert_equal(array, array2)
+    for i in range(5):
+        pass
+
 
 
     
