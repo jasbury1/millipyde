@@ -374,9 +374,17 @@ def gamma_performance():
 def main():
     inputs = []
 
-    for i in range(5):
-        pass
+    for i in range(7):
+        inputs.append(mp.image_from_path("examples/benchmark_in/charlie6.png"))
 
+    ops = [mp.Operation("rgb2grey")]
+
+    pipeline = mp.Pipeline(inputs, ops)
+
+    start = time.perf_counter()
+    pipeline.run()
+    stop = time.perf_counter()
+    print("\nTime to run: {}\n".format(stop - start))
 
 
     

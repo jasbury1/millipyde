@@ -485,7 +485,7 @@ static void _delete_peer_access_matrix()
 
 
 /*******************************************************************************
- * The caller is responsible for making sure the device_id is valid
+ * The caller is responsible for making sure the device_id is valid and usable
  ******************************************************************************/
 static void _mpdev_initialize_device(int device_id)
 {

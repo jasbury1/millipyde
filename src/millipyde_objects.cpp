@@ -58,15 +58,15 @@ mpobj_change_device(MPObjData *obj_data, int new_device_id)
         return;
     }
     if (mpdev_can_use_peer(prev_device_id, new_device_id)) {
-        // Set ourselves to the old device to enable peer 2 peer
-        HIP_CHECK(hipSetDevice(prev_device_id));
-
-        // Set ourselves to the peer GPU and allocate GPU memory and initiate transfer
+        // Set ourselves to the peer GPU and allocate GPU memory
         HIP_CHECK(hipSetDevice(new_device_id));
+        
         void *new_device_data;
         hipMalloc((void **)&new_device_data, obj_data->nbytes);
+
         //hipMemcpy(new_device_data, obj_data->device_data, obj_data->nbytes, hipMemcpyDeviceToDevice);
-        hipMemcpyPeerAsync(new_device_data, new_device_id, obj_data->device_data, prev_device_id, obj_data->nbytes, stream);
+        HIP_CHECK(hipMemcpyPeerAsync(new_device_data, new_device_id, obj_data->device_data,
+                           prev_device_id, obj_data->nbytes, stream));
 
         // Set ourselves back to old GPU to disable peer 2 peer and clean up
         HIP_CHECK(hipSetDevice(prev_device_id));
@@ -76,6 +76,7 @@ mpobj_change_device(MPObjData *obj_data, int new_device_id)
     }
     else {
         // TODO: Transfer the hard way using CPU
+        printf("These devices are not enabled for peer access.\n");
     }
 }
 

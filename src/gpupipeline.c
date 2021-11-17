@@ -268,11 +268,13 @@ PyGPUPipeline_run(PyGPUPipelineObject *self, PyObject *Py_UNUSED(ignored))
     {
         obj_data = MP_OBJ_DATA(PyList_GetItem(self->inputs, iter));
 
-        ExecutionArgs *args = gpupipeline_create_args(obj_data, self->runnables, num_stages,
-                                                      device_id, 
+        ExecutionArgs *args = gpupipeline_create_args(obj_data,
+                                                      self->runnables,
+                                                      num_stages,
+                                                      device_id,
                                                       (iter % THREADS_PER_DEVICE) + 1,
                                                       receiver);
-        
+
         mpdev_submit_work(device_id, gpupipeline_thread_run_sequence, args);
         if(cycle_devices && ((iter + 1) % THREADS_PER_DEVICE == 0))
         {
@@ -359,6 +361,8 @@ gpupipeline_run_sequence(MPObjData *obj_data, MPRunnable *runnables, int num_sta
     obj_data->pinned = MP_TRUE;
     if (obj_data->mem_loc != device_id)
     {
+        // Use temporary stream for memory transfer
+        obj_data->stream = mpdev_get_stream(obj_data->mem_loc, stream_id);
         mpobj_change_device(obj_data, device_id);
     }
 
