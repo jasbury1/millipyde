@@ -240,6 +240,18 @@ gpuoperation_func_from_name(PyObject *uname)
     {
         return mpimg_rotate;
     }
+    else if (strcmp(name, "brightness") == 0)
+    {
+        return mpimg_brightness;
+    }
+    else if (strcmp(name, "adjust_gamma") == 0)
+    {
+        return mpimg_adjust_gamma;
+    }
+    else if (strcmp(name, "colorize") == 0)
+    {
+        return mpimg_colorize;
+    }
 
     return NULL;
 }
@@ -261,6 +273,18 @@ gpuoperation_args_from_name(PyObject *uname, PyObject *arg_tuple)
     else if (strcmp(name, "gaussian") == 0)
     {
         return gpuimage_gaussian_args(arg_tuple);
+    }
+    else if (strcmp(name, "brightness") == 0)
+    {
+        return gpuimage_brightness_args(arg_tuple);
+    }
+    else if (strcmp(name, "adjust_gamma") == 0)
+    {
+        return gpuimage_gamma_args(arg_tuple);
+    }
+    else if (strcmp(name, "colorize") == 0)
+    {
+        return gpuimage_colorize_args(arg_tuple);
     }
 
     return NULL;

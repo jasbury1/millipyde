@@ -146,20 +146,21 @@ PyGPUArray_to_array(PyGPUArrayObject *self, void *closure)
 PyObject *
 PyGPUArray_array_ufunc(PyGPUArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    PyObject *ufunc;
-    PyObject *method;
-    PyObject *func_args;
-    PyObject *func_kwds;
+    printf("Tuple size: %d\n", PyTuple_Size(args));
 
-    PyObject *array_self = PyGPUArray_to_array(self, NULL);
-    
-    if (!PyArg_ParseTuple(args, "OOOO", &ufunc, &method, &func_args, &func_kwds))
+    PyObject *ufunc = PyTuple_GetItem(args, 0);
+    PyObject *method = PyTuple_GetItem(args, 1);
+    PyObject *ufunc_args = PyTuple_GetItem(args, 2);
+    PyObject *ufunc_kwds;
+
+    printf("Arg Type: %s\n", ufunc_args->ob_type->tp_name);
+
+    if(strcmp("__call__", PyUnicode_AsUTF8(method)) == 0)
     {
-        return NULL;
+        //return PyObject_Call(ufunc)
     }
 
-    // TODO
-    return NULL;
+    return Py_None;
 }
 
 PyObject *
@@ -194,7 +195,6 @@ PyGPUArray_array_function(PyGPUArrayObject *self, PyObject *args, PyObject *kwds
         }
     }
 
-    //return PyObject_Call(func, func_args, func_kwds);
     return PyObject_Call(func, new_args, func_kwds);
 }
 

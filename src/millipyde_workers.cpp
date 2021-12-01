@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <iostream>
 #include <pthread.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <sys/syscall.h>
 
 #include "hip/hip_runtime.h"
 
@@ -165,6 +168,11 @@ mpwrk_process_work(void *arg)
 
         if (node != NULL)
         {
+            /*
+            pid_t x = syscall(__NR_gettid);
+            printf("TID %d\n", (int)x);
+            */
+
             node->work(node->arg);
             mpwrk_destroy_work_node(node);
         }

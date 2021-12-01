@@ -370,16 +370,207 @@ def gamma_performance():
 
     npt.assert_almost_equal(charlie, np.array(d_charlie), decimal=4)
 
+def pipeline_performance():
+    num_inputs = 100
 
-def main():
+    ops = [mp.Operation("gaussian", 2),
+           mp.Operation("adjust_gamma", 2, 1),
+           mp.Operation("fliplr"),
+           mp.Operation("rotate", 45),
+           mp.Operation("rgb2grey")
+           ]
+    
     inputs = []
-
-    for i in range(7):
+    for i in range(num_inputs):
         inputs.append(mp.image_from_path("examples/benchmark_in/charlie6.png"))
 
-    ops = [mp.Operation("rgb2grey")]
+    pipeline = mp.Pipeline(inputs, ops, device=0)
 
-    pipeline = mp.Pipeline(inputs, ops)
+    start = time.perf_counter()
+    pipeline.run()
+    stop = time.perf_counter()
+    print("\nTime to run: {}\n".format(stop - start))
+    
+    inputs = []
+    for i in range(num_inputs):
+        inputs.append(mp.image_from_path("examples/benchmark_in/charlie6.png"))
+
+    start = time.perf_counter()
+    for i in inputs:
+        for o in ops:
+            o.run_on(i)
+    stop = time.perf_counter()
+    print("\nTime to run non-pipeline version: {}\n".format(stop - start))
+
+
+def long_pipeline_performance():
+    num_inputs = 100
+
+    ops = [mp.Operation("gaussian", 2),
+           mp.Operation("rotate", 4),
+           mp.Operation("adjust_gamma", 1.3, 1),
+           mp.Operation("rotate", 10),
+           mp.Operation("gaussian", 2),
+           mp.Operation("adjust_gamma", 1.4, 1),
+           mp.Operation("fliplr"),
+           mp.Operation("adjust_gamma", .5, 1),
+           mp.Operation("fliplr"),
+           mp.Operation("gaussian", 2),
+           mp.Operation("rotate", 2),
+           mp.Operation("gaussian", 2),
+           mp.Operation("gaussian", 2),
+           mp.Operation("rotate", 10),
+           mp.Operation("rgb2grey"),
+           mp.Operation("gaussian", 2),
+           mp.Operation("gaussian", 2),
+           mp.Operation("rotate", 4),
+           mp.Operation("adjust_gamma", 1.3, 1),
+           mp.Operation("rotate", 10)
+           ]
+
+    inputs = []
+
+    for i in range(num_inputs):
+        inputs.append(mp.image_from_path("examples/benchmark_in/charlie6.png"))
+
+    pipeline = mp.Pipeline(inputs, ops, device=0)
+
+    start = time.perf_counter()
+    pipeline.run()
+    stop = time.perf_counter()
+    print("\nTime to run: {}\n".format(stop - start))
+    
+    inputs = []
+    for i in range(num_inputs):
+        inputs.append(mp.image_from_path("examples/benchmark_in/charlie6.png"))
+
+    start = time.perf_counter()
+    for i in inputs:
+        for o in ops:
+            o.run_on(i)
+    stop = time.perf_counter()
+    print("\nTime to run non-pipeline version: {}\n".format(stop - start))
+
+
+'''
+struct timespec ts;
+    ts.tv_sec = 2/1000;
+    ts.tv_nsec = (2 % 1000) * 1000000;
+
+    nanosleep(&ts, &ts);
+'''
+
+
+def connected_pipelines_performance():
+    num_inputs = 75
+
+    ops = [mp.Operation("gaussian", 2),
+           mp.Operation("rotate", 4),
+           mp.Operation("adjust_gamma", 1.3, 1),
+           mp.Operation("rotate", 10),
+           mp.Operation("gaussian", 2),
+           mp.Operation("adjust_gamma", 1.4, 1),
+           mp.Operation("fliplr"),
+           mp.Operation("adjust_gamma", .5, 1),
+           mp.Operation("fliplr"),
+           mp.Operation("gaussian", 2),
+           ]
+
+    ops2 = [mp.Operation("rotate", 2),
+            mp.Operation("gaussian", 2),
+            mp.Operation("gaussian", 2),
+            mp.Operation("rotate", 10),
+            mp.Operation("rgb2grey"),
+            mp.Operation("gaussian", 2),
+            mp.Operation("gaussian", 2),
+            mp.Operation("rotate", 4),
+            mp.Operation("adjust_gamma", 1.3, 1),
+            mp.Operation("rotate", 10)
+            ]
+
+    inputs = []
+    for i in range(num_inputs):
+        inputs.append(mp.image_from_path("examples/benchmark_in/charlie6.png"))
+
+    start = time.perf_counter()
+    for i in inputs:
+        for o in ops:
+            o.run_on(i)
+        for o in ops2:
+            o.run_on(i)
+    stop = time.perf_counter()
+    print("\nControl: {}\n".format(stop - start))
+
+    inputs = []
+
+    for i in range(num_inputs):
+        inputs.append(mp.image_from_path("examples/benchmark_in/charlie6.png"))
+
+    pipeline = mp.Pipeline(inputs, ops, device=0)
+    pipeline2 = mp.Pipeline([], ops2, device=1)
+    pipeline.connect_to(pipeline2)
+
+    start = time.perf_counter()
+    pipeline.run()
+    stop = time.perf_counter()
+    print("\nTime to run connected pipeline: {}\n".format(stop - start))
+
+
+    ops3 = [mp.Operation("gaussian", 2),
+           mp.Operation("rotate", 4),
+           mp.Operation("adjust_gamma", 1.3, 1),
+           mp.Operation("rotate", 10),
+           mp.Operation("gaussian", 2),
+           mp.Operation("adjust_gamma", 1.4, 1),
+           mp.Operation("fliplr"),
+           mp.Operation("adjust_gamma", .5, 1),
+           mp.Operation("fliplr"),
+           mp.Operation("gaussian", 2),
+           mp.Operation("rotate", 2),
+           mp.Operation("gaussian", 2),
+           mp.Operation("gaussian", 2),
+           mp.Operation("rotate", 10),
+           mp.Operation("rgb2grey"),
+           mp.Operation("gaussian", 2),
+           mp.Operation("gaussian", 2),
+           mp.Operation("rotate", 4),
+           mp.Operation("adjust_gamma", 1.3, 1),
+           mp.Operation("rotate", 10)
+           ]
+
+    inputs = []
+
+    for i in range(num_inputs):
+        inputs.append(mp.image_from_path("examples/benchmark_in/charlie6.png"))
+
+    pipeline = mp.Pipeline(inputs, ops3)
+
+    start = time.perf_counter()
+    pipeline.run()
+    stop = time.perf_counter()
+    print("\nTime to run one pipeline: {}\n".format(stop - start))
+
+
+def connected_pipelines_performance_2():
+    num_inputs = 75
+
+    ops = [mp.Operation("gaussian", 2),
+           mp.Operation("adjust_gamma", 2, 1),
+           mp.Operation("fliplr")
+           ]
+
+    ops2 = [mp.Operation("rotate", 45),
+            mp.Operation("rgb2grey")
+            ]
+    
+    inputs = []
+    for i in range(num_inputs):
+        inputs.append(mp.image_from_path("examples/benchmark_in/charlie6.png"))
+
+    pipeline = mp.Pipeline(inputs, ops, device=0)
+    pipeline2 = mp.Pipeline([], ops2, device=1)
+
+    pipeline.connect_to(pipeline2)
 
     start = time.perf_counter()
     pipeline.run()
@@ -387,8 +578,51 @@ def main():
     print("\nTime to run: {}\n".format(stop - start))
 
 
-    
+def main():
+    num_inputs = 75
 
+    ops = [mp.Operation("gaussian", 2),
+           mp.Operation("rotate", 4),
+           mp.Operation("adjust_gamma", 1.3, 1),
+           mp.Operation("rotate", 10),
+           mp.Operation("gaussian", 2),
+           mp.Operation("adjust_gamma", 1.4, 1),
+           mp.Operation("fliplr"),
+           mp.Operation("adjust_gamma", .5, 1),
+           mp.Operation("fliplr"),
+           mp.Operation("gaussian", 2),
+           mp.Operation("rotate", 2),
+           mp.Operation("gaussian", 2),
+           mp.Operation("gaussian", 2),
+           mp.Operation("rotate", 10),
+           mp.Operation("rgb2grey"),
+           mp.Operation("gaussian", 2),
+           mp.Operation("gaussian", 2),
+           mp.Operation("rotate", 4),
+           mp.Operation("adjust_gamma", 1.3, 1),
+           mp.Operation("rotate", 10)
+           ]
+
+    inputs = []
+    for _ in range(num_inputs):
+        inputs.append(mp.image_from_path("examples/benchmark_in/charlie6.png"))
+
+    pipeline = mp.Pipeline(inputs, ops)
+
+    start = time.perf_counter()
+    pipeline.run()
+    stop = time.perf_counter()
+    print("\nTime to run one pipeline: {}\n".format(stop - start))
+
+
+    control = np.array(inputs[0])
+    for i in range(1, num_inputs):
+        print(i)
+        experiment = np.array(inputs[i])
+        npt.assert_almost_equal(control, experiment, decimal=4)
+
+    
+    
 
 
 if __name__ == '__main__':

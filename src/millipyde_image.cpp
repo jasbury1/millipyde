@@ -1,5 +1,8 @@
 #include <stdio.h>
 #include <iostream>
+#include <unistd.h>
+#include <time.h>
+
 #include "hip/hip_runtime.h"
 #include "millipyde_hip_util.h"
 #include "millipyde_image.h"
