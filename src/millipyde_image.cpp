@@ -389,16 +389,11 @@ __global__ void g_brightness_one_channel(double *d_data, double *d_result, doubl
 
     if (x < width && y < height) {
         int idx = y * width + x;
+        double val = d_data[idx] + delta;
+        val = (val < 0 ? 0 : val);
+        val = (val > 1 ? 1 : val);
 
-        if (delta > 0)
-        {
-            d_result[idx] = fmin(1.0, d_data[idx] + delta);
-        }
-        else
-        {
-            d_result[idx] = fmax(0, d_data[idx] + delta); 
-        }
-        
+        d_result[idx] = val;
     }
 }
 
@@ -476,9 +471,13 @@ __global__ void g_adjust_gamma_four_channel(uint32_t *d_data, uint32_t *d_result
         
         a = ((d_data[idx] >> 24) & 0xff);
 
-        unsigned char r = (unsigned char)(max(min(temp_r, 255), 0));
-        unsigned char g = (unsigned char)(max(min(temp_g, 255), 0));
-        unsigned char b = (unsigned char)(max(min(temp_b, 255), 0));
+        temp_r = (temp_r < 0 ? 0 : temp_r);
+        temp_g = (temp_g < 0 ? 0 : temp_g);
+        temp_b = (temp_b < 0 ? 0 : temp_b);
+
+        unsigned char r = (temp_r > 255 ? 255 : (unsigned char)temp_r);
+        unsigned char g = (temp_g > 255 ? 255 : (unsigned char)temp_g);
+        unsigned char b = (temp_b > 255 ? 255 : (unsigned char)temp_b);
 
         uint32_t result = a;
         result = result << 8;
@@ -502,12 +501,16 @@ __global__ void g_colorize_four_channel(uint32_t *d_data, uint32_t *d_result,
     if (x < width && y < height) {
         int idx = y * width + x;
 
-        unsigned char r, g, b, a;
+        double temp_r, temp_g, temp_b;
 
-        r = (unsigned char)(min(255, (((double)(d_data[idx] & 0xff)) * r_mult)));
-        g = (unsigned char)(min(255, (((double)((d_data[idx] >> 8) & 0xff)) * g_mult)));
-        b = (unsigned char)(min(255, (((double)((d_data[idx] >> 16) & 0xff)) * b_mult)));
-        a = ((d_data[idx] >> 24) & 0xff);
+        temp_r = (((double)(d_data[idx] & 0xff)) * r_mult);
+        temp_g = (((double)((d_data[idx] >> 8) & 0xff)) * g_mult);
+        temp_b = (((double)((d_data[idx] >> 16) & 0xff)) * b_mult);
+
+        unsigned char r = (temp_r > 255 ? 255 : (unsigned char)temp_r);
+        unsigned char g = (temp_g > 255 ? 255 : (unsigned char)temp_g);
+        unsigned char b = (temp_b > 255 ? 255 : (unsigned char)temp_b);
+        unsigned char a = ((d_data[idx] >> 24) & 0xff);
 
         uint32_t result = a;
         result = result << 8;

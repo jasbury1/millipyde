@@ -146,7 +146,23 @@ PyGPUArray_to_array(PyGPUArrayObject *self, void *closure)
 PyObject *
 PyGPUArray_array_ufunc(PyGPUArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    printf("Tuple size: %d\n", PyTuple_Size(args));
+    int args_len = PyTuple_Size(args);
+    PyObject *new_args = PyTuple_New(args_len);    
+    int i;
+
+    for(i = 0; i < args_len; ++i)
+    {
+        PyObject *arg = PyTuple_GetItem(args, i);
+        if (gpuarray_check_subtype(arg))
+        {
+            PyObject *ndarray = PyGPUArray_to_array((PyGPUArrayObject *)arg, NULL);
+            PyTuple_SetItem(new_args, i, ndarray);
+        }
+        else
+        {
+            PyTuple_SetItem(new_args, i, arg);
+        }
+    }
 
     PyObject *ufunc = PyTuple_GetItem(args, 0);
     PyObject *method = PyTuple_GetItem(args, 1);
@@ -157,8 +173,19 @@ PyGPUArray_array_ufunc(PyGPUArrayObject *self, PyObject *args, PyObject *kwds)
 
     if(strcmp("__call__", PyUnicode_AsUTF8(method)) == 0)
     {
-        //return PyObject_Call(ufunc)
+        PyObject *ndarray = PyGPUArray_to_array((PyGPUArrayObject *)(PyTuple_GetItem(args, 2)), NULL);
+        PyObject *callable = PyObject_GetAttrString(ndarray, "__array_ufunc__");
+        printf("%s\n", callable->ob_type->tp_name);
+        PyObject *result = PyObject_Call(callable, args, kwds);
+        return result;
+        /*
+        PyObject *new_args = PyTuple_New(1);
+        PyTuple_SetItem(new_args, 1, ndarray);
+        PyObject *result = PyObject_Call(ufunc, new_args, NULL);
+        return result;
+        */
     }
+
 
     return Py_None;
 }

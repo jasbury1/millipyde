@@ -34,15 +34,13 @@ static int** peer_access_matrix;
 
 MPDevice *device_array = NULL;
 
+extern "C"{
+
 static int _update_recommended_device();
 static void _check_peer_to_peer();
 static void _init_peer_access_matrix();
 static void _delete_peer_access_matrix();
 static void _mpdev_initialize_device(int device_id);
-
-extern "C"{
-
-
 
 /*******************************************************************************
  * 

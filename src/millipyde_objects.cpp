@@ -111,8 +111,8 @@ mpobj_clone_data(MPObjData *obj_data, int device_id, int stream_id)
     void *new_device_data;
     HIP_CHECK(hipSetDevice(device_id));
     HIP_CHECK(hipMalloc((void **)&new_device_data, cloned_data->nbytes));
-    HIP_CHECK(hipMemcpyDtoD((void *)new_device_data,
-                            (void *)obj_data->device_data, 
+    HIP_CHECK(hipMemcpyDtoD((hipDeviceptr_t)new_device_data,
+                            (hipDeviceptr_t)obj_data->device_data, 
                             cloned_data->nbytes));
     cloned_data->device_data = new_device_data;
 

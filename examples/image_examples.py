@@ -579,47 +579,8 @@ def connected_pipelines_performance_2():
 
 
 def main():
-    num_inputs = 75
-
-    ops = [mp.Operation("gaussian", 2),
-           mp.Operation("rotate", 4),
-           mp.Operation("adjust_gamma", 1.3, 1),
-           mp.Operation("rotate", 10),
-           mp.Operation("gaussian", 2),
-           mp.Operation("adjust_gamma", 1.4, 1),
-           mp.Operation("fliplr"),
-           mp.Operation("adjust_gamma", .5, 1),
-           mp.Operation("fliplr"),
-           mp.Operation("gaussian", 2),
-           mp.Operation("rotate", 2),
-           mp.Operation("gaussian", 2),
-           mp.Operation("gaussian", 2),
-           mp.Operation("rotate", 10),
-           mp.Operation("rgb2grey"),
-           mp.Operation("gaussian", 2),
-           mp.Operation("gaussian", 2),
-           mp.Operation("rotate", 4),
-           mp.Operation("adjust_gamma", 1.3, 1),
-           mp.Operation("rotate", 10)
-           ]
-
-    inputs = []
-    for _ in range(num_inputs):
-        inputs.append(mp.image_from_path("examples/benchmark_in/charlie6.png"))
-
-    pipeline = mp.Pipeline(inputs, ops)
-
-    start = time.perf_counter()
-    pipeline.run()
-    stop = time.perf_counter()
-    print("\nTime to run one pipeline: {}\n".format(stop - start))
-
-
-    control = np.array(inputs[0])
-    for i in range(1, num_inputs):
-        print(i)
-        experiment = np.array(inputs[i])
-        npt.assert_almost_equal(control, experiment, decimal=4)
+    gpuarr = mp.gpuarray([1, 2, 3, 4, 5])
+    print(np.sin(gpuarr))
 
     
     
